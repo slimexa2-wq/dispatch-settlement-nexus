@@ -12,6 +12,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Verify patch part count
         run: test "$(find patch-archive -name 'part-*.b64' | wc -l)" -eq 15
       - name: Reconstruct and verify patch hashes
@@ -24,6 +27,8 @@ jobs:
           grep -Fq 'apps/admin/src/pages/InternalEmployeesPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
           grep -Fq 'apps/admin/src/pages/ReimbursementsPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
           grep -Fq 'internal-hr-and-reimbursement-domain.test.ts' 0001-internal-hr-reimbursement-foundation.patch
+      - name: Run core domain rules
+        run: node --experimental-strip-types scripts/verify-domain-rules.mjs
       - name: Verify real roster was not uploaded
         run: |
           ! find . -type f -iname '*.xlsx' -print -quit | grep -q .
