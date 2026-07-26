@@ -1,0 +1,7 @@
+{"input": "四川时代1至6月每月入职人数是多少", "expected_skill": "project_personnel_statistics", "expected_mode": "read"}
+{"input": "张三现在还在职吗", "expected_skill": "employee_information_query", "expected_mode": "read"}
+{"input": "四川时代还差多少人", "expected_skill": "recruitment_progress_query", "expected_mode": "read"}
+{"input": "张三今天入职四川时代操作工", "expected_skill": "employee_entry", "expected_mode": "write"}
+{"input": "张三今天离职，原因是厂区临时工清退", "expected_skill": "employee_resignation", "expected_mode": "write"}
+{"input": "张三为什么想离职", "expected_skill": "unsupported", "expected_mode": "unsupported"}
+{"input": "本月离职人数是多少", "expected_skill": "project_personnel_statistics", "expected_mode": "read"}

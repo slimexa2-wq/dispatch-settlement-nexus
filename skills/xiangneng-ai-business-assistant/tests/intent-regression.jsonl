@@ -1,0 +1,15 @@
+{"id": "R001", "input": "四川时代1至6月每月入职人数是多少", "expected_skill": "project_personnel_statistics", "expected_mode": "read"}
+{"id": "R002", "input": "四川时代上半年招进来的人每个月分别有多少", "expected_skill": "project_personnel_statistics", "expected_mode": "read"}
+{"id": "R003", "input": "本月离职人数是多少", "expected_skill": "project_personnel_statistics", "expected_mode": "read"}
+{"id": "R004", "input": "张三现在还在职吗", "expected_skill": "employee_information_query", "expected_mode": "read"}
+{"id": "R005", "input": "张三什么时候入职的", "expected_skill": "employee_information_query", "expected_mode": "read"}
+{"id": "R006", "input": "手机号尾号5678是谁", "expected_skill": "employee_information_query", "expected_mode": "read"}
+{"id": "R007", "input": "四川时代还差多少人", "expected_skill": "recruitment_progress_query", "expected_mode": "read"}
+{"id": "R008", "input": "哪些项目招聘缺口超过20人", "expected_skill": "recruitment_progress_query", "expected_mode": "read"}
+{"id": "R009", "input": "给张三办理入职，今天入职四川时代操作工", "expected_skill": "employee_entry", "expected_mode": "write"}
+{"id": "R010", "input": "把李四状态改成在职", "expected_skill": "employee_entry", "expected_mode": "write"}
+{"id": "R011", "input": "张三今天离职，原因是厂区临时工清退", "expected_skill": "employee_resignation", "expected_mode": "write"}
+{"id": "R012", "input": "王五已经不干了，昨天走的，个人原因", "expected_skill": "employee_resignation", "expected_mode": "write"}
+{"id": "R013", "input": "张三为什么想离职", "expected_skill": "unsupported", "expected_mode": "unsupported", "must_not_write": true}
+{"id": "R014", "input": "离职政策是什么", "expected_skill": "unsupported", "expected_mode": "unsupported", "must_not_write": true}
+{"id": "R015", "input": "四川时代每月离职多少人", "expected_skill": "project_personnel_statistics", "expected_mode": "read", "must_not_write": true}

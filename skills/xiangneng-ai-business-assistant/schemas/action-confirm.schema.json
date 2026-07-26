@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "action_token",
+    "idempotency_key",
+    "confirmed"
+  ],
+  "properties": {
+    "action_token": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 16
+    },
+    "confirmed": {
+      "const": true
+    }
+  }
+}

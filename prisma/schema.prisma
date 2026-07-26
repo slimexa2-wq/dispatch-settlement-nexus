@@ -1,0 +1,769 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../apps/api/src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  HEADQUARTERS_MANAGER
+  BRANCH_MANAGER
+  PROJECT_OPERATOR
+  RESOURCE_SPECIALIST
+  SUPPLIER
+  EMPLOYEE
+  JOB_SEEKER
+  SYSTEM_ADMIN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  HISTORICAL
+  PENDING_CONFIRMATION
+}
+
+enum ResponsibilityType {
+  CLIENT
+  OURS
+  JOINT
+  PENDING_CONFIRMATION
+}
+
+enum InterviewStatus {
+  PENDING_ARRIVAL
+  ARRIVED
+  PASSED
+  FAILED
+  ABANDONED
+}
+
+enum EmploymentStatus {
+  APPLICANT
+  INTERVIEWING
+  PENDING_ONBOARD
+  ACTIVE
+  LEFT
+}
+
+enum PolicyType {
+  SUPPLIER
+  EMPLOYEE_REFERRAL
+}
+
+enum JobStatus {
+  RECRUITING
+  PAUSED
+  FILLED
+  ENDED
+}
+
+enum ApplicationSource {
+  OPERATOR
+  SUPPLIER
+  SELF
+  REFERRAL
+}
+
+enum RewardStatus {
+  PENDING
+  ACHIEVED
+  PAID
+  CANCELLED
+}
+
+enum SalarySlipStatus {
+  DRAFT
+  PUBLISHED
+  WITHDRAWN
+}
+
+enum ImportStatus {
+  PREVIEW
+  COMMITTED
+  PARTIAL
+  FAILED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED_NOT_CONFIGURED
+}
+
+enum AiActionStatus {
+  PREVIEWED
+  EXECUTED
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+model Branch {
+  id         String    @id @default(uuid()) @db.Uuid
+  sourceCode String?   @unique @map("source_code") @db.VarChar(64)
+  name       String    @unique @db.VarChar(200)
+  remark     String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  projects   Project[]
+  users      User[]
+
+  @@map("branches")
+}
+
+model Project {
+  id               String              @id @default(uuid()) @db.Uuid
+  sourceProjectId  String?             @unique @map("source_project_id") @db.VarChar(64)
+  branchId         String              @map("branch_id") @db.Uuid
+  name             String              @db.VarChar(200)
+  isExternal       Boolean             @default(false) @map("is_external")
+  businessType     String?             @map("business_type") @db.VarChar(64)
+  status           ProjectStatus?
+  managerName      String?             @map("manager_name") @db.VarChar(64)
+  managerPhone     String?             @map("manager_phone") @db.VarChar(32)
+  cooperationStart DateTime?           @map("cooperation_start") @db.Date
+  cooperationEnd   DateTime?           @map("cooperation_end") @db.Date
+  responsibility   ResponsibilityType?
+  description      String?             @db.Text
+  remark           String?             @db.Text
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  branch           Branch              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  images           ProjectImage[]
+  people           Person[]
+  jobDemands       JobDemand[]
+  policies         Policy[]
+  supplierLinks    SupplierProject[]
+  userLinks        UserProject[]
+  portalQrCodes    PortalQrCode[]
+
+  @@unique([branchId, name])
+  @@index([branchId, status])
+  @@map("projects")
+}
+
+model ProjectImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  projectId    String   @map("project_id") @db.Uuid
+  storageKey   String   @unique @map("storage_key") @db.VarChar(128)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int      @map("size_bytes")
+  sortOrder    Int      @default(0) @map("sort_order")
+  note         String?  @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, sortOrder])
+  @@map("project_images")
+}
+
+model Supplier {
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String             @unique @db.VarChar(200)
+  contactName       String?            @map("contact_name") @db.VarChar(64)
+  contactPhone      String?            @map("contact_phone") @db.VarChar(32)
+  level             String?            @db.VarChar(32)
+  isActive          Boolean            @default(true) @map("is_active")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  projectLinks      SupplierProject[]
+  people            Person[]
+  policies          Policy[]
+  applications      Application[]
+  users             User[]
+  portalSettlements PortalSettlement[]
+
+  @@map("suppliers")
+}
+
+model SupplierProject {
+  supplierId String   @map("supplier_id") @db.Uuid
+  projectId  String   @map("project_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([supplierId, projectId])
+  @@index([projectId])
+  @@map("supplier_project_relations")
+}
+
+model Policy {
+  id                    String           @id @default(uuid()) @db.Uuid
+  name                  String           @db.VarChar(200)
+  type                  PolicyType
+  projectId             String           @map("project_id") @db.Uuid
+  jobTitle              String?          @map("job_title") @db.VarChar(120)
+  supplierId            String?          @map("supplier_id") @db.Uuid
+  supplierLevel         String?          @map("supplier_level") @db.VarChar(32)
+  employeeType          String?          @map("employee_type") @db.VarChar(64)
+  amount                Decimal          @db.Decimal(12, 2)
+  achievementConditions String           @map("achievement_conditions") @db.Text
+  exclusionConditions   String?          @map("exclusion_conditions") @db.Text
+  effectiveAt           DateTime         @map("effective_at") @db.Date
+  expiresAt             DateTime?        @map("expires_at") @db.Date
+  notes                 String?          @db.Text
+  version               Int              @default(1)
+  isActive              Boolean          @default(true) @map("is_active")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  project               Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier              Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierJobDemands    JobDemand[]      @relation("SupplierPolicyJobDemands")
+  referralJobDemands    JobDemand[]      @relation("ReferralPolicyJobDemands")
+  matchedPeople         Person[]         @relation("MatchedSupplierPolicy")
+  referralRecords       ReferralRecord[]
+  rewardRecords         ReferralReward[]
+
+  @@index([projectId, type, isActive])
+  @@index([supplierId, type])
+  @@map("policies")
+}
+
+model JobDemand {
+  id               String           @id @default(uuid()) @db.Uuid
+  projectId        String           @map("project_id") @db.Uuid
+  title            String           @db.VarChar(120)
+  requiredCount    Int              @map("required_count")
+  requirements     String           @db.Text
+  salary           String           @db.VarChar(500)
+  workTime         String           @map("work_time") @db.VarChar(500)
+  workLocation     String           @map("work_location") @db.VarChar(500)
+  deadline         DateTime
+  status           JobStatus        @default(RECRUITING)
+  supplierPolicyId String?          @map("supplier_policy_id") @db.Uuid
+  referralPolicyId String?          @map("referral_policy_id") @db.Uuid
+  notes            String?          @db.Text
+  createdById      String?          @map("created_by_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplierPolicy   Policy?          @relation("SupplierPolicyJobDemands", fields: [supplierPolicyId], references: [id], onDelete: Restrict)
+  referralPolicy   Policy?          @relation("ReferralPolicyJobDemands", fields: [referralPolicyId], references: [id], onDelete: Restrict)
+  createdBy        User?            @relation("CreatedJobDemands", fields: [createdById], references: [id], onDelete: SetNull)
+  applications     Application[]
+  referrals        ReferralRecord[]
+  referralShares   ReferralShare[]
+  portalFavorites  PortalFavorite[]
+  portalQrCodes    PortalQrCode[]
+
+  @@index([projectId, status, deadline])
+  @@map("job_demands")
+}
+
+model Person {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  name                     String                 @db.VarChar(64)
+  idCard                   String                 @unique @map("id_card") @db.VarChar(18)
+  phone                    String                 @db.VarChar(32)
+  gender                   String?                @db.VarChar(16)
+  age                      Int?
+  ethnicity                String?                @db.VarChar(32)
+  origin                   String?                @db.VarChar(120)
+  projectId                String                 @map("project_id") @db.Uuid
+  jobTitle                 String                 @map("job_title") @db.VarChar(120)
+  status                   EmploymentStatus       @default(APPLICANT)
+  interviewStatus          InterviewStatus        @default(PENDING_ARRIVAL) @map("interview_status")
+  interviewDate            DateTime?              @map("interview_date") @db.Date
+  supplierId               String?                @map("supplier_id") @db.Uuid
+  recommenderUserId        String?                @map("recommender_user_id") @db.Uuid
+  recommenderName          String?                @map("recommender_name") @db.VarChar(64)
+  emergencyContactName     String?                @map("emergency_contact_name") @db.VarChar(64)
+  emergencyContactPhone    String?                @map("emergency_contact_phone") @db.VarChar(32)
+  emergencyContactRelation String?                @map("emergency_contact_relation") @db.VarChar(32)
+  onboardDate              DateTime?              @map("onboard_date") @db.Date
+  offboardDate             DateTime?              @map("offboard_date") @db.Date
+  offboardReason           String?                @map("offboard_reason") @db.VarChar(500)
+  employeeNo               String?                @unique @map("employee_no") @db.VarChar(64)
+  insuranceTypes           Json                   @default("[]") @map("insurance_types")
+  supplierPolicyId         String?                @map("supplier_policy_id") @db.Uuid
+  supplierPolicySnapshot   Json?                  @map("supplier_policy_snapshot")
+  notes                    String?                @db.Text
+  createdAt                DateTime               @default(now()) @map("created_at")
+  updatedAt                DateTime               @updatedAt @map("updated_at")
+  project                  Project                @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier                 Supplier?              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  recommender              User?                  @relation("RecommendedPeople", fields: [recommenderUserId], references: [id], onDelete: SetNull)
+  supplierPolicy           Policy?                @relation("MatchedSupplierPolicy", fields: [supplierPolicyId], references: [id], onDelete: Restrict)
+  files                    PersonFile[]
+  statusLogs               PersonStatusLog[]
+  applications             Application[]
+  referrals                ReferralRecord[]
+  salarySlips              SalarySlip[]
+  user                     User?                  @relation("PersonUser")
+  aiDemoSnapshot           AiDemoSnapshot?
+  portalAdvances           PortalAdvance[]
+  portalSettlementItems    PortalSettlementItem[]
+
+  @@index([projectId, status])
+  @@index([supplierId, status])
+  @@index([recommenderUserId])
+  @@index([phone])
+  @@map("people")
+}
+
+model PersonFile {
+  id           String   @id @default(uuid()) @db.Uuid
+  personId     String   @map("person_id") @db.Uuid
+  storageKey   String   @unique @map("storage_key") @db.VarChar(128)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  person       Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  uploadedBy   User?    @relation("UploadedPersonFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([personId])
+  @@map("person_files")
+}
+
+model PersonStatusLog {
+  id              String            @id @default(uuid()) @db.Uuid
+  personId        String            @map("person_id") @db.Uuid
+  fromStatus      EmploymentStatus? @map("from_status")
+  toStatus        EmploymentStatus  @map("to_status")
+  interviewStatus InterviewStatus?  @map("interview_status")
+  action          String            @db.VarChar(64)
+  notes           String?           @db.Text
+  actorId         String?           @map("actor_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at")
+  person          Person            @relation(fields: [personId], references: [id], onDelete: Cascade)
+  actor           User?             @relation("PersonStatusActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([personId, createdAt])
+  @@map("person_status_logs")
+}
+
+model Application {
+  id                String            @id @default(uuid()) @db.Uuid
+  personId          String            @map("person_id") @db.Uuid
+  jobDemandId       String            @map("job_demand_id") @db.Uuid
+  source            ApplicationSource
+  supplierId        String?           @map("supplier_id") @db.Uuid
+  recommenderUserId String?           @map("recommender_user_id") @db.Uuid
+  recommenderName   String?           @map("recommender_name") @db.VarChar(64)
+  interviewStatus   InterviewStatus   @default(PENDING_ARRIVAL) @map("interview_status")
+  interviewDate     DateTime?         @map("interview_date") @db.Date
+  employmentStatus  EmploymentStatus  @default(APPLICANT) @map("employment_status")
+  onboardDate       DateTime?         @map("onboard_date") @db.Date
+  offboardDate      DateTime?         @map("offboard_date") @db.Date
+  offboardReason    String?           @map("offboard_reason") @db.VarChar(500)
+  appliedAt         DateTime          @default(now()) @map("applied_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  person            Person            @relation(fields: [personId], references: [id], onDelete: Cascade)
+  jobDemand         JobDemand         @relation(fields: [jobDemandId], references: [id], onDelete: Restrict)
+  supplier          Supplier?         @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  recommender       User?             @relation("ApplicationRecommenders", fields: [recommenderUserId], references: [id], onDelete: SetNull)
+  referral          ReferralRecord?
+
+  @@index([personId, jobDemandId, appliedAt])
+  @@index([jobDemandId, source])
+  @@index([supplierId])
+  @@map("applications")
+}
+
+model ReferralRecord {
+  id                String          @id @default(uuid()) @db.Uuid
+  applicationId     String          @unique @map("application_id") @db.Uuid
+  personId          String          @map("person_id") @db.Uuid
+  jobDemandId       String          @map("job_demand_id") @db.Uuid
+  recommenderUserId String          @map("recommender_user_id") @db.Uuid
+  policyId          String?         @map("policy_id") @db.Uuid
+  policySnapshot    Json?           @map("policy_snapshot")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  application       Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  person            Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+  jobDemand         JobDemand       @relation(fields: [jobDemandId], references: [id], onDelete: Restrict)
+  recommender       User            @relation("ReferralRecommenders", fields: [recommenderUserId], references: [id], onDelete: Restrict)
+  policy            Policy?         @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  reward            ReferralReward?
+
+  @@index([recommenderUserId, createdAt])
+  @@map("referral_records")
+}
+
+model ReferralReward {
+  id         String         @id @default(uuid()) @db.Uuid
+  referralId String         @unique @map("referral_id") @db.Uuid
+  policyId   String?        @map("policy_id") @db.Uuid
+  amount     Decimal        @db.Decimal(12, 2)
+  status     RewardStatus   @default(PENDING)
+  achievedAt DateTime?      @map("achieved_at")
+  paidAt     DateTime?      @map("paid_at")
+  notes      String?        @db.Text
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  referral   ReferralRecord @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  policy     Policy?        @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@map("referral_reward_records")
+}
+
+model SalaryImportBatch {
+  id           String       @id @default(uuid()) @db.Uuid
+  sourceFile   String       @map("source_file") @db.VarChar(255)
+  sourceHash   String       @map("source_hash") @db.VarChar(64)
+  salaryMonth  String       @map("salary_month") @db.VarChar(7)
+  status       ImportStatus @default(PREVIEW)
+  totalRows    Int          @map("total_rows")
+  acceptedRows Int          @map("accepted_rows")
+  skippedRows  Int          @map("skipped_rows")
+  previewRows  Json         @default("[]") @map("preview_rows")
+  errors       Json         @default("[]")
+  createdById  String?      @map("created_by_id") @db.Uuid
+  publishedAt  DateTime?    @map("published_at")
+  withdrawnAt  DateTime?    @map("withdrawn_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    User?        @relation("SalaryImportCreators", fields: [createdById], references: [id], onDelete: SetNull)
+  slips        SalarySlip[]
+
+  @@unique([sourceHash, salaryMonth])
+  @@map("salary_import_batches")
+}
+
+model SalarySlip {
+  id                      String            @id @default(uuid()) @db.Uuid
+  personId                String            @map("person_id") @db.Uuid
+  batchId                 String            @map("batch_id") @db.Uuid
+  salaryMonth             String            @map("salary_month") @db.VarChar(7)
+  grossPay                Decimal           @map("gross_pay") @db.Decimal(12, 2)
+  netPay                  Decimal           @map("net_pay") @db.Decimal(12, 2)
+  hourlyPay               Decimal           @default(0) @map("hourly_pay") @db.Decimal(12, 2)
+  overtimePay             Decimal           @default(0) @map("overtime_pay") @db.Decimal(12, 2)
+  allowance               Decimal           @default(0) @db.Decimal(12, 2)
+  referralReward          Decimal           @default(0) @map("referral_reward") @db.Decimal(12, 2)
+  socialSecurityDeduction Decimal           @default(0) @map("social_security_deduction") @db.Decimal(12, 2)
+  otherDeduction          Decimal           @default(0) @map("other_deduction") @db.Decimal(12, 2)
+  notes                   String?           @db.Text
+  status                  SalarySlipStatus  @default(DRAFT)
+  publishedAt             DateTime?         @map("published_at")
+  withdrawnAt             DateTime?         @map("withdrawn_at")
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
+  person                  Person            @relation(fields: [personId], references: [id], onDelete: Restrict)
+  batch                   SalaryImportBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@unique([personId, salaryMonth])
+  @@index([batchId, status])
+  @@map("salary_slips")
+}
+
+model User {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  username                String                   @unique @db.VarChar(64)
+  passwordHash            String                   @map("password_hash") @db.VarChar(255)
+  displayName             String                   @map("display_name") @db.VarChar(64)
+  role                    UserRole
+  branchId                String?                  @map("branch_id") @db.Uuid
+  supplierId              String?                  @map("supplier_id") @db.Uuid
+  personId                String?                  @unique @map("person_id") @db.Uuid
+  employeeType            String?                  @map("employee_type") @db.VarChar(64)
+  isActive                Boolean                  @default(true) @map("is_active")
+  tokenVersion            Int                      @default(0) @map("token_version")
+  wechatMiniappOpenId     String?                  @unique @map("wechat_miniapp_open_id") @db.VarChar(128)
+  wechatOfficialOpenId    String?                  @unique @map("wechat_official_open_id") @db.VarChar(128)
+  wechatUnionId           String?                  @map("wechat_union_id") @db.VarChar(128)
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  supplier                Supplier?                @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  person                  Person?                  @relation("PersonUser", fields: [personId], references: [id], onDelete: Restrict)
+  projectLinks            UserProject[]
+  createdJobDemands       JobDemand[]              @relation("CreatedJobDemands")
+  recommendedPeople       Person[]                 @relation("RecommendedPeople")
+  applicationReferrals    Application[]            @relation("ApplicationRecommenders")
+  referralRecords         ReferralRecord[]         @relation("ReferralRecommenders")
+  referralShares          ReferralShare[]          @relation("ReferralShareCreators")
+  uploadedPersonFiles     PersonFile[]             @relation("UploadedPersonFiles")
+  statusChanges           PersonStatusLog[]        @relation("PersonStatusActors")
+  salaryImportBatches     SalaryImportBatch[]      @relation("SalaryImportCreators")
+  importJobs              ImportJob[]              @relation("ImportJobCreators")
+  notifications           Notification[]           @relation("NotificationRecipients")
+  auditLogs               AuditLog[]               @relation("AuditActors")
+  aiActions               AiAction[]
+  aiAuditLogs             AiAuditLog[]             @relation("AiAuditActors")
+  portalFavorites         PortalFavorite[]
+  portalAdvances          PortalAdvance[]          @relation("PortalAdvanceCreators")
+  portalAppeals           PortalAppeal[]           @relation("PortalAppealCreators")
+  handledPortalAppeals    PortalAppeal[]           @relation("PortalAppealHandlers")
+  portalQrCodes           PortalQrCode[]
+  portalNotificationReads PortalNotificationRead[]
+
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model UserProject {
+  userId    String   @map("user_id") @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
+  @@map("user_project_relations")
+}
+
+model ImportJob {
+  id          String       @id @default(uuid()) @db.Uuid
+  type        String       @db.VarChar(64)
+  sourceFile  String       @map("source_file") @db.VarChar(255)
+  sourceHash  String       @map("source_hash") @db.VarChar(64)
+  status      ImportStatus @default(PREVIEW)
+  totalRows   Int          @default(0) @map("total_rows")
+  successRows Int          @default(0) @map("success_rows")
+  skippedRows Int          @default(0) @map("skipped_rows")
+  failedRows  Int          @default(0) @map("failed_rows")
+  summary     Json         @default("{}")
+  previewRows Json         @default("[]") @map("preview_rows")
+  errors      Json         @default("[]")
+  createdById String?      @map("created_by_id") @db.Uuid
+  committedAt DateTime?    @map("committed_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  createdBy   User?        @relation("ImportJobCreators", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([type, sourceHash])
+  @@index([status, createdAt])
+  @@map("import_jobs")
+}
+
+model Notification {
+  id              String                   @id @default(uuid()) @db.Uuid
+  recipientUserId String?                  @map("recipient_user_id") @db.Uuid
+  type            String                   @db.VarChar(64)
+  title           String                   @db.VarChar(200)
+  content         String                   @db.Text
+  targetPath      String?                  @map("target_path") @db.VarChar(500)
+  dedupeKey       String?                  @unique @map("dedupe_key") @db.VarChar(200)
+  status          NotificationStatus       @default(PENDING)
+  attempts        Int                      @default(0)
+  lastError       String?                  @map("last_error") @db.Text
+  sentAt          DateTime?                @map("sent_at")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  recipient       User?                    @relation("NotificationRecipients", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  portalReads     PortalNotificationRead[]
+
+  @@index([recipientUserId, status])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(100)
+  resourceId   String?  @map("resource_id") @db.VarChar(128)
+  before       Json?
+  after        Json?
+  ipAddress    String?  @map("ip_address") @db.VarChar(64)
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+  actor        User?    @relation("AuditActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([resourceType, resourceId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+model AiAction {
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
+  skill          String         @db.VarChar(80)
+  rawInstruction String         @map("raw_instruction") @db.Text
+  parameters     Json
+  before         Json
+  after          Json
+  impact         Json?
+  tokenHash      String         @map("token_hash") @db.VarChar(64)
+  expiresAt      DateTime       @map("expires_at")
+  status         AiActionStatus @default(PREVIEWED)
+  idempotencyKey String?        @unique @map("idempotency_key") @db.VarChar(128)
+  result         Json?
+  error          String?        @db.Text
+  confirmedAt    DateTime?      @map("confirmed_at")
+  executedAt     DateTime?      @map("executed_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status, expiresAt])
+  @@map("ai_actions")
+}
+
+model AiAuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  role           UserRole
+  rawInstruction String   @map("raw_instruction") @db.Text
+  skill          String   @db.VarChar(80)
+  parameters     Json
+  tool           String   @db.VarChar(120)
+  before         Json?
+  after          Json?
+  confirmed      Boolean  @default(false)
+  actionId       String?  @map("action_id") @db.Uuid
+  idempotencyKey String?  @map("idempotency_key") @db.VarChar(128)
+  result         Json?
+  error          String?  @db.Text
+  scope          Json
+  model          String?  @db.VarChar(120)
+  routeType      String   @map("route_type") @db.VarChar(32)
+  createdAt      DateTime @default(now()) @map("created_at")
+  actor          User?    @relation("AiAuditActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([actionId])
+  @@map("ai_audit_logs")
+}
+
+model AiDemoSnapshot {
+  id               String   @id @default(uuid()) @db.Uuid
+  personId         String   @unique @map("person_id") @db.Uuid
+  personState      Json     @map("person_state")
+  applicationState Json?    @map("application_state")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  person           Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@map("ai_demo_snapshots")
+}
+
+model ReferralShare {
+  id                String    @id @default(uuid()) @db.Uuid
+  token             String    @unique @db.VarChar(32)
+  jobDemandId       String    @map("job_demand_id") @db.Uuid
+  recommenderUserId String    @map("recommender_user_id") @db.Uuid
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  jobDemand         JobDemand @relation(fields: [jobDemandId], references: [id], onDelete: Cascade)
+  recommender       User      @relation("ReferralShareCreators", fields: [recommenderUserId], references: [id], onDelete: Cascade)
+
+  @@index([recommenderUserId, createdAt])
+  @@map("referral_shares")
+}
+
+model PortalFavorite {
+  userId      String    @map("user_id") @db.Uuid
+  jobDemandId String    @map("job_demand_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobDemand   JobDemand @relation(fields: [jobDemandId], references: [id], onDelete: Cascade)
+
+  @@id([userId, jobDemandId])
+  @@index([jobDemandId])
+  @@map("portal_favorites")
+}
+
+model PortalAdvance {
+  id            String   @id @default(uuid()) @db.Uuid
+  personId      String   @map("person_id") @db.Uuid
+  creatorUserId String   @map("creator_user_id") @db.Uuid
+  amount        Decimal  @db.Decimal(12, 2)
+  reason        String   @db.Text
+  status        String   @default("submitted") @db.VarChar(32)
+  reply         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  person        Person   @relation(fields: [personId], references: [id], onDelete: Restrict)
+  creator       User     @relation("PortalAdvanceCreators", fields: [creatorUserId], references: [id], onDelete: Restrict)
+
+  @@index([creatorUserId, status])
+  @@index([personId])
+  @@map("portal_advances")
+}
+
+model PortalAppeal {
+  id              String   @id @default(uuid()) @db.Uuid
+  creatorUserId   String   @map("creator_user_id") @db.Uuid
+  type            String   @db.VarChar(64)
+  subjectId       String?  @map("subject_id") @db.VarChar(128)
+  description     String   @db.Text
+  requestedAmount Decimal? @map("requested_amount") @db.Decimal(12, 2)
+  expectedStatus  String?  @map("expected_status") @db.VarChar(64)
+  attachmentIds   Json     @default("[]") @map("attachment_ids")
+  status          String   @default("submitted") @db.VarChar(32)
+  reply           String?  @db.Text
+  handlerUserId   String?  @map("handler_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  creator         User     @relation("PortalAppealCreators", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  handler         User?    @relation("PortalAppealHandlers", fields: [handlerUserId], references: [id], onDelete: SetNull)
+
+  @@index([creatorUserId, status])
+  @@index([handlerUserId])
+  @@map("portal_appeals")
+}
+
+model PortalSettlement {
+  id              String                 @id @default(uuid()) @db.Uuid
+  supplierId      String                 @map("supplier_id") @db.Uuid
+  month           String                 @db.VarChar(7)
+  dueAmount       Decimal                @map("due_amount") @db.Decimal(14, 2)
+  confirmedAmount Decimal                @default(0) @map("confirmed_amount") @db.Decimal(14, 2)
+  pendingAmount   Decimal                @default(0) @map("pending_amount") @db.Decimal(14, 2)
+  disputedAmount  Decimal                @default(0) @map("disputed_amount") @db.Decimal(14, 2)
+  status          String                 @default("pending_confirmation") @db.VarChar(32)
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  supplier        Supplier               @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items           PortalSettlementItem[]
+
+  @@unique([supplierId, month])
+  @@index([month, status])
+  @@map("portal_settlements")
+}
+
+model PortalSettlementItem {
+  id             String           @id @default(uuid()) @db.Uuid
+  settlementId   String           @map("settlement_id") @db.Uuid
+  personId       String           @map("person_id") @db.Uuid
+  policy         String           @db.Text
+  employmentDays Int              @map("employment_days")
+  dueAmount      Decimal          @map("due_amount") @db.Decimal(12, 2)
+  actualAmount   Decimal          @default(0) @map("actual_amount") @db.Decimal(12, 2)
+  status         String           @default("pending") @db.VarChar(32)
+  settlement     PortalSettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  person         Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+
+  @@unique([settlementId, personId])
+  @@index([personId])
+  @@map("portal_settlement_items")
+}
+
+model PortalQrCode {
+  id              String     @id @default(uuid()) @db.Uuid
+  token           String     @unique @db.VarChar(64)
+  projectId       String     @map("project_id") @db.Uuid
+  jobDemandId     String?    @map("job_demand_id") @db.Uuid
+  createdByUserId String     @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime   @default(now()) @map("created_at")
+  expiresAt       DateTime   @map("expires_at")
+  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  jobDemand       JobDemand? @relation(fields: [jobDemandId], references: [id], onDelete: SetNull)
+  createdBy       User       @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, expiresAt])
+  @@map("portal_qr_codes")
+}
+
+model PortalNotificationRead {
+  userId         String       @map("user_id") @db.Uuid
+  notificationId String       @map("notification_id") @db.Uuid
+  readAt         DateTime     @default(now()) @map("read_at")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, notificationId])
+  @@index([notificationId])
+  @@map("portal_notification_reads")
+}

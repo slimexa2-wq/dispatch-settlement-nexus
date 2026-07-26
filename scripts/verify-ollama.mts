@@ -1,0 +1,32 @@
+import { fileURLToPath } from "node:url";
+import { AiSchemaRegistry } from "../apps/api/src/ai/schema-registry.js";
+import { OllamaClient } from "../apps/api/src/ai/ollama-client.js";
+import type { AppConfig } from "../apps/api/src/config.js";
+
+const config: AppConfig = {
+  NODE_ENV: "test", API_HOST: "127.0.0.1", API_PORT: 3100, ADMIN_ORIGIN: "http://localhost:4320",
+  DATABASE_URL: "postgresql://postgres@127.0.0.1:5432/xiangneng_hrms_demo",
+  JWT_SECRET: "local-verification-only-secret-32-characters", JWT_EXPIRES_IN: "1h",
+  UPLOAD_DIR: fileURLToPath(new URL("../apps/api/uploads", import.meta.url)), MAX_UPLOAD_BYTES: 1024,
+  WECHAT_MINIAPP_PATH: "/pages/index/index", XIANGNENG_LLM_BASE_URL: "http://127.0.0.1:11434/v1",
+  XIANGNENG_LLM_MODEL: "qwen3.5:4b", XIANGNENG_LLM_API_KEY: "ollama-local",
+  AI_MODEL_TIMEOUT_MS: 30_000, AI_ACTION_TTL_SECONDS: 600, AI_DEMO_MODE: true,
+  AI_SKILL_ROOT: fileURLToPath(new URL("../skills/xiangneng-ai-business-assistant", import.meta.url))
+};
+
+const schemas = new AiSchemaRegistry(config);
+await schemas.load();
+const client = new OllamaClient(config);
+const started = performance.now();
+const result = await client.completeJson([
+  {
+    role: "system",
+    content: "你是业务路由器，不查询、不执行。候选：project_personnel_statistics=项目入离职在职净增减；recruitment_progress_query=招聘需求完成人数缺口完成率。判定规则：招人、补人、招聘达成、需求完成、缺口或完成率都属于 recruitment_progress_query；入职数、离职数、在职数或净增减属于 project_personnel_statistics。必须选择语义最接近的候选；只有完全无关才选 unsupported。只输出 skill。"
+  },
+  { role: "user", content: "极米光电外包招人的达成情况怎么样" }
+], schemas.toolsFor(["project_personnel_statistics", "recruitment_progress_query"], 4));
+schemas.validateIntent(result);
+if (result.skill !== "recruitment_progress_query") {
+  throw new Error(`Expected recruitment_progress_query, received ${result.skill}`);
+}
+console.log(JSON.stringify({ status: "ok", elapsed_ms: Math.round(performance.now() - started), result }, null, 2));

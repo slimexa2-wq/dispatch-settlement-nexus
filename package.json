@@ -1,0 +1,46 @@
+{
+  "name": "xiangneng-hrms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "祥能人员与招聘信息管理系统",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @xiangneng/api --filter @xiangneng/admin --filter @xiangneng/portal dev",
+    "dev:api": "pnpm --filter @xiangneng/api dev",
+    "dev:admin": "pnpm --filter @xiangneng/admin dev",
+    "dev:portal": "pnpm --filter @xiangneng/portal dev",
+    "demo:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-demo.ps1",
+    "demo:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-local-demo.ps1",
+    "verify:ai": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-ai-integration.mts",
+    "verify:ollama": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-ollama.mts",
+    "dev:website": "pnpm --filter @xiangneng/website dev",
+    "dev:miniapp": "pnpm --filter @xiangneng/miniapp dev:weapp",
+    "build:website": "pnpm --filter @xiangneng/website build",
+    "demo:compact": "node scripts/compact-demo-data.mjs",
+    "demo:enrich": "pnpm --filter @xiangneng/api exec tsx ../../scripts/enrich-demo-data.mts",
+    "demo:generate": "pnpm --filter @xiangneng/api exec tsx ../../scripts/generate-synthetic-demo-data.mts",
+    "demo:safety": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-public-data-safety.mts",
+    "demo:package": "pnpm --filter @xiangneng/admin build && node scripts/package-demo.mjs",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "test:coverage": "pnpm -r --if-present test:coverage",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "check": "pnpm demo:safety && pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @xiangneng/api db:generate",
+    "db:validate": "pnpm --filter @xiangneng/api db:validate",
+    "db:migrate": "pnpm --filter @xiangneng/api db:migrate",
+    "db:seed": "pnpm --filter @xiangneng/api db:seed",
+    "db:import-demo": "pnpm --filter @xiangneng/api db:import-demo",
+    "data:preview": "pnpm --filter @xiangneng/data-import preview",
+    "data:extract": "pnpm --filter @xiangneng/data-import extract",
+    "data:verify": "pnpm --filter @xiangneng/data-import verify"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
+  }
+}

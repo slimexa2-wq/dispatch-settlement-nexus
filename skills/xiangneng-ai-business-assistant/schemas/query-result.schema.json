@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "query_scope",
+    "metric",
+    "rows",
+    "summary",
+    "definition",
+    "data_updated_at"
+  ],
+  "properties": {
+    "query_scope": {
+      "type": "object"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "summary": {
+      "type": "object"
+    },
+    "definition": {
+      "type": "string"
+    },
+    "data_updated_at": {
+      "type": "string"
+    },
+    "detail_route": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

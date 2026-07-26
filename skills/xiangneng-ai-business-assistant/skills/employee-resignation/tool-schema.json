@@ -1,0 +1,59 @@
+{
+  "tools": [
+    {
+      "name": "preview_employee_resignation",
+      "description": "生成离职预览，不写数据库",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "employee_id",
+          "resignation_date",
+          "resignation_reason"
+        ],
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "resignation_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "resignation_reason": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "remark": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    {
+      "name": "confirm_employee_resignation",
+      "description": "使用预览令牌确认执行离职",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_token",
+          "idempotency_key"
+        ],
+        "properties": {
+          "action_token": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 16
+          }
+        }
+      }
+    }
+  ]
+}

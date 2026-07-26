@@ -1,0 +1,3 @@
+{"input": "四川时代1至6月每月入职人数", "intent": "query", "metric": "hire_count"}
+{"input": "本月离职人数", "intent": "query", "metric": "resignation_count"}
+{"input": "给张三办理入职", "intent": "negative"}

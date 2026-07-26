@@ -1,0 +1,18 @@
+employee_status:
+  applied: 已报名
+  interview_pending: 待面试
+  interview_passed: 面试通过
+  interview_failed: 面试未通过
+  entry_pending: 待入职
+  active: 在职
+  resigned: 已离职
+  abandoned: 放弃
+entry_allowed_from: [interview_passed, entry_pending]
+resignation_allowed_from: [active]
+standard_resignation_reasons: [个人原因, 自离, 厂区临时工清退, 项目结束, 违纪辞退, 身体原因, 家庭原因, 工作不适应, 其他]
+statistics:
+  hire_count_date_field: entry_date
+  resignation_count_date_field: resignation_date
+  current_headcount_statuses: [active]
+  net_change_formula: hire_count - resignation_count
+  recruitment_gap_formula: max(demand_count - completed_count, 0)

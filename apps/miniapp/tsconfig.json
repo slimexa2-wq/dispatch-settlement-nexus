@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "declaration": false,
+    "noEmit": true,
+    "types": ["@tarojs/taro", "node", "vitest/globals"],
+    "baseUrl": "."
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "config/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
+}

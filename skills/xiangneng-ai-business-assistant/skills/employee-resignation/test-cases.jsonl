@@ -1,0 +1,3 @@
+{"input": "张三今天离职，原因是厂区临时工清退", "expected_skill": "employee_resignation", "expected": "preview", "confirmation_required": true}
+{"input": "张三为什么想离职", "expected_skill": "unsupported", "must_not_write": true}
+{"input": "本月离职人数", "expected_skill": "project_personnel_statistics"}

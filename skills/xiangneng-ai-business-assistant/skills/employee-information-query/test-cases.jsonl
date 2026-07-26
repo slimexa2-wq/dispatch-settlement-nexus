@@ -1,0 +1,3 @@
+{"input": "张三在哪个项目", "expected_skill": "employee_information_query"}
+{"input": "查手机号尾号5678的人", "expected_skill": "employee_information_query"}
+{"input": "张三今天离职", "expected_skill": "employee_resignation"}

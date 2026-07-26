@@ -1,0 +1,73 @@
+{
+  "tools": [
+    {
+      "name": "preview_employee_entry",
+      "description": "生成入职预览，不写数据库",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "employee_id",
+          "entry_date",
+          "project_id",
+          "position_id"
+        ],
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "position_id": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "insurance_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remark": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    {
+      "name": "confirm_employee_entry",
+      "description": "使用预览令牌确认执行入职",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_token",
+          "idempotency_key"
+        ],
+        "properties": {
+          "action_token": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 16
+          }
+        }
+      }
+    }
+  ]
+}

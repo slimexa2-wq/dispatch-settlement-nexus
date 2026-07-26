@@ -1,0 +1,61 @@
+{
+  "tools": [
+    {
+      "name": "search_employee",
+      "description": "按姓名、手机号、编号或尾号搜索权限范围内人员",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone_suffix": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]{4,11}$"
+          },
+          "employee_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "get_employee_detail",
+      "description": "读取唯一人员允许字段与生命周期",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "employee_id"
+        ],
+        "properties": {
+          "employee_id": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

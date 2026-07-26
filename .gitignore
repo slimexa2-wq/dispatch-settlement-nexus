@@ -1,0 +1,32 @@
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+output/playwright/report/
+output/playwright/test-results/
+.env
+.env.local
+*.log
+*.pid
+.DS_Store
+Thumbs.db
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+apps/api/data/*.db
+apps/api/src/generated/
+apps/miniapp/.temp/
+apps/miniapp/dist/
+prisma/generated/
+docs/screenshots/*.png
+docs/reports/runtime-*.json
+data/derived/
+apps/admin/public/demo-data.json
+docs/source/*.xls
+docs/source/*.xlsx
+# 本地演示运行时日志 / 进程状态（不入库）
+output/
+# tailwind / 临时测试产物
+.tailtest/

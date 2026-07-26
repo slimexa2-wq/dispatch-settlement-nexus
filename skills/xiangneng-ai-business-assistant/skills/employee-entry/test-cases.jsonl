@@ -1,0 +1,3 @@
+{"input": "张三今天入职四川时代操作工", "expected_skill": "employee_entry", "expected": "preview", "confirmation_required": true}
+{"input": "给李四办理入职", "expected": "clarify", "missing": ["entry_date", "project_name", "position_name"]}
+{"input": "本月入职人数", "expected_skill": "project_personnel_statistics"}

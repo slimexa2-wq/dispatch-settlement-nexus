@@ -1,0 +1,33 @@
+assistant:
+  name: 祥能AI业务助手
+  locale: zh-CN
+  timezone: Asia/Shanghai
+  mode: demo
+  rule_first: true
+  model_fallback: true
+  max_candidate_skills: 3
+  max_tools_per_request: 4
+  require_structured_output: true
+  direct_sql_allowed: false
+  write_confirmation_required: true
+model:
+  endpoint_env: XIANGNENG_LLM_BASE_URL
+  model_env: XIANGNENG_LLM_MODEL
+  api_key_env: XIANGNENG_LLM_API_KEY
+  request_timeout_seconds: 10
+  first_token_timeout_seconds: 5
+  keep_alive: true
+  temperature: 0.1
+  max_output_tokens: 800
+fallback:
+  enable_rule_form: true
+  enable_manual_page_link: true
+  write_failure_policy: block
+  read_failure_policy: show_standard_form
+audit:
+  enabled: true
+  log_raw_user_text: true
+  log_intent_result: true
+  log_tool_call: true
+  log_before_after: true
+  mask_sensitive_fields: true

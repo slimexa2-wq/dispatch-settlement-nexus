@@ -1,0 +1,3 @@
+{"input": "张三现在还在职吗", "intent": "query_status"}
+{"input": "查手机号尾号5678的人", "intent": "search"}
+{"input": "给王五办理离职", "intent": "negative"}

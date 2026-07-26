@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "success",
+    "error_code",
+    "message",
+    "recoverable"
+  ],
+  "properties": {
+    "success": {
+      "const": false
+    },
+    "error_code": {
+      "enum": [
+        "UNSUPPORTED_INTENT",
+        "LOW_CONFIDENCE",
+        "MISSING_PARAMETER",
+        "AMBIGUOUS_ENTITY",
+        "ENTITY_NOT_FOUND",
+        "PERMISSION_DENIED",
+        "INVALID_STATE",
+        "VALIDATION_FAILED",
+        "MODEL_TIMEOUT",
+        "MODEL_UNAVAILABLE",
+        "TOOL_FAILED",
+        "ACTION_TOKEN_EXPIRED",
+        "DUPLICATE_ACTION"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "recoverable": {
+      "type": "boolean"
+    },
+    "clarification_options": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "manual_route": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
