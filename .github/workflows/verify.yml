@@ -29,10 +29,10 @@ jobs:
           grep -Fq 'internal-hr-and-reimbursement-domain.test.ts' 0001-internal-hr-reimbursement-foundation.patch
       - name: Run core domain rules
         run: node --experimental-strip-types scripts/verify-domain-rules.mjs
-      - name: Verify real roster was not uploaded
+      - name: Verify real roster files were not uploaded
         run: |
-          ! find . -type f -iname '*.xlsx' -print -quit | grep -q .
-          ! grep -RIl --exclude='*.b64' --exclude='*.patch' '集团花名册.xlsx' . | grep -q .
+          test -z "$(find . -type f \( -iname '*.xlsx' -o -iname '*.xls' -o -iname '*.csv' \) -print -quit)"
+          test -z "$(find . -type f \( -iname '*花名册*' -o -iname '*roster*' \) -print -quit)"
       - name: Show patch summary
         run: |
           wc -c 0001-internal-hr-reimbursement-foundation.patch
