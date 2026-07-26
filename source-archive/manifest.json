@@ -1,0 +1,15 @@
+{
+  "archive": "xiangneng-hrms-internal-hr-reimbursement-foundation.tar.gz",
+  "encoding": "base64 split files",
+  "parts": 16,
+  "sha256": "0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405",
+  "archiveSizeBytes": 685310,
+  "sourceFileCount": 355,
+  "excluded": [
+    "202606 集团花名册.xlsx and all roster spreadsheets",
+    "real employee and derived private data",
+    "generated Prisma engines and clients",
+    "debug screenshots and large demonstration images",
+    "node_modules and build outputs"
+  ]
+}
