@@ -27,6 +27,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-replace-before-production-with-32-characters}
       ADMIN_ORIGIN: http://localhost:8080
       UPLOAD_DIR: /app/uploads
+      XIANGNENG_LLM_PROVIDER: ollama
+      XIANGNENG_LLM_BASE_URL: ${XIANGNENG_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      XIANGNENG_LLM_MODEL: ${XIANGNENG_LLM_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_FALLBACK_MODEL: ${XIANGNENG_LLM_FALLBACK_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_CHAT_MODEL: ${XIANGNENG_LLM_CHAT_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_API_KEY: ${XIANGNENG_LLM_API_KEY:-ollama-local}
+      AI_MODEL_TIMEOUT_MS: ${AI_MODEL_TIMEOUT_MS:-10000}
       WECHAT_MINIAPP_APP_ID: ${WECHAT_MINIAPP_APP_ID:-}
       WECHAT_MINIAPP_APP_SECRET: ${WECHAT_MINIAPP_APP_SECRET:-}
       WECHAT_OFFICIAL_APP_ID: ${WECHAT_OFFICIAL_APP_ID:-}
@@ -41,6 +48,8 @@ services:
       - "3310:3310"
     volumes:
       - uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy

@@ -2,6 +2,7 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readProjectWorkbook, type ProjectWorkbookPreview } from "./project-master.js";
+import { validateSyntheticDemoData } from "./synthetic-demo.js";
 
 const packageDirectory = path.dirname(fileURLToPath(import.meta.url));
 const rootDirectory = path.resolve(packageDirectory, "../../..");
@@ -19,6 +20,7 @@ const exceptionOutput = path.join(
   outputDirectory,
   "organization-projects-exceptions.json"
 );
+const syntheticDemoFile = path.join(rootDirectory, "data/synthetic/demo-data.json");
 
 function compact(preview: ProjectWorkbookPreview): object {
   return {
@@ -63,20 +65,35 @@ async function extract(): Promise<void> {
 }
 
 async function verify(): Promise<void> {
-  await access(mainOutput);
-  const fresh = await readProjectWorkbook(sourceFile);
-  const saved = JSON.parse(await readFile(mainOutput, "utf8")) as ProjectWorkbookPreview;
-  const checks = {
-    sourceSha256: saved.sourceSha256 === fresh.sourceSha256,
-    branchCount: saved.reconciliation.branchCount === fresh.reconciliation.branchCount,
-    projectCount: saved.projects.length === fresh.projects.length,
-    projects:
-      JSON.stringify(saved.projects) === JSON.stringify(fresh.projects),
-    reconciliation:
-      JSON.stringify(saved.reconciliation) === JSON.stringify(fresh.reconciliation)
-  };
-  console.log(JSON.stringify(checks, null, 2));
-  if (Object.values(checks).some((result) => !result)) process.exitCode = 1;
+  try {
+    await access(sourceFile);
+    await access(mainOutput);
+    const fresh = await readProjectWorkbook(sourceFile);
+    const saved = JSON.parse(await readFile(mainOutput, "utf8")) as ProjectWorkbookPreview;
+    const checks = {
+      mode: "source-workbook-reconciliation",
+      sourceSha256: saved.sourceSha256 === fresh.sourceSha256,
+      branchCount: saved.reconciliation.branchCount === fresh.reconciliation.branchCount,
+      projectCount: saved.projects.length === fresh.projects.length,
+      projects:
+        JSON.stringify(saved.projects) === JSON.stringify(fresh.projects),
+      reconciliation:
+        JSON.stringify(saved.reconciliation) === JSON.stringify(fresh.reconciliation)
+    };
+    console.log(JSON.stringify(checks, null, 2));
+    if (Object.values(checks).some((result) => result === false)) process.exitCode = 1;
+    return;
+  } catch {
+    const validation = validateSyntheticDemoData(
+      JSON.parse(await readFile(syntheticDemoFile, "utf8"))
+    );
+    console.log(JSON.stringify({
+      mode: "self-contained-synthetic-demo",
+      sourceWorkbookAvailable: false,
+      ...validation
+    }, null, 2));
+    if (!validation.valid) process.exitCode = 1;
+  }
 }
 
 const command = process.argv[2] ?? "preview";

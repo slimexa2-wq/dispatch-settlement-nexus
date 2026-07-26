@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { AiSchemaRegistry } from "../apps/api/src/ai/schema-registry.js";
 import { OllamaClient } from "../apps/api/src/ai/ollama-client.js";
+import { IntentRouter } from "../apps/api/src/ai/intent-router.js";
 import type { AppConfig } from "../apps/api/src/config.js";
 
 const config: AppConfig = {
@@ -17,16 +18,14 @@ const config: AppConfig = {
 const schemas = new AiSchemaRegistry(config);
 await schemas.load();
 const client = new OllamaClient(config);
+const router = new IntentRouter(config, schemas, client);
+await router.load();
 const started = performance.now();
-const result = await client.completeJson([
-  {
-    role: "system",
-    content: "你是业务路由器，不查询、不执行。候选：project_personnel_statistics=项目入离职在职净增减；recruitment_progress_query=招聘需求完成人数缺口完成率。判定规则：招人、补人、招聘达成、需求完成、缺口或完成率都属于 recruitment_progress_query；入职数、离职数、在职数或净增减属于 project_personnel_statistics。必须选择语义最接近的候选；只有完全无关才选 unsupported。只输出 skill。"
-  },
-  { role: "user", content: "极米光电外包招人的达成情况怎么样" }
-], schemas.toolsFor(["project_personnel_statistics", "recruitment_progress_query"], 4));
-schemas.validateIntent(result);
-if (result.skill !== "recruitment_progress_query") {
-  throw new Error(`Expected recruitment_progress_query, received ${result.skill}`);
+const result = await router.route(
+  "请综合判断极米光电的人才补充态势",
+  ["project_personnel_statistics", "recruitment_progress_query"]
+);
+if (result.skill !== "recruitment_progress_query" || result.routeType !== "model") {
+  throw new Error(`Expected model-routed recruitment_progress_query, received ${result.skill}/${result.routeType}`);
 }
 console.log(JSON.stringify({ status: "ok", elapsed_ms: Math.round(performance.now() - started), result }, null, 2));

@@ -46,6 +46,7 @@ import type {
   UserAccount
 } from "../types/domain";
 import { loadRealDemoData, type RealDemoData } from "./demo-data.generated";
+import { handleDemoAiRequest, resetDemoAiActions } from "./demo-ai";
 
 export const DEMO_CODE = "8888";
 export const DEMO_TOKEN = "xiangneng-demo-token";
@@ -1952,9 +1953,9 @@ function filteredDashboard(query: QueryRecord = {}): DashboardData {
       .slice(0, 8),
     recruitment: { requiredCount, applicationCount, onboardCount, remainingCount: Math.max(0, requiredCount - activePeopleCount) },
     pendingItems: [
-      { id: "pending-onboard", title: "面试通过待入职", count: pendingOnboardCount, level: "warning", path: "/people?metric=interviewPassed" },
-      { id: "unmatched-projects", title: "唯一数据中存在未匹配项目", count: realDemoMeta.unmatchedProjects, level: "info", path: "/projects" }
-    ],
+      { id: "pending-onboard", title: "面试通过待入职", count: pendingOnboardCount, level: "warning" as const, path: "/people?metric=interviewPassed" },
+      { id: "unmatched-projects", title: "唯一数据中存在未匹配项目", count: realDemoMeta.unmatchedProjects, level: "info" as const, path: "/projects" }
+    ].filter((item) => item.count > 0),
     anomalies: [{ id: "repeated-application-rows", type: "同一人员多次报名/跨项目记录", scopeName: "人员主档与报名记录分离", expected: realDemoMeta.personMasters, actual: realDemoMeta.applicationRecords, difference: realDemoMeta.repeatedApplicationRows }]
   };
   dashboardCache.set(cacheKey, result);
@@ -1971,7 +1972,9 @@ function previewImport(): ImportPreview {
     skipped: [],
     warnings: [
       { code: "PERSON_MASTER_WITH_HISTORY", message: `人员主档 ${realDemoMeta.personMasters} 个，保留报名/面试/项目记录 ${realDemoMeta.applicationRecords} 条` },
-      { code: "UNMATCHED_PROJECT", message: `组织项目清单未匹配项目 ${realDemoMeta.unmatchedProjects} 个，已保留并标记待维护` }
+      ...(realDemoMeta.unmatchedProjects > 0
+        ? [{ code: "UNMATCHED_PROJECT", message: `组织项目清单未匹配项目 ${realDemoMeta.unmatchedProjects} 个，已按演示数据规则补全项目归属` }]
+        : [])
     ],
     reconciliation: { sourceRows: realDemoMeta.sourceRows, personMasters: realDemoMeta.personMasters, applicationRecords: realDemoMeta.applicationRecords, repeatedApplicationRows: realDemoMeta.repeatedApplicationRows, projectsFromOrg: realDemoMeta.projectsFromOrg, totalDemoProjects: realDemoMeta.totalDemoProjects, suppliers: realDemoMeta.supplierCount }
   };
@@ -2562,6 +2565,36 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
   const pageNumber = queryNumber(query, "page", 1);
   const pageSize = queryNumber(query, "pageSize", 20);
   const id = path.split("/").filter(Boolean).at(-1) ?? "";
+  const aiResult = handleDemoAiRequest(method, path, body, {
+    people,
+    projects,
+    jobs: jobDemands,
+    suppliers,
+    onboard: (personId, date) => {
+      const person = patchPerson(personId, personPatchForAction(`/people/${personId}/onboard`, {
+        onboardDate: date,
+        insuranceTypes: [],
+        notes: "祥能AI业务助手确认执行"
+      }), `/people/${personId}/onboard`);
+      patchLatestApplicationForAction(personId, `/people/${personId}/onboard`, { onboardDate: date });
+      syncDerivedData();
+      commitDemoState();
+      return personDetail(person.id);
+    },
+    offboard: (personId, date, reason) => {
+      const person = patchPerson(personId, personPatchForAction(`/people/${personId}/offboard`, {
+        offboardDate: date,
+        offboardReason: reason,
+        insuranceTypes: [],
+        notes: "祥能AI业务助手确认执行"
+      }), `/people/${personId}/offboard`);
+      patchLatestApplicationForAction(personId, `/people/${personId}/offboard`, { offboardDate: date, offboardReason: reason });
+      syncDerivedData();
+      commitDemoState();
+      return personDetail(person.id);
+    }
+  });
+  if (aiResult) return aiResult as T;
 
   if (method === "GET" && path === "/auth/me") return demoUser as T;
   if (method === "GET" && path === "/organization/options") return demoOrganizationOptions as T;
@@ -3094,6 +3127,7 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
 
   if (method === "POST" && path === "/demo/reset") {
     clearPersistedDemoState();
+    resetDemoAiActions();
     realData = null;
     changedPersonIds = new Set<string>();
     candidateDemoPersonId = undefined;

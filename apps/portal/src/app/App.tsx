@@ -97,7 +97,7 @@ export function App() {
       <Route path="me/appeals" element={<AppealsPage />} />
       <Route path="me/favorites" element={<FavoritesPage />} />
       <Route path="me/:page" element={<GenericPersonalPage title="个人服务" />} />
-      <Route path="*" element={<Navigate to="home" replace />} />
+      <Route path="*" element={<Navigate to="/personal/home" replace />} />
     </Route>
 
     <Route path="/internal" element={<RequirePortal portal="internal" />}>
@@ -113,7 +113,7 @@ export function App() {
       <Route path="review" element={<ReviewQueue />} />
       <Route path="self-recruitment" element={<SelfRecruitment />} />
       <Route path="audit" element={<AuditLogPage />} />
-      <Route path="*" element={<Navigate to="dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/internal/dashboard" replace />} />
     </Route>
 
     <Route path="/supplier" element={<RequirePortal portal="supplier" />}>
@@ -126,7 +126,7 @@ export function App() {
       <Route path="me" element={<SessionPage>{(session) => <SupplierMe session={session} />}</SessionPage>} />
       <Route path="appeals" element={<SupplierAppeals />} />
       <Route path="messages" element={<SupplierMessages portal="supplier" />} />
-      <Route path="*" element={<Navigate to="jobs" replace />} />
+      <Route path="*" element={<Navigate to="/supplier/jobs" replace />} />
     </Route>
     <Route path="*" element={<Navigate to="/entry" replace />} />
   </Routes>;

@@ -18,6 +18,10 @@ const skillMeaning: Record<AiSkill, string> = {
   employee_resignation: "给唯一在职人员办理离职"
 };
 
+const unsafeOrOutOfScope = /批量|所有人|全部人员|全员|删除.{0,8}(人员|档案)|自由\s*SQL|绕过权限|跨权限/;
+const unsupportedInformationalWords = /为什么.{0,8}(离职|辞职)|(?:离职|入职)政策/;
+const informationalWriteWords = /为什么.{0,8}(离职|辞职)|(?:离职|入职)政策|什么时候(?:入职|离职)|(?:入职|离职)(?:时间|日期|记录)/;
+
 function chinaDate(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 }
@@ -80,6 +84,8 @@ function extractProjectName(message: string): string | undefined {
   const withProject = message.match(/([\u4e00-\u9fa5A-Za-z0-9（）()·-]{2,30})项目/)?.[1]
     ?.replace(/^(查询|统计|看看|请查|本月|今年)/, "");
   if (withProject) return withProject;
+  const talentSubject = message.match(/(?:综合判断|帮我看看|帮我看|查询|看看|请查)?([\u4e00-\u9fa5A-Za-z0-9（）()·-]{2,20})的人才/)?.[1];
+  if (talentSubject) return talentSubject.replace(/^(请综合判断|综合判断|帮我看看|帮我看|查询|看看|请查)/, "");
   return message.match(/([\u4e00-\u9fa5A-Za-z0-9（）()·-]{2,30}(?:外包|工厂|基地|中心))(?:的|人才|招聘|人员|还|目前|招|缺|达成)/)?.[1]
     ?.replace(/^(请综合判断|综合判断|帮我看看|帮我看|查询|看看)/, "");
 }
@@ -155,6 +161,30 @@ export class IntentRouter {
 
   async route(message: string, allowed: AiSkill[], supplied: Record<string, unknown> = {}): Promise<IntentDecision> {
     if (!this.keywords) throw new Error("AI 规则尚未加载");
+    if (unsafeOrOutOfScope.test(message)) {
+      return {
+        skill: "unsupported",
+        confidence: 1,
+        mode: "unsupported",
+        parameters: supplied,
+        needs_clarification: true,
+        clarification_question: "该请求超出已确认能力范围，AI 不支持批量、删除、自由 SQL 或绕过权限。",
+        reason: "安全边界规则拒绝",
+        routeType: "rule"
+      };
+    }
+    if (unsupportedInformationalWords.test(message)) {
+      return {
+        skill: "unsupported",
+        confidence: 1,
+        mode: "unsupported",
+        parameters: supplied,
+        needs_clarification: true,
+        clarification_question: "该问题不是人员状态变更指令，AI 不会触发入职或离职写操作。",
+        reason: "信息咨询禁止误触发写操作",
+        routeType: "rule"
+      };
+    }
     const ranked = allowed.map((skill) => {
       const item = this.keywords!.skills[skill];
       if (item.exclusions.some((word) => message.includes(word))) return { skill, strong: 0, weak: 0, score: 0 };
@@ -192,6 +222,43 @@ export class IntentRouter {
         routeType: "rule"
       };
     }
+    if (!informationalWriteWords.test(message)) {
+      try {
+        const candidates = allowed.map((skill) => `${skill}=${skillMeaning[skill]}`).join("；");
+        const modelDecision = await this.model.completeJson([
+          {
+            role: "system",
+            content: [
+              "你只负责在候选业务意图中选择，不查询数据、不执行操作。",
+              `候选：${candidates}；unsupported=与候选无关。`,
+              "批量、删除、自由SQL、绕过权限必须选unsupported。",
+              "询问为什么离职、入离职政策、什么时候入离职属于查询或unsupported，绝不能选写操作。",
+              "只返回符合Schema的JSON。"
+            ].join("")
+          },
+          { role: "user", content: message }
+        ], this.schemas.toolsFor(allowed, 4));
+        this.schemas.validateIntent(modelDecision);
+        const skill = modelDecision.skill as AiSkill | "unsupported";
+        if (skill !== "unsupported" && allowed.includes(skill)) {
+          const modelParameters = typeof modelDecision.parameters === "object" && modelDecision.parameters
+            ? modelDecision.parameters as Record<string, unknown>
+            : {};
+          return {
+            skill,
+            confidence: typeof modelDecision.confidence === "number" ? modelDecision.confidence : 0.82,
+            mode: skill === "employee_entry" || skill === "employee_resignation" ? "write" : "read",
+            parameters: { ...extractParameters(skill, message), ...modelParameters, ...supplied },
+            needs_clarification: Boolean(modelDecision.needs_clarification),
+            clarification_question: typeof modelDecision.clarification_question === "string" ? modelDecision.clarification_question : null,
+            reason: "本地模型语义匹配",
+            routeType: "model"
+          };
+        }
+      } catch {
+        // 模型超时、熔断或输出未通过 Schema 时，继续返回标准表单，不影响传统系统。
+      }
+    }
     return {
       skill: "unsupported",
       confidence: 0,
@@ -199,7 +266,7 @@ export class IntentRouter {
       parameters: supplied,
       needs_clarification: true,
       clarification_question: "我目前只支持项目人员数据、人员信息、招聘进度、单人入职和单人离职。",
-      reason: "未命中固定能力范围",
+      reason: "规则与模型均未命中固定能力范围",
       routeType: "form"
     };
   }

@@ -44,7 +44,9 @@ export class GeneralChat {
       const result = await this.model.chat(messages, {
         model: req.chatModel ?? this.config.XIANGNENG_LLM_MODEL,
         fallbackModel: this.config.XIANGNENG_LLM_FALLBACK_MODEL,
-        numPredict: 96
+        temperature: 0.1,
+        numPredict: 96,
+        timeoutMs: this.config.AI_MODEL_TIMEOUT_MS
       });
       return { message: result.content, model: result.model, degraded: result.degraded };
     } catch (error) {

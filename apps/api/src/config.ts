@@ -36,7 +36,7 @@ const rawEnvSchema = z.object({
   XIANGNENG_LLM_BASE_URL: z.string().url().default("http://127.0.0.1:11434/v1"),
   XIANGNENG_LLM_MODEL: z.string().trim().min(1).default("qwen3.5:4b"),
   XIANGNENG_LLM_FALLBACK_MODEL: z.string().trim().min(1).default("qwen3.5:4b"),
-  XIANGNENG_LLM_CHAT_MODEL: z.string().trim().min(1).default("qwen2.5:1.5b"),
+  XIANGNENG_LLM_CHAT_MODEL: z.string().trim().min(1).default("qwen3.5:4b"),
   XIANGNENG_LLM_API_KEY: z.string().default("ollama-local"),
   AI_MODEL_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(10000),
   AI_ACTION_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(600),

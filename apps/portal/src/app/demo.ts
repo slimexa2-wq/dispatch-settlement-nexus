@@ -532,8 +532,342 @@ function auditLogs() {
   ];
 }
 
+type PortalAiAction = {
+  id: string;
+  token: string;
+  expiresAt: number;
+  type: 'entry' | 'resignation';
+  personId: string;
+  date: string;
+  reason?: string;
+  result?: JsonObject;
+};
+
+const portalAiActions = new Map<string, PortalAiAction>();
+const portalAiIdempotency = new Map<string, JsonObject>();
+
+function aiText(value: unknown): string {
+  return String(value ?? '').trim();
+}
+
+function aiDate(message: string): string {
+  const match = message.match(/(20\d{2})[-/.年](\d{1,2})(?:[-/.月](\d{1,2}))?/);
+  return match ? `${match[1]}-${match[2]!.padStart(2, '0')}-${(match[3] ?? '26').padStart(2, '0')}` : '2026-07-26';
+}
+
+function aiPeople(message: string, parameters: JsonObject, session: Session | null): Person[] {
+  const candidates = scopedPeople(session);
+  const employeeId = aiText(parameters.employee_id ?? parameters.employeeId);
+  if (employeeId) return candidates.filter((person) => person.id === employeeId || person.employeeNo === employeeId);
+  const named = aiText(parameters.employee_name ?? parameters.name);
+  if (named) return candidates.filter((person) => person.name === named);
+  const exact = candidates.filter((person) => message.includes(person.name));
+  if (exact.length) return exact;
+  const phone = message.match(/1\d{10}|\d{4}$/)?.[0] ?? aiText(parameters.phone ?? parameters.phone_suffix);
+  return phone ? candidates.filter((person) => person.phone.includes(phone) || person.employeeNo?.includes(phone)) : [];
+}
+
+function aiProject(message: string, session: Session | null): Job | undefined {
+  const jobs = scopedJobs(session);
+  const exact = jobs.find((job) => message.includes(job.projectName));
+  if (exact) return exact;
+  const normalized = message.replace(/[\s，。；、？！,.!?：:（）()]/g, '');
+  return jobs
+    .map((job) => {
+      const token = job.projectName.replace(/项目|外包|招聘|服务/g, '');
+      return { job, score: token && normalized.includes(token) ? token.length : 0 };
+    })
+    .sort((a, b) => b.score - a.score)
+    .find((item) => item.score >= 2)?.job;
+}
+
+function portalEmployee(person: Person): JsonObject {
+  return {
+    employee_id: person.id,
+    employee_no: person.employeeNo,
+    name: person.name,
+    phone: person.phone,
+    id_card: person.idCard,
+    status: person.status,
+    project: { id: person.projectId, name: person.projectName },
+    position_name: person.jobTitle,
+    onboard_date: person.onboardDate,
+    offboard_date: person.departureDate,
+    supplier: person.supplierId ? { id: person.supplierId, name: person.supplierName } : undefined,
+    recommender_name: person.recommenderName,
+    lifecycle: person.lifecycle ?? []
+  };
+}
+
+function portalPersonnelStatistics(message: string, session: Session | null): JsonObject {
+  const matchedJob = aiProject(message, session);
+  const jobs = scopedJobs(session).filter((job) => !matchedJob || job.project_id === matchedJob.project_id);
+  const projectIds = [...new Set(jobs.map((job) => job.project_id))];
+  const people = scopedPeople(session).filter((person) => projectIds.includes(person.projectId));
+  const rows = projectIds.map((projectId) => {
+    const related = people.filter((person) => person.projectId === projectId);
+    const job = jobs.find((item) => item.project_id === projectId);
+    const hireCount = related.filter((person) => person.onboardDate?.startsWith('2026-07')).length;
+    const resignationCount = related.filter((person) => person.departureDate?.startsWith('2026-07')).length;
+    const currentHeadcount = related.filter((person) => person.status === 'employed' && !person.departureDate).length;
+    return {
+      period: '2026-07',
+      project_id: projectId,
+      project_name: job?.projectName ?? related[0]?.projectName ?? '未分配项目',
+      branch_name: job?.companyName ?? '祥能分公司',
+      hire_count: hireCount,
+      resignation_count: resignationCount,
+      current_headcount: currentHeadcount,
+      net_change: hireCount - resignationCount
+    };
+  });
+  const totals = rows.reduce((sum, row) => ({
+    hire_count: sum.hire_count + row.hire_count,
+    resignation_count: sum.resignation_count + row.resignation_count,
+    current_headcount: sum.current_headcount + row.current_headcount,
+    net_change: sum.net_change + row.net_change
+  }), { hire_count: 0, resignation_count: 0, current_headcount: 0, net_change: 0 });
+  return {
+    type: 'query_result',
+    skill: 'project_personnel_statistics',
+    route_type: 'demo_retrieval',
+    confidence: 1,
+    result: {
+      rows,
+      totals,
+      methodology: '本月入离职按人员主档日期统计；当前在职按人员状态为在职且无离职日期统计。',
+      updated_at: new Date().toISOString()
+    }
+  };
+}
+
+function portalRecruitmentProgress(message: string, session: Session | null): JsonObject {
+  const matchedJob = aiProject(message, session);
+  const jobs = scopedJobs(session).filter((job) =>
+    job.status === 'recruiting' &&
+    (!matchedJob || job.project_id === matchedJob.project_id) &&
+    (!message.includes('岗位') || !state.jobs.some((item) => message.includes(item.title)) || message.includes(job.title))
+  );
+  const rows = jobs.map((job) => ({
+    job_id: job.id,
+    project_name: job.projectName,
+    position_name: job.title,
+    demand_count: job.headcount,
+    completed_count: Number(job.completedCount),
+    registered_count: Number(job.appliedCount),
+    gap: Math.max(0, job.headcount - Number(job.completedCount)),
+    completion_rate: job.headcount ? Math.min(100, Math.round(Number(job.completedCount) / job.headcount * 1000) / 10) : 0,
+    deadline: job.deadline,
+    status: job.status
+  })).sort((a, b) => b.gap - a.gap);
+  const totals = rows.reduce((sum, row) => ({
+    demand_count: sum.demand_count + row.demand_count,
+    completed_count: sum.completed_count + row.completed_count,
+    gap: sum.gap + row.gap
+  }), { demand_count: 0, completed_count: 0, gap: 0 });
+  return {
+    type: 'query_result',
+    skill: 'recruitment_progress_query',
+    route_type: 'demo_retrieval',
+    confidence: 1,
+    result: {
+      rows,
+      totals: {
+        ...totals,
+        completion_rate: totals.demand_count ? Math.min(100, Math.round(totals.completed_count / totals.demand_count * 1000) / 10) : 0
+      },
+      methodology: '需求、完成和缺口来自当前招聘岗位；完成率按完成人数除以需求人数计算。',
+      updated_at: new Date().toISOString()
+    }
+  };
+}
+
+function portalKnowledge(message: string, session: Session | null): JsonObject | null {
+  const matchedJob = aiProject(message, session);
+  const jobs = scopedJobs(session);
+  const wantsOverview = /系统|总览|概况|多少项目|多少人员|多少岗位/.test(message);
+  const wantsProject = Boolean(matchedJob) || /项目|负责人|地址|介绍/.test(message);
+  const wantsJobs = /岗位|职责|要求|薪资|工作时间|工作内容/.test(message);
+  const wantsSupplier = /供应商|合作方|联系人/.test(message);
+  if (!wantsOverview && !wantsProject && !wantsJobs && !wantsSupplier) return null;
+  const records: JsonObject[] = [];
+  if (wantsOverview) records.push({
+    type: 'system',
+    title: '当前权限数据总览',
+    fields: { 项目数: new Set(jobs.map((job) => job.project_id)).size, 人员数: scopedPeople(session).length, 岗位数: jobs.length, 供应商数: session?.role === 'supplier' ? 1 : source.suppliers.length }
+  });
+  if (wantsProject) {
+    const selected = matchedJob ? jobs.filter((job) => job.project_id === matchedJob.project_id).slice(0, 1) : jobs.filter((job, index, all) => all.findIndex((item) => item.project_id === job.project_id) === index).slice(0, 12);
+    selected.forEach((job) => records.push({
+      type: 'project',
+      title: job.projectName,
+      fields: { 分公司: job.companyName, 负责人: job.managerName, 联系电话: job.managerPhone, 项目地址: job.address, 项目介绍: job.projectDescription }
+    }));
+  }
+  if (wantsJobs) {
+    jobs.filter((job) => !matchedJob || job.project_id === matchedJob.project_id).slice(0, 20).forEach((job) => records.push({
+      type: 'job',
+      title: job.title,
+      fields: { 项目: job.projectName, 需求人数: job.headcount, 薪资: `${job.salary_min}-${job.salary_max}元/月`, 工作时间: job.work_time, 工作地点: job.address, 岗位职责: job.duties, 岗位要求: job.requirements, 福利待遇: job.benefits, 截止日期: job.deadline }
+    }));
+  }
+  if (wantsSupplier) {
+    const suppliers = session?.role === 'supplier'
+      ? source.suppliers.filter((supplier) => supplier.id === session.supplierId)
+      : source.suppliers.filter((supplier) => message.includes(supplier.name) || !source.suppliers.some((item) => message.includes(item.name))).slice(0, 20);
+    suppliers.forEach((supplier) => records.push({
+      type: 'supplier',
+      title: supplier.name,
+      fields: { 联系人: supplier.contactName ?? '供应商经理', 联系电话: supplier.contactPhone ?? '0831-8881234', 合作等级: supplier.level ?? 'A', 合作项目数: supplier.projectIds?.length ?? 0 }
+    }));
+  }
+  if (!records.length) return null;
+  return {
+    type: 'knowledge_result',
+    answer: records.slice(0, 4).map((record) => `${record.title}：${Object.entries(record.fields as JsonObject).slice(0, 4).map(([key, value]) => `${key}${value}`).join('，')}`).join('；'),
+    result: {
+      records,
+      methodology: '仅检索当前登录角色可访问的小程序演示业务状态；正式环境由后端权限过滤并交给本地Qwen组织答案。',
+      updated_at: new Date().toISOString()
+    },
+    route_type: 'demo_retrieval',
+    confidence: 1
+  };
+}
+
+function portalActionPreview(type: PortalAiAction['type'], message: string, parameters: JsonObject, session: Session | null): JsonObject {
+  const matches = aiPeople(message, parameters, session);
+  if (matches.length > 1) return {
+    type: 'query_result',
+    skill: 'employee_information_query',
+    result: {
+      match: 'ambiguous',
+      candidates: matches.slice(0, 12).map((person) => ({ employee_id: person.id, name: person.name, phone: person.phone, project_name: person.projectName, position_name: person.jobTitle }))
+    }
+  };
+  const person = matches[0];
+  if (!person) return { type: 'clarification', skill: type === 'entry' ? 'employee_entry' : 'employee_resignation', message: '请补充唯一人员姓名、手机号或员工编号。', extracted_parameters: parameters };
+  if (type === 'entry' && person.status === 'employed' && !person.departureDate) return { type: 'clarification', skill: 'employee_entry', message: `${person.name}当前已在职，不能重复办理入职。` };
+  if (type === 'resignation' && (person.status !== 'employed' || person.departureDate)) return { type: 'clarification', skill: 'employee_resignation', message: `${person.name}当前不是在职状态，不能办理离职。` };
+  const date = aiText(parameters.entry_date ?? parameters.resignation_date) || aiDate(message);
+  const reason = aiText(parameters.resignation_reason) || message.match(/原因(?:是|为|：|:)?\s*([^，。；;]+)/)?.[1] || '个人原因';
+  const action: PortalAiAction = {
+    id: crypto.randomUUID(),
+    token: `${crypto.randomUUID()}${crypto.randomUUID()}`.replaceAll('-', ''),
+    expiresAt: Date.now() + 10 * 60_000,
+    type,
+    personId: person.id,
+    date,
+    reason
+  };
+  portalAiActions.set(action.id, action);
+  return {
+    type: 'action_preview',
+    skill: type === 'entry' ? 'employee_entry' : 'employee_resignation',
+    route_type: 'demo_rule',
+    preview: {
+      action_id: action.id,
+      action_token: action.token,
+      expires_at: new Date(action.expiresAt).toISOString(),
+      confirmation_required: true,
+      person: { employee_id: person.id, name: person.name, phone: person.phone, project_name: person.projectName, position_name: person.jobTitle },
+      before: { status: person.status, onboardDate: person.onboardDate, offboardDate: person.departureDate },
+      after: type === 'entry'
+        ? { status: 'employed', onboardDate: date, projectId: person.projectId, jobTitle: person.jobTitle }
+        : { status: 'departed', offboardDate: date, offboardReason: reason },
+      impact_scope: ['人员主档', '生命周期', '招聘进度', '统计看板', '审计日志']
+    }
+  };
+}
+
+function portalAiRequest(method: string, pathname: string, body: JsonObject, session: Session | null): JsonObject | null {
+  if (method === 'GET' && pathname === '/api/ai/health') return {
+    status: 'degraded',
+    database: 'demo_snapshot',
+    model: 'backend_required',
+    model_name: 'Qwen3.5 4B',
+    rules: 'ok',
+    retrieval: 'ok',
+    allowed_skills: ['project_personnel_statistics', 'employee_information_query', 'recruitment_progress_query', 'employee_entry', 'employee_resignation'],
+    form_fallback_available: true,
+    checked_at: new Date().toISOString()
+  };
+  if (method === 'POST' && pathname === '/api/ai/chat') {
+    const message = aiText(body.message);
+    const parameters = (body.parameters && typeof body.parameters === 'object' ? body.parameters : {}) as JsonObject;
+    if (/(?:给|为|让).{1,20}(?:办理|确认|执行)?.{0,6}入职/.test(message) && !/什么时候入职|入职时间|入职日期|入职多少|入职数/.test(message)) return portalActionPreview('entry', message, parameters, session);
+    if (/(?:给|为|让).{1,20}(?:办理|确认|执行)?.{0,6}(?:离职|离岗)/.test(message) && !/什么时候离职|离职时间|离职日期|离职多少|离职数/.test(message)) return portalActionPreview('resignation', message, parameters, session);
+    const matches = aiPeople(message, parameters, session);
+    if (matches.length > 1) return {
+      type: 'query_result',
+      skill: 'employee_information_query',
+      result: { match: 'ambiguous', candidates: matches.slice(0, 12).map((person) => ({ employee_id: person.id, name: person.name, phone: person.phone, project_name: person.projectName, position_name: person.jobTitle })) }
+    };
+    if (matches.length === 1) return {
+      type: 'query_result',
+      skill: 'employee_information_query',
+      route_type: 'demo_retrieval',
+      confidence: 1,
+      result: { match: 'unique', employee: portalEmployee(matches[0]!), methodology: '按当前权限范围内的人员主档和生命周期实时查询。', updated_at: new Date().toISOString() }
+    };
+    if (/招聘|招人|缺口|完成率|达成|还差|需求人数/.test(message)) return portalRecruitmentProgress(message, session);
+    if (/在职|入职数|离职数|入职.*离职|净增|净减|人员数据|人员统计/.test(message)) return portalPersonnelStatistics(message, session);
+    const knowledge = portalKnowledge(message, session);
+    if (knowledge) return knowledge;
+    if (/你好|你是谁|能做什么|有什么功能|帮助/.test(message)) return {
+      type: 'chat_result',
+      message: '我是祥能AI业务助手，可自由查询权限范围内的人员、项目、岗位、供应商和招聘数据，也可对单人入职、离职先生成预览再确认执行。',
+      route_type: 'demo_fast_path',
+      model: 'rule+retrieval',
+      degraded: true
+    };
+    return { type: 'clarification', skill: 'employee_information_query', message: '请补充人员姓名/手机号、项目名称、岗位或供应商名称，我会继续检索。', extracted_parameters: parameters, standard_form_available: true };
+  }
+  if (method === 'POST' && pathname === '/api/ai/actions/confirm') {
+    const idempotencyKey = aiText(body.idempotencyKey);
+    const previous = portalAiIdempotency.get(idempotencyKey);
+    if (previous) return previous;
+    const action = portalAiActions.get(aiText(body.actionId));
+    if (!action || action.token !== aiText(body.actionToken)) throw new Error('操作预览不存在或令牌无效，请重新生成');
+    if (action.expiresAt < Date.now()) throw new Error('操作预览已过期，请重新生成');
+    if (action.result) return action.result;
+    const person = state.people.find((item) => item.id === action.personId);
+    if (!person) throw new Error('人员不存在');
+    if (action.type === 'entry' && person.status === 'employed' && !person.departureDate) throw new Error('人员状态已变化，请重新生成预览');
+    if (action.type === 'resignation' && (person.status !== 'employed' || person.departureDate)) throw new Error('人员状态已变化，请重新生成预览');
+    const now = new Date().toISOString();
+    const updated: Person = {
+      ...person,
+      status: action.type === 'entry' ? 'employed' : 'departed',
+      onboardDate: action.type === 'entry' ? action.date : person.onboardDate,
+      departureDate: action.type === 'resignation' ? action.date : person.departureDate,
+      insuranceStatus: action.type === 'entry' ? '已办理' : person.insuranceStatus,
+      lifecycle: [{
+        id: `life-ai-${Date.now()}`,
+        status: action.type === 'entry' ? 'employed' : 'departed',
+        occurredAt: now,
+        note: action.type === 'entry' ? '祥能AI业务助手确认办理入职' : `祥能AI业务助手确认办理离职：${action.reason}`
+      }, ...(person.lifecycle ?? [])]
+    };
+    state.people = state.people.map((item) => item.id === person.id ? updated : item);
+    persist();
+    action.result = { type: 'action_result', status: 'EXECUTED', action_id: action.id, person: portalEmployee(updated), executed_at: now, audited: true, idempotent: true };
+    if (idempotencyKey) portalAiIdempotency.set(idempotencyKey, action.result);
+    return action.result;
+  }
+  if (method === 'POST' && pathname === '/api/ai/demo/reset') {
+    portalAiActions.clear();
+    portalAiIdempotency.clear();
+    resetPortalDemo();
+    return { ok: true, restored_people: state.people.length };
+  }
+  return null;
+}
+
 export function resetPortalDemo(): void {
   state = createInitialState();
+  portalAiActions.clear();
+  portalAiIdempotency.clear();
   persist();
 }
 
@@ -543,6 +877,8 @@ export async function handlePortalDemoRequest<T>(path: string, init: RequestInit
   const pathname = url.pathname;
   const body = requestBody(init);
   const session = currentSession();
+  const aiResponse = portalAiRequest(method, pathname, body, session);
+  if (aiResponse) return aiResponse as T;
 
   if (method === 'GET' && pathname === '/api/personas') return personas as T;
   if (method === 'POST' && pathname === '/api/session/select-persona') {

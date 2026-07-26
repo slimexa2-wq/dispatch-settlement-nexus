@@ -1,4 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { AiSchemaRegistry } from "../src/ai/schema-registry.js";
 import { IntentRouter } from "../src/ai/intent-router.js";
 import type { OllamaClient } from "../src/ai/ollama-client.js";
@@ -49,6 +51,34 @@ describe("祥能 AI 规则优先路由与 Schema 安全门", () => {
     expect(decision).toMatchObject({ skill: "unsupported", routeType: "form", needs_clarification: true });
   });
 
+  it("复杂表达由本地模型语义兜底，参数仍由程序提取", async () => {
+    let modelCalled = false;
+    const model = {
+      completeJson: async () => {
+        modelCalled = true;
+        return {
+          skill: "recruitment_progress_query",
+          confidence: 0.88,
+          mode: "read",
+          parameters: {},
+          needs_clarification: false,
+          clarification_question: null,
+          reason: "semantic"
+        };
+      }
+    } as unknown as OllamaClient;
+    const router = new IntentRouter(testConfig, schemas, model);
+    await router.load();
+    const decision = await router.route("请综合判断宜宾时代的人才补充态势", ["recruitment_progress_query"]);
+    expect(modelCalled).toBe(true);
+    expect(decision).toMatchObject({
+      skill: "recruitment_progress_query",
+      routeType: "model",
+      mode: "read"
+    });
+    expect(decision.parameters).toMatchObject({ project_name: "宜宾时代" });
+  });
+
   it("批量人员参数无法通过单人入职工具 Schema", () => {
     expect(() => schemas.validateToolInput("employee_entry", "preview_employee_entry", {
       employee_ids: ["a", "b"], entry_date: "2026-07-22", project_id: "p", position_id: "j"
@@ -83,5 +113,25 @@ describe("祥能 AI 规则优先路由与 Schema 安全门", () => {
     const decision = await router.route("查一下邱玉彬什么时候入职", allowed);
     expect(decision).toMatchObject({ skill: "employee_information_query", routeType: "rule", mode: "read" });
     expect(decision.skill === "employee_entry" || decision.skill === "employee_resignation").toBe(false);
+  });
+
+  it("通过 Skill 包的意图回归样例，模型离线时仍不误触发写操作", async () => {
+    const raw = await readFile(join(testConfig.AI_SKILL_ROOT, "tests", "intent-regression.jsonl"), "utf8");
+    const cases = raw.trim().split(/\r?\n/).map((line) => JSON.parse(line) as {
+      id: string;
+      input: string;
+      expected_skill: string;
+      expected_mode: string;
+      must_not_write?: boolean;
+    });
+    const model = { completeJson: async () => { throw new Error("model offline"); } } as unknown as OllamaClient;
+    const router = new IntentRouter(testConfig, schemas, model);
+    await router.load();
+    for (const item of cases) {
+      const decision = await router.route(item.input, allowed);
+      expect(decision.skill, item.id).toBe(item.expected_skill);
+      expect(decision.mode, item.id).toBe(item.expected_mode);
+      if (item.must_not_write) expect(decision.mode, item.id).not.toBe("write");
+    }
   });
 });

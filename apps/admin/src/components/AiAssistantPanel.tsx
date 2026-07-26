@@ -159,7 +159,7 @@ function KnowledgeResult({ payload }: { payload: JsonRecord }) {
 }
 
 export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
-  const [entries, setEntries] = useState<ChatEntry[]>([{ id: "welcome", role: "assistant", text: "您好，我是祥能AI业务助手。查询结果来自当前权限范围内的正式数据库；入职和离职必须先预览，再由您点击确认。" }]);
+  const [entries, setEntries] = useState<ChatEntry[]>([{ id: "welcome", role: "assistant", text: "您好，我是祥能AI业务助手。查询结果来自当前权限范围内的系统业务数据；入职和离职必须先预览，再由您点击确认。" }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [health, setHealth] = useState<JsonRecord | null>(null);
@@ -207,7 +207,10 @@ export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
         idempotencyKey: crypto.randomUUID()
       });
       updatePayload(entry.id, { confirmed: true });
-      setEntries((current) => [...current, { id: crypto.randomUUID(), role: "assistant", text: result.status === "EXECUTED" ? "操作已通过正式业务服务事务执行并写入审计日志。" : `操作状态：${String(result.status)}`, payload: { type: "action_result", result } }]);
+      const successText = health?.database === "demo_snapshot"
+        ? "操作已同步到演示业务状态并记录审计信息；连接正式后端时使用数据库事务执行。"
+        : "操作已通过正式业务服务事务执行并写入审计日志。";
+      setEntries((current) => [...current, { id: crypto.randomUUID(), role: "assistant", text: result.status === "EXECUTED" ? successText : `操作状态：${String(result.status)}`, payload: { type: "action_result", result } }]);
     } catch (error) {
       setEntries((current) => [...current, { id: crypto.randomUUID(), role: "assistant", text: getErrorMessage(error), payload: { type: "error" } }]);
     } finally {
@@ -249,7 +252,7 @@ export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
   return <div className={`admin-ai-panel${compact ? " admin-ai-panel-compact" : ""}`}>
     <div className="admin-ai-status">
       <Space><RobotOutlined /><Typography.Text strong>祥能AI业务助手</Typography.Text></Space>
-      <Tag color={health?.status === "ok" ? "success" : "warning"}>{health?.status === "ok" ? `本地模型在线 · ${String(health.model_name ?? "Qwen3.5 4B")}` : "降级表单可用"}</Tag>
+      <Tag color={health?.status === "ok" ? "success" : health?.retrieval === "ok" ? "processing" : "warning"}>{health?.status === "ok" ? `本地模型在线 · ${String(health.model_name ?? "Qwen3.5 4B")}` : health?.retrieval === "ok" ? "演示业务检索在线 · Qwen后端可切换" : "降级表单可用"}</Tag>
     </div>
     <div className="admin-ai-quick">{quickActions.map((item) => <Button key={item.label} icon={item.icon} onClick={() => void send(item.message)}>{item.label}</Button>)}</div>
     <div className="admin-ai-chat">
@@ -261,7 +264,7 @@ export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
       <div ref={endRef} />
     </div>
     <div className="admin-ai-input">
-      <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} value={input} placeholder="例如：查询极米光电外包本月人员数据" onChange={(event) => setInput(event.target.value)} onPressEnter={(event) => { if (!event.shiftKey) { event.preventDefault(); void send(input); } }} />
+      <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} value={input} placeholder="可输入任意姓名、手机号、项目、岗位或供应商问题" onChange={(event) => setInput(event.target.value)} onPressEnter={(event) => { if (!event.shiftKey) { event.preventDefault(); void send(input); } }} />
       <Button type="primary" icon={busy ? <Spin size="small" /> : <SendOutlined />} disabled={busy || !input.trim()} onClick={() => void send(input)} />
     </div>
     <Typography.Text type="secondary" className="admin-ai-footnote"><CheckCircleOutlined /> 模型只理解意图；查数、权限、事务和审计由程序执行。</Typography.Text>
