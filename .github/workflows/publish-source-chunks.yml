@@ -25,9 +25,9 @@ jobs:
         run: |
           count="$(find source-archive -maxdepth 1 -name 'part-*.b64' -type f 2>/dev/null | wc -l)"
           echo "count=$count" >> "$GITHUB_OUTPUT"
-          echo "Found $count/16 source chunks"
+          echo "Found $count/58 source chunks"
       - name: Reconstruct and publish complete source
-        if: steps.chunks.outputs.count == '16'
+        if: steps.chunks.outputs.count == '58'
         shell: bash
         run: |
           set -euo pipefail
