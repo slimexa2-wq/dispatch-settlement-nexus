@@ -154,6 +154,45 @@ enum DataScopeType {
   GROUP
 }
 
+enum ReimbursementStatus {
+  PENDING_SUBMISSION
+  DEPARTMENT_PREPARING
+  OWNER_REVIEWING
+  FINANCE_REVIEWING
+  APPROVED
+  PENDING_PAYMENT
+  PAID
+}
+
+enum ReimbursementAttachmentType {
+  PAYMENT_VOUCHER
+  INVOICE
+  SUPPORTING
+}
+
+enum ReimbursementIssueStatus {
+  OPEN
+  RESOLVED
+}
+
+enum ReimbursementApprovalDecision {
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+enum ReimbursementArtifactType {
+  REIMBURSEMENT_FORM
+  PAYMENT_PACKAGE
+  INVOICE_PACKAGE
+}
+
+enum ReimbursementArtifactStatus {
+  PENDING
+  GENERATED
+  FAILED
+}
+
 model Branch {
   id         String    @id @default(uuid()) @db.Uuid
   sourceCode String?   @unique @map("source_code") @db.VarChar(64)
@@ -167,6 +206,7 @@ model Branch {
   internalEmployees InternalEmployee[]
   internalEmployments InternalEmployment[]
   dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
 
   @@map("branches")
 }
@@ -208,6 +248,7 @@ model OrganizationUnit {
   internalEmployees InternalEmployee[]
   employments   InternalEmployment[]
   dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
 
   @@unique([parentId, name])
   @@index([parentId, sortOrder])
@@ -358,6 +399,7 @@ model Project {
   userLinks        UserProject[]
   portalQrCodes    PortalQrCode[]
   dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
 
   @@unique([branchId, name])
   @@index([branchId, status])
@@ -396,6 +438,7 @@ model Supplier {
   users             User[]
   dataScopeBindings DataScopeBinding[]
   portalSettlements PortalSettlement[]
+  reimbursementBatches ReimbursementBatch[]
 
   @@map("suppliers")
 }
@@ -817,6 +860,13 @@ model User {
   handledPortalAppeals    PortalAppeal[]           @relation("PortalAppealHandlers")
   portalQrCodes           PortalQrCode[]
   portalNotificationReads PortalNotificationRead[]
+  reimbursementApplications ReimbursementBatch[]      @relation("ReimbursementApplicants")
+  reimbursementUploads      ReimbursementAttachment[] @relation("ReimbursementUploaders")
+  reimbursementIssuesRaised ReimbursementIssue[]      @relation("ReimbursementIssueRaisers")
+  reimbursementIssuesResolved ReimbursementIssue[]    @relation("ReimbursementIssueResolvers")
+  reimbursementApprovals    ReimbursementApproval[]   @relation("ReimbursementApprovalActors")
+  reimbursementPayments     ReimbursementPayment[]    @relation("ReimbursementPayers")
+  reimbursementArtifacts    ReimbursementArtifact[]   @relation("ReimbursementArtifactGenerators")
 
   @@index([role, isActive])
   @@map("users")
@@ -1086,4 +1136,171 @@ model PortalNotificationRead {
   @@id([userId, notificationId])
   @@index([notificationId])
   @@map("portal_notification_reads")
+}
+
+model ReimbursementBatch {
+  id                 String              @id @default(uuid()) @db.Uuid
+  code               String              @unique @db.VarChar(64)
+  title              String              @db.VarChar(200)
+  applicantUserId    String              @map("applicant_user_id") @db.Uuid
+  branchId           String?             @map("branch_id") @db.Uuid
+  organizationUnitId String?             @map("organization_unit_id") @db.Uuid
+  projectId          String?             @map("project_id") @db.Uuid
+  supplierId         String?             @map("supplier_id") @db.Uuid
+  status             ReimbursementStatus @default(PENDING_SUBMISSION)
+  currency           String              @default("CNY") @db.VarChar(3)
+  totalPaymentCents  Int                 @default(0) @map("total_payment_cents")
+  totalInvoiceCents  Int                 @default(0) @map("total_invoice_cents")
+  invoiceExcessCents Int                 @default(0) @map("invoice_excess_cents")
+  version            Int                 @default(1)
+  submittedAt        DateTime?           @map("submitted_at")
+  approvedAt         DateTime?           @map("approved_at")
+  paidAt             DateTime?           @map("paid_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  applicant          User                @relation("ReimbursementApplicants", fields: [applicantUserId], references: [id], onDelete: Restrict)
+  branch             Branch?             @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit?   @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  project            Project?            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines              ReimbursementLine[]
+  attachments        ReimbursementAttachment[]
+  issues             ReimbursementIssue[]
+  approvals          ReimbursementApproval[]
+  payment            ReimbursementPayment?
+  artifacts          ReimbursementArtifact[]
+
+  @@unique([id, version])
+  @@index([applicantUserId, status, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([organizationUnitId, status, createdAt])
+  @@index([projectId, status, createdAt])
+  @@index([supplierId, status, createdAt])
+  @@map("reimbursement_batches")
+}
+
+model ReimbursementLine {
+  id             String   @id @default(uuid()) @db.Uuid
+  batchId        String   @map("batch_id") @db.Uuid
+  sequence       Int
+  expenseDate    DateTime @map("expense_date") @db.Date
+  category       String   @db.VarChar(80)
+  description    String   @db.VarChar(500)
+  payeeName      String?  @map("payee_name") @db.VarChar(120)
+  payeeAccount   String?  @map("payee_account") @db.VarChar(120)
+  payeeBank      String?  @map("payee_bank") @db.VarChar(200)
+  paymentCents   Int      @map("payment_cents")
+  invoiceCents   Int      @map("invoice_cents")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  batch          ReimbursementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  attachments    ReimbursementAttachment[]
+  issues         ReimbursementIssue[]
+
+  @@unique([batchId, sequence])
+  @@index([batchId, expenseDate])
+  @@map("reimbursement_lines")
+}
+
+model ReimbursementAttachment {
+  id           String                      @id @default(uuid()) @db.Uuid
+  batchId      String                      @map("batch_id") @db.Uuid
+  lineId       String?                     @map("line_id") @db.Uuid
+  type         ReimbursementAttachmentType
+  storageKey   String                      @unique @map("storage_key") @db.VarChar(500)
+  originalName String                      @map("original_name") @db.VarChar(255)
+  mimeType     String                      @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int                         @map("size_bytes")
+  sha256       String                      @db.VarChar(64)
+  uploadedById String?                     @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  batch        ReimbursementBatch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  line         ReimbursementLine?          @relation(fields: [lineId], references: [id], onDelete: SetNull)
+  uploadedBy   User?                       @relation("ReimbursementUploaders", fields: [uploadedById], references: [id], onDelete: SetNull)
+  paymentProof ReimbursementPayment?       @relation("ReimbursementPaymentProof")
+
+  @@index([batchId, type, createdAt])
+  @@index([lineId, type, createdAt])
+  @@index([uploadedById, createdAt])
+  @@map("reimbursement_attachments")
+}
+
+model ReimbursementIssue {
+  id           String                   @id @default(uuid()) @db.Uuid
+  batchId      String                   @map("batch_id") @db.Uuid
+  lineId       String?                  @map("line_id") @db.Uuid
+  raisedById   String                   @map("raised_by_id") @db.Uuid
+  resolvedById String?                  @map("resolved_by_id") @db.Uuid
+  type         String                   @db.VarChar(80)
+  description  String                   @db.VarChar(500)
+  status       ReimbursementIssueStatus @default(OPEN)
+  resolution   String?                  @db.VarChar(500)
+  resolvedAt   DateTime?                @map("resolved_at")
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  batch        ReimbursementBatch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  line         ReimbursementLine?       @relation(fields: [lineId], references: [id], onDelete: SetNull)
+  raisedBy     User                     @relation("ReimbursementIssueRaisers", fields: [raisedById], references: [id], onDelete: Restrict)
+  resolvedBy   User?                    @relation("ReimbursementIssueResolvers", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([batchId, status, createdAt])
+  @@index([lineId, status])
+  @@index([raisedById, createdAt])
+  @@map("reimbursement_issues")
+}
+
+model ReimbursementApproval {
+  id         String                        @id @default(uuid()) @db.Uuid
+  batchId    String                        @map("batch_id") @db.Uuid
+  actorId    String                        @map("actor_id") @db.Uuid
+  fromStatus ReimbursementStatus           @map("from_status")
+  toStatus   ReimbursementStatus           @map("to_status")
+  decision   ReimbursementApprovalDecision
+  comment    String?                       @db.VarChar(500)
+  createdAt  DateTime                      @default(now()) @map("created_at")
+  batch      ReimbursementBatch            @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  actor      User                          @relation("ReimbursementApprovalActors", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([batchId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("reimbursement_approvals")
+}
+
+model ReimbursementPayment {
+  id                String   @id @default(uuid()) @db.Uuid
+  batchId           String   @unique @map("batch_id") @db.Uuid
+  amountCents       Int      @map("amount_cents")
+  reference         String   @unique @db.VarChar(120)
+  paidById          String   @map("paid_by_id") @db.Uuid
+  paidAt            DateTime @map("paid_at")
+  proofAttachmentId String?  @unique @map("proof_attachment_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
+  batch             ReimbursementBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  paidBy            User               @relation("ReimbursementPayers", fields: [paidById], references: [id], onDelete: Restrict)
+  proofAttachment   ReimbursementAttachment? @relation("ReimbursementPaymentProof", fields: [proofAttachmentId], references: [id], onDelete: Restrict)
+
+  @@index([paidById, paidAt])
+  @@index([paidAt])
+  @@map("reimbursement_payments")
+}
+
+model ReimbursementArtifact {
+  id            String                      @id @default(uuid()) @db.Uuid
+  batchId       String                      @map("batch_id") @db.Uuid
+  type          ReimbursementArtifactType
+  status        ReimbursementArtifactStatus @default(PENDING)
+  storageKey    String?                     @unique @map("storage_key") @db.VarChar(500)
+  originalName  String?                     @map("original_name") @db.VarChar(255)
+  error         String?                     @db.Text
+  generatedById String?                     @map("generated_by_id") @db.Uuid
+  generatedAt   DateTime?                   @map("generated_at")
+  createdAt     DateTime                    @default(now()) @map("created_at")
+  updatedAt     DateTime                    @updatedAt @map("updated_at")
+  batch         ReimbursementBatch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  generatedBy   User?                       @relation("ReimbursementArtifactGenerators", fields: [generatedById], references: [id], onDelete: SetNull)
+
+  @@unique([batchId, type])
+  @@index([batchId, status])
+  @@index([generatedById, createdAt])
+  @@map("reimbursement_artifacts")
 }
