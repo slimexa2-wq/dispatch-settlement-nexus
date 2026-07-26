@@ -715,3 +715,39 @@ export type Reimbursement = {
   artifacts: ReimbursementArtifact[];
   _count?: { lines: number; issues: number; attachments: number };
 };
+
+export type LeadershipDashboard = {
+  asOf: string;
+  period: { start: string; end: string; label: string };
+  people: {
+    outsourcedActive: number;
+    internalActive: number;
+    totalActive: number;
+    onboardMonth: number;
+    offboardMonth: number;
+    netGrowth: number;
+  };
+  projects: { active: number; activeSuppliers: number };
+  recruitment: {
+    activeDemands: number;
+    requiredCount: number;
+    applicationCount: number;
+    remainingCount: number;
+    completionRate: number;
+  };
+  reimbursements: {
+    count: number;
+    totalPaymentCents: number;
+    totalInvoiceCents: number;
+    invoiceExcessCents: number;
+    paidCount: number;
+    pendingCount: number;
+    openIssues: number;
+    byStatus: Array<{
+      status: ReimbursementStatus;
+      count: number;
+      paymentCents: number;
+    }>;
+  };
+  definitions: string[];
+};

@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Permission } from "@xiangneng/shared";
 import { api, clearToken, getToken, setToken } from "../lib/api";
-import { DEMO_CODE, DEMO_TOKEN } from "../lib/demo";
+import { DEMO_CODE, DEMO_TOKEN, demoUserForRole } from "../lib/demo";
 import type { SessionUser } from "../types/domain";
 
 export type DemoRoleKey = "leader" | "systemAdmin" | "operator" | "supplier" | "candidate" | "employee";
@@ -72,14 +72,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const loginDemoRole = useCallback(async (role: DemoRoleKey) => {
     clearToken();
-    const result = await api.post<LoginResult>("/auth/demo-login", { persona: demoPersona(role) });
-    const token = result.accessToken ?? result.token;
-    if (!token) throw new Error("演示登录响应缺少访问令牌");
+    let session: SessionUser;
+    let token = DEMO_TOKEN;
+    try {
+      const result = await api.post<LoginResult>("/auth/demo-login", {
+        persona: demoPersona(role)
+      });
+      token = result.accessToken ?? result.token ?? DEMO_TOKEN;
+      session = result.user;
+    } catch {
+      // 比赛断网或本地数据库未启动时，切到同一套合成数据离线演示层。
+      session = demoUserForRole(role);
+    }
     setToken(token);
     localStorage.setItem(DEMO_MODE_KEY, "true");
     setIsDemo(true);
-    setUser(result.user);
-    return result.user;
+    setUser(session);
+    return session;
   }, []);
 
   const refreshUser = useCallback(async () => {

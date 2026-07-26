@@ -23,7 +23,7 @@ export function AdminAiDrawer() {
     <Drawer
       title="祥能AI业务助手"
       placement="right"
-      width={560}
+      size={560}
       open={open}
       onClose={() => setOpen(false)}
       destroyOnHidden

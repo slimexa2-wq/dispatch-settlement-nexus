@@ -6,6 +6,7 @@ import {
   BankOutlined,
   DashboardOutlined,
   DatabaseOutlined,
+  CrownOutlined,
   DollarOutlined,
   DownloadOutlined,
   FileProtectOutlined,
@@ -84,7 +85,8 @@ const menuItems: ItemType[] = [
   { key: "/ai-assistant", icon: <RobotOutlined />, label: "AI 助手" },
   { key: "/product", icon: <GlobalOutlined />, label: "产品介绍" },
   { key: "/internal-employees", icon: <IdcardOutlined />, label: "内部员工" },
-  { key: "/reimbursements", icon: <AccountBookOutlined />, label: "报销管理" }
+  { key: "/reimbursements", icon: <AccountBookOutlined />, label: "报销管理" },
+  { key: "/leadership", icon: <CrownOutlined />, label: "领导驾驶舱" }
 ];
 
 type ModuleActionConfig = {
@@ -99,6 +101,7 @@ type ModuleActionConfig = {
 function selectedPath(pathname: string): string {
   const paths = [
     "/dashboard",
+    "/leadership",
     "/people",
     "/internal-employees",
     "/reimbursements",
@@ -162,6 +165,7 @@ export function AppLayout() {
   const currentModule = moduleConfig(location.pathname);
 
   const visibleMenuItems: ItemType[] = [
+    ...(can(Permission.LEADERSHIP_DASHBOARD_READ) ? [menuItems[15]!] : []),
     ...(can(Permission.DASHBOARD_READ) ? [menuItems[0]!] : []),
     ...(can(Permission.PEOPLE_READ) ? [menuItems[1]!] : []),
     ...(can(Permission.INTERNAL_EMPLOYEE_READ) ? [menuItems[13]!] : []),
@@ -257,7 +261,7 @@ export function AppLayout() {
       ) : (
         <Drawer
           placement="left"
-          width={268}
+          size={268}
           open={drawerOpen}
           closable={false}
           onClose={() => setDrawerOpen(false)}

@@ -22,11 +22,12 @@ const ProductIntroPage = lazy(() => import("../pages/ProductIntroPage").then((mo
 const AiAssistantPage = lazy(() => import("../pages/AiAssistantPage").then((module) => ({ default: module.AiAssistantPage })));
 const InternalEmployeesPage = lazy(() => import("../pages/InternalEmployeesPage").then((module) => ({ default: module.InternalEmployeesPage })));
 const ReimbursementsPage = lazy(() => import("../pages/ReimbursementsPage").then((module) => ({ default: module.ReimbursementsPage })));
+const LeadershipDashboardPage = lazy(() => import("../pages/LeadershipDashboardPage").then((module) => ({ default: module.LeadershipDashboardPage })));
 
 function ProtectedLayout() {
   const { user, initializing } = useAuth();
   const location = useLocation();
-  if (initializing) return <div className="full-screen-loader"><Spin size="large" tip="正在验证登录状态" /></div>;
+  if (initializing) return <div className="full-screen-loader"><Spin size="large" description="正在验证登录状态" /></div>;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   return <AppLayout />;
 }
@@ -46,6 +47,7 @@ export function AppRoutes() {
         <Route path="/people" element={<PeoplePage />} />
         <Route path="/internal-employees" element={<InternalEmployeesPage />} />
         <Route path="/reimbursements" element={<ReimbursementsPage />} />
+        <Route path="/leadership" element={<LeadershipDashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/suppliers" element={<SuppliersPage />} />
         <Route path="/policies/supplier" element={<PoliciesPage type="SUPPLIER" />} />

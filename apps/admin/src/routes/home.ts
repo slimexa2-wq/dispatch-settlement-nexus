@@ -2,6 +2,7 @@ import { Permission } from "@xiangneng/shared";
 
 export function homePathForPermissions(permissions: readonly Permission[]): string {
   const has = (permission: Permission) => permissions.includes(permission);
+  if (has(Permission.LEADERSHIP_DASHBOARD_READ)) return "/leadership";
   if (has(Permission.DASHBOARD_READ)) return "/dashboard";
   if (has(Permission.PEOPLE_READ)) return "/people";
   if (has(Permission.PROJECT_READ)) return "/projects";

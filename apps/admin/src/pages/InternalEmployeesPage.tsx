@@ -451,7 +451,7 @@ function InternalEmployeesContent() {
             <Typography.Text type="secondary">{detail.employeeNo}</Typography.Text>
           </Space>
         ) : "内部员工详情"}
-        width={900}
+        size={900}
         open={detailOpen}
         loading={detailLoading}
         onClose={() => setDetailOpen(false)}

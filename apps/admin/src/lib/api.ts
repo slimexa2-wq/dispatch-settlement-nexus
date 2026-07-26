@@ -111,7 +111,18 @@ async function request<T>(
 ): Promise<T> {
   const method = init.method ?? "GET";
   if (isDemoSession()) {
-    return await handleDemoRequest<T>(method, path.startsWith("/") ? path : `/${path}`, init.query ?? {}, parseDemoBody(init.body));
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    const [demoPath, search = ""] = normalized.split("?", 2);
+    const demoQuery: Query = { ...(init.query ?? {}) };
+    new URLSearchParams(search).forEach((value, key) => {
+      demoQuery[key] = value;
+    });
+    return await handleDemoRequest<T>(
+      method,
+      demoPath ?? normalized,
+      demoQuery,
+      parseDemoBody(init.body)
+    );
   }
 
   const token = getToken();

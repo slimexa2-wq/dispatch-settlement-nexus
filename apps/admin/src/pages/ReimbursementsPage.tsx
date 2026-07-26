@@ -452,7 +452,7 @@ export function ReimbursementsPage() {
   ];
 
   if (!readPermission(can)) {
-    return <Alert type="error" showIcon message="当前账号没有报销业务权限" />;
+    return <Alert type="error" showIcon title="当前账号没有报销业务权限" />;
   }
 
   const artifactCards = ([
@@ -600,7 +600,7 @@ export function ReimbursementsPage() {
 
       <Drawer
         title={detail ? `${detail.code} · ${detail.title}` : "报销单详情"}
-        width={1160}
+        size={1160}
         open={detailOpen}
         loading={detailLoading}
         onClose={() => setDetailOpen(false)}
@@ -638,7 +638,7 @@ export function ReimbursementsPage() {
               <Alert
                 type="warning"
                 showIcon
-                message={`存在 ${detail.issues.filter((issue) => issue.status === "OPEN").length} 个未解决问题，流程已锁定`}
+                title={`存在 ${detail.issues.filter((issue) => issue.status === "OPEN").length} 个未解决问题，流程已锁定`}
               />
             ) : null}
             <Row gutter={[12, 12]}>
@@ -784,7 +784,7 @@ export function ReimbursementsPage() {
         <Alert
           type="info"
           showIcon
-          message="金额口径：每条发票金额必须严格大于付款金额，系统同时在接口和数据库层校验。"
+          title="金额口径：每条发票金额必须严格大于付款金额，系统同时在接口和数据库层校验。"
           style={{ marginBottom: 16 }}
         />
         <Form<CreateValues> form={createForm} layout="vertical" onFinish={(values) => void createBatch(values)}>

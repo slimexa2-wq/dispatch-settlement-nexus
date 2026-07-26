@@ -6283,6 +6283,29 @@ a,
   border-color: #1677ff;
 }
 
+.leadership-metric-list,
+.leadership-definition-list {
+  display: grid;
+  gap: 0;
+  margin-bottom: 14px;
+}
+
+.leadership-metric-row,
+.leadership-definition-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.leadership-definition-list > div {
+  align-items: flex-start;
+  color: #5f6b7a;
+  line-height: 1.65;
+}
+
 @media (max-width: 1199px) {
   .xn-miniapp-workbench .content-card {
     position: static;

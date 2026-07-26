@@ -29,6 +29,7 @@ import { aiRoutes } from "./routes/ai.js";
 import { portalRoutes } from "./routes/portal.js";
 import { internalEmployeeRoutes } from "./routes/internal-employees.js";
 import { reimbursementRoutes } from "./routes/reimbursements.js";
+import { leadershipRoutes } from "./routes/leadership.js";
 import "./types.js";
 
 export type BuildAppOptions = {
@@ -117,6 +118,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     await portalRoutes(api);
     await internalEmployeeRoutes(api);
     await reimbursementRoutes(api);
+    await leadershipRoutes(api);
   }, { prefix: "/api" });
 
   // 单服务部署：API 进程同时托管门户生产构建（Render Web Service 即如此）。

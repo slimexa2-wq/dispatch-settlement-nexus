@@ -25,12 +25,19 @@ import type {
   ElectronicContract,
   ElectronicSeal,
   ImportPreview,
+  InternalEmployee,
   JobDemand,
+  LeadershipDashboard,
+  OrganizationOptionSet,
   Person,
   PersonLifecycleRecord,
   Policy,
   Project,
   RegistrationQr,
+  Reimbursement,
+  ReimbursementArtifact,
+  ReimbursementIssue,
+  ReimbursementStatus,
   ReferralReward,
   SalarySlip,
   SessionUser,
@@ -38,13 +45,212 @@ import type {
   Supplier,
   UserAccount
 } from "../types/domain";
-import { realDemoDataUrl, type RealDemoData } from "./demo-data.generated";
+import { loadRealDemoData, type RealDemoData } from "./demo-data.generated";
 
 export const DEMO_CODE = "8888";
 export const DEMO_TOKEN = "xiangneng-demo-token";
 const DEMO_STATE_KEY = "xiangneng.demo.shared-state.v2";
 
 const now = new Date().toISOString();
+
+const demoOrganizationOptions: OrganizationOptionSet = {
+  legalEntities: [
+    { id: "demo-legal-1", code: "XN-DEMO-01", name: "祥能演示一分公司有限公司" },
+    { id: "demo-legal-2", code: "XN-DEMO-02", name: "祥能演示二分公司有限公司" }
+  ],
+  branches: [
+    { id: "synthetic-branch-01", name: "祥能演示一分公司" },
+    { id: "synthetic-branch-02", name: "祥能演示二分公司" },
+    { id: "synthetic-branch-03", name: "祥能演示三分公司" }
+  ],
+  organizationUnits: [
+    { id: "demo-org-hr", code: "OU-DEMO-HR", name: "人力资源中心", type: "CENTER", branchId: "synthetic-branch-01", path: "/group/branch-01/hr" },
+    { id: "demo-org-ops", code: "OU-DEMO-OPS", name: "运营管理部", type: "DEPARTMENT", branchId: "synthetic-branch-01", path: "/group/branch-01/ops" },
+    { id: "demo-org-finance", code: "OU-DEMO-FIN", name: "财务管理部", type: "DEPARTMENT", branchId: "synthetic-branch-01", path: "/group/branch-01/finance" }
+  ],
+  positions: [
+    { id: "demo-position-hr", code: "POS-DEMO-HR", name: "人事专员", organizationUnitId: "demo-org-hr" },
+    { id: "demo-position-ops", code: "POS-DEMO-OPS", name: "运营主管", organizationUnitId: "demo-org-ops" },
+    { id: "demo-position-finance", code: "POS-DEMO-FIN", name: "财务审核", organizationUnitId: "demo-org-finance" }
+  ],
+  jobGrades: [
+    { id: "demo-grade-5", code: "G5", name: "专业岗位", level: 5 },
+    { id: "demo-grade-7", code: "G7", name: "管理岗位", level: 7 }
+  ]
+};
+
+function createDemoInternalEmployees(): InternalEmployee[] {
+  const names = ["张伟", "李娜", "王强", "刘敏", "陈磊", "赵静"];
+  return names.map((name, index) => {
+    const organizationUnit = demoOrganizationOptions.organizationUnits[index % 3]!;
+    const position = demoOrganizationOptions.positions[index % 3]!;
+    const branch = demoOrganizationOptions.branches[index % 2]!;
+    const onboardDate = `202${index % 3 + 3}-0${index % 8 + 1}-0${index + 1}`;
+    return {
+      id: `demo-internal-${index + 1}`,
+      employeeNo: `XN-DEMO-${String(index + 1).padStart(4, "0")}`,
+      userId: `demo-internal-user-${index + 1}`,
+      name,
+      phone: `13800001${String(index + 1).padStart(3, "0")}`,
+      idCard: `510105199${index}0101${String(1200 + index).padStart(4, "0")}`,
+      email: `demo${index + 1}@xiangneng.example`,
+      legalEntityId: "demo-legal-1",
+      branchId: branch.id,
+      organizationUnitId: organizationUnit.id,
+      positionId: position.id,
+      jobGradeId: index < 2 ? "demo-grade-7" : "demo-grade-5",
+      status: index === 5 ? "LEFT" : "ACTIVE",
+      onboardDate,
+      offboardDate: index === 5 ? "2026-06-30" : undefined,
+      offboardReason: index === 5 ? "个人发展" : undefined,
+      version: 1,
+      legalEntity: demoOrganizationOptions.legalEntities[0],
+      branch,
+      organizationUnit,
+      position,
+      jobGrade: demoOrganizationOptions.jobGrades[index < 2 ? 1 : 0],
+      employments: [{
+        id: `demo-employment-${index + 1}`,
+        startedAt: onboardDate,
+        endedAt: index === 5 ? "2026-06-30" : undefined,
+        isPrimary: true,
+        reason: "入职",
+        legalEntity: demoOrganizationOptions.legalEntities[0],
+        branch,
+        organizationUnit: { id: organizationUnit.id, name: organizationUnit.name },
+        position: { id: position.id, name: position.name },
+        jobGrade: { id: index < 2 ? "demo-grade-7" : "demo-grade-5", name: index < 2 ? "管理岗位" : "专业岗位" }
+      }],
+      changes: [{
+        id: `demo-change-${index + 1}`,
+        type: "ONBOARD",
+        effectiveAt: onboardDate,
+        reason: "入职",
+        createdAt: `${onboardDate}T09:00:00.000Z`
+      }]
+    };
+  });
+}
+
+const reimbursementStatusOrder: ReimbursementStatus[] = [
+  "PENDING_SUBMISSION",
+  "DEPARTMENT_PREPARING",
+  "OWNER_REVIEWING",
+  "FINANCE_REVIEWING",
+  "APPROVED",
+  "PENDING_PAYMENT",
+  "PAID"
+];
+
+function createDemoReimbursements(): Reimbursement[] {
+  return reimbursementStatusOrder.map((status, index) => {
+    const paymentCents = (12_000 + index * 3_500) * 100;
+    const invoiceCents = paymentCents + (120 + index * 30) * 100;
+    const createdAt = `2026-07-${String(10 + index).padStart(2, "0")}T09:00:00.000Z`;
+    const lineId = `demo-reimbursement-line-${index + 1}`;
+    const attachments = index === 0 ? [] : [
+      {
+        id: `demo-payment-attachment-${index + 1}`,
+        batchId: `demo-reimbursement-${index + 1}`,
+        lineId,
+        type: "PAYMENT_VOUCHER" as const,
+        originalName: `${String(index + 1).padStart(3, "0")}-付款凭证.pdf`,
+        mimeType: "application/pdf",
+        sizeBytes: 128_000 + index * 1_024,
+        sha256: `${index + 1}`.repeat(64).slice(0, 64),
+        createdAt
+      },
+      {
+        id: `demo-invoice-attachment-${index + 1}`,
+        batchId: `demo-reimbursement-${index + 1}`,
+        lineId,
+        type: "INVOICE" as const,
+        originalName: `${String(index + 1).padStart(3, "0")}-增值税发票.pdf`,
+        mimeType: "application/pdf",
+        sizeBytes: 156_000 + index * 1_024,
+        sha256: `${index + 2}`.repeat(64).slice(0, 64),
+        createdAt
+      }
+    ];
+    const approvals = reimbursementStatusOrder
+      .slice(1, index + 1)
+      .map((toStatus, approvalIndex) => ({
+        id: `demo-approval-${index + 1}-${approvalIndex + 1}`,
+        fromStatus: reimbursementStatusOrder[approvalIndex]!,
+        toStatus,
+        decision: "APPROVED" as const,
+        comment: `演示流程：${approvalIndex + 1}级处理通过`,
+        actor: { id: `demo-actor-${approvalIndex + 1}`, displayName: ["张伟", "王主管", "财务审核", "出纳"][approvalIndex % 4]! },
+        createdAt: `2026-07-${String(11 + index).padStart(2, "0")}T${String(9 + approvalIndex).padStart(2, "0")}:00:00.000Z`
+      }));
+    return {
+      id: `demo-reimbursement-${index + 1}`,
+      code: `BX-202607-${String(index + 1).padStart(4, "0")}`,
+      title: ["项目差旅报销", "办公用品报销", "项目材料报销", "客户拜访差旅报销", "招聘会场地报销", "培训费用报销", "运营活动费用报销"][index]!,
+      applicantUserId: "demo-systemAdmin",
+      applicant: { id: "demo-systemAdmin", displayName: ["张伟", "李娜", "王强", "刘敏", "陈磊", "赵静", "周敏"][index]! },
+      branchId: demoOrganizationOptions.branches[index % 3]!.id,
+      branch: demoOrganizationOptions.branches[index % 3]!,
+      organizationUnitId: demoOrganizationOptions.organizationUnits[index % 3]!.id,
+      organizationUnit: demoOrganizationOptions.organizationUnits[index % 3]!,
+      status,
+      totalPaymentCents: paymentCents,
+      totalInvoiceCents: invoiceCents,
+      invoiceExcessCents: invoiceCents - paymentCents,
+      version: index + 1,
+      submittedAt: index > 0 ? createdAt : undefined,
+      approvedAt: index >= 4 ? createdAt : undefined,
+      paidAt: status === "PAID" ? "2026-07-24T15:30:00.000Z" : undefined,
+      createdAt,
+      updatedAt: `2026-07-${String(18 + index).padStart(2, "0")}T14:30:00.000Z`,
+      lines: [{
+        id: lineId,
+        sequence: 1,
+        expenseDate: `2026-07-${String(8 + index).padStart(2, "0")}`,
+        category: ["差旅费", "办公费", "项目材料费"][index % 3]!,
+        description: `演示完整业务明细 ${index + 1}：已维护用途、收款人、付款金额和发票金额`,
+        payeeName: ["张伟", "李娜", "王强"][index % 3]!,
+        payeeAccount: `62220210000000${String(index + 1).padStart(4, "0")}`,
+        payeeBank: "中国工商银行演示支行",
+        paymentCents,
+        invoiceCents,
+        attachments
+      }],
+      attachments,
+      issues: index === 3 ? [{
+        id: "demo-reimbursement-issue-1",
+        lineId,
+        type: "附件缺失",
+        description: "补充出差审批单",
+        status: "OPEN",
+        raisedBy: { id: "demo-finance", displayName: "财务审核" },
+        createdAt: "2026-07-20T10:00:00.000Z"
+      }] : [],
+      approvals,
+      payment: status === "PAID" ? {
+        id: "demo-payment-1",
+        amountCents: paymentCents,
+        reference: "XN202607240001",
+        paidAt: "2026-07-24T15:30:00.000Z"
+      } : undefined,
+      artifacts: index >= 4 ? ([
+        "REIMBURSEMENT_FORM",
+        "PAYMENT_PACKAGE",
+        "INVOICE_PACKAGE"
+      ] as const).map((type) => ({
+        id: `demo-artifact-${index + 1}-${type}`,
+        type,
+        status: "GENERATED" as const,
+        originalName: `${type}-${index + 1}`,
+        generatedAt: createdAt
+      })) : [],
+      _count: { lines: 1, issues: index === 3 ? 1 : 0, attachments: attachments.length }
+    };
+  });
+}
+
+let internalEmployees = createDemoInternalEmployees();
+let reimbursements = createDemoReimbursements();
 
 export const demoUser: SessionUser = {
   id: "demo-admin",
@@ -57,6 +263,33 @@ export const demoUser: SessionUser = {
   projectIds: [],
   permissions: [...rolePermissions[UserRole.SYSTEM_ADMIN]]
 };
+
+export function demoUserForRole(role: string): SessionUser {
+  const resolvedRole = {
+    leader: UserRole.GROUP_LEADER,
+    systemAdmin: UserRole.SYSTEM_ADMIN,
+    operator: UserRole.PROJECT_OPERATOR,
+    supplier: UserRole.SUPPLIER_ADMIN,
+    employee: UserRole.EMPLOYEE,
+    candidate: UserRole.JOB_SEEKER
+  }[role] ?? UserRole.SYSTEM_ADMIN;
+  const displayName = {
+    [UserRole.GROUP_LEADER]: "集团领导演示账号",
+    [UserRole.SYSTEM_ADMIN]: "系统管理员演示账号",
+    [UserRole.PROJECT_OPERATOR]: "现场运营演示账号",
+    [UserRole.SUPPLIER_ADMIN]: "供应商管理员演示账号",
+    [UserRole.EMPLOYEE]: "内部员工演示账号",
+    [UserRole.JOB_SEEKER]: "求职者演示账号"
+  }[resolvedRole] ?? "演示账号";
+  return {
+    ...demoUser,
+    id: `demo-${role}`,
+    username: `demo_${role}`,
+    displayName,
+    role: resolvedRole,
+    permissions: [...rolePermissions[resolvedRole]]
+  };
+}
 
 type QueryRecord = Record<string, unknown>;
 type DemoApplication = Record<string, unknown> & {
@@ -108,6 +341,8 @@ const peopleFilterCache = new Map<string, Person[]>();
 const dashboardCache = new Map<string, DashboardData>();
 
 type PersistedDemoState = {
+  internalEmployees?: InternalEmployee[];
+  reimbursements?: Reimbursement[];
   projects: Project[];
   suppliers: Supplier[];
   people: Person[];
@@ -449,6 +684,8 @@ function jobDemandForStorage(job: JobDemand): JobDemand {
 function persistDemoState(): void {
   if (!canPersistDemoState()) return;
   const state: PersistedDemoState = {
+    internalEmployees,
+    reimbursements,
     projects: projects.map(projectForStorage),
     suppliers: suppliers.map(supplierForStorage),
     people: people.filter((person) => changedPersonIds.has(person.id) || person.id.startsWith("person-demo-")).map(personForStorage),
@@ -653,9 +890,7 @@ function commitDemoState(): void {
 
 async function ensureRealDemoData(): Promise<void> {
   if (realData) return;
-  const response = await fetch(realDemoDataUrl);
-  if (!response.ok) throw new Error("真实演示数据加载失败");
-  realData = await response.json() as RealDemoData;
+  realData = await loadRealDemoData();
   realDemoMeta = realData.meta;
   branchById = new Map(realData.branches.map((branch) => [branch.id, branch]));
   projects = realData.projects.map((project, index) => {
@@ -752,6 +987,8 @@ async function ensureRealDemoData(): Promise<void> {
   policies[1] = { ...policies[1]!, projectId: projects[0]?.id ?? "", project: projects[0] };
   const persisted = readPersistedDemoState();
   if (persisted) {
+    internalEmployees = persisted.internalEmployees ?? internalEmployees;
+    reimbursements = persisted.reimbursements ?? reimbursements;
     if (persisted.projects?.length) projects = persisted.projects;
     if (persisted.suppliers?.length) suppliers = persisted.suppliers;
     if (persisted.jobDemands?.length) jobDemands = persisted.jobDemands;
@@ -1989,6 +2226,337 @@ function patchJobDemandRecord(id: string, input: Partial<JobDemand>): JobDemand 
   return byId(jobDemands, id);
 }
 
+function demoLeadershipDashboard(): LeadershipDashboard {
+  const activeOutsourced = people.filter((person) =>
+    (person.employmentStatus ?? person.status) === EmploymentStatus.ACTIVE
+  ).length;
+  const activeInternal = internalEmployees.filter((employee) => employee.status === "ACTIVE").length;
+  const onboardMonth = people.filter((person) => person.onboardDate?.startsWith("2026-07")).length;
+  const offboardMonth = people.filter((person) => person.offboardDate?.startsWith("2026-07")).length;
+  const recruiting = jobDemands.filter((job) => job.status === JobStatus.RECRUITING);
+  const requiredCount = recruiting.reduce((sum, job) => sum + Number(job.requiredCount ?? 0), 0);
+  const applicationCount = recruiting.reduce((sum, job) => sum + Number(job.applicationCount ?? 0), 0);
+  const totalPaymentCents = reimbursements.reduce((sum, item) => sum + item.totalPaymentCents, 0);
+  const totalInvoiceCents = reimbursements.reduce((sum, item) => sum + item.totalInvoiceCents, 0);
+  return {
+    asOf: new Date().toISOString(),
+    period: {
+      start: "2026-07-01T00:00:00.000Z",
+      end: "2026-08-01T00:00:00.000Z",
+      label: "2026年07月"
+    },
+    people: {
+      outsourcedActive: activeOutsourced,
+      internalActive: activeInternal,
+      totalActive: activeOutsourced + activeInternal,
+      onboardMonth,
+      offboardMonth,
+      netGrowth: onboardMonth - offboardMonth
+    },
+    projects: {
+      active: projects.filter((project) => project.status === ProjectStatus.ACTIVE).length,
+      activeSuppliers: suppliers.filter((supplier) => supplier.projects?.length).length
+    },
+    recruitment: {
+      activeDemands: recruiting.length,
+      requiredCount,
+      applicationCount,
+      remainingCount: Math.max(requiredCount - applicationCount, 0),
+      completionRate: requiredCount
+        ? Math.min(100, Math.round(applicationCount / requiredCount * 1000) / 10)
+        : 0
+    },
+    reimbursements: {
+      count: reimbursements.length,
+      totalPaymentCents,
+      totalInvoiceCents,
+      invoiceExcessCents: totalInvoiceCents - totalPaymentCents,
+      paidCount: reimbursements.filter((item) => item.status === "PAID").length,
+      pendingCount: reimbursements.filter((item) => item.status !== "PAID").length,
+      openIssues: reimbursements.flatMap((item) => item.issues).filter((issue) => issue.status === "OPEN").length,
+      byStatus: reimbursementStatusOrder.map((status) => {
+        const rows = reimbursements.filter((item) => item.status === status);
+        return {
+          status,
+          count: rows.length,
+          paymentCents: rows.reduce((sum, item) => sum + item.totalPaymentCents, 0)
+        };
+      }).filter((item) => item.count > 0)
+    },
+    definitions: [
+      "当前在职：截至更新时间，人员状态为在职的外包人员与内部员工合计。",
+      "本月入离职：按人员主档入职日期、离职日期落在本自然月统计。",
+      "招聘完成率：招聘中岗位的报名人数 ÷ 需求人数，最高显示100%。",
+      "报销金额：按明细付款与发票金额汇总，发票金额严格大于付款金额。"
+    ]
+  };
+}
+
+function filterDemoReimbursements(query: QueryRecord): Reimbursement[] {
+  const keyword = String(query.keyword ?? "").trim().toLowerCase();
+  const status = String(query.status ?? "").trim();
+  const branchId = String(query.branchId ?? "").trim();
+  const organizationUnitId = String(query.organizationUnitId ?? "").trim();
+  return reimbursements.filter((item) =>
+    (!keyword || `${item.code} ${item.title} ${item.applicant.displayName}`.toLowerCase().includes(keyword)) &&
+    (!status || item.status === status) &&
+    (!branchId || item.branchId === branchId) &&
+    (!organizationUnitId || item.organizationUnitId === organizationUnitId)
+  );
+}
+
+function createDemoReimbursement(input: Omit<Partial<Reimbursement>, "lines"> & {
+  lines?: Array<{
+    sequence: number;
+    expenseDate: string;
+    category: string;
+    description: string;
+    payeeName?: string;
+    payeeAccount?: string;
+    payeeBank?: string;
+    paymentCents: number;
+    invoiceCents: number;
+  }>;
+}): Reimbursement {
+  const lines = input.lines ?? [];
+  if (!lines.length) throw new Error("报销单至少需要一条明细");
+  if (lines.some((line) => line.invoiceCents <= line.paymentCents)) {
+    throw new Error("发票金额必须严格大于付款金额");
+  }
+  const batchId = `demo-reimbursement-${Date.now()}`;
+  const branch = demoOrganizationOptions.branches.find((item) => item.id === input.branchId);
+  const organizationUnit = demoOrganizationOptions.organizationUnits.find((item) => item.id === input.organizationUnitId);
+  const createdAt = new Date().toISOString();
+  const record: Reimbursement = {
+    id: batchId,
+    code: `BX-202607-${String(reimbursements.length + 1).padStart(4, "0")}`,
+    title: input.title?.trim() || "新建报销单",
+    applicantUserId: demoUser.id,
+    applicant: { id: demoUser.id, displayName: demoUser.displayName },
+    branchId: branch?.id,
+    branch,
+    organizationUnitId: organizationUnit?.id,
+    organizationUnit,
+    status: "PENDING_SUBMISSION",
+    totalPaymentCents: lines.reduce((sum, line) => sum + line.paymentCents, 0),
+    totalInvoiceCents: lines.reduce((sum, line) => sum + line.invoiceCents, 0),
+    invoiceExcessCents: lines.reduce((sum, line) => sum + line.invoiceCents - line.paymentCents, 0),
+    version: 1,
+    createdAt,
+    updatedAt: createdAt,
+    lines: lines.map((line) => ({
+      id: `${batchId}-line-${line.sequence}`,
+      ...line,
+      attachments: []
+    })),
+    attachments: [],
+    issues: [],
+    approvals: [],
+    artifacts: [],
+    _count: { lines: lines.length, issues: 0, attachments: 0 }
+  };
+  reimbursements = [record, ...reimbursements];
+  commitDemoState();
+  return record;
+}
+
+type DemoInternalEmployeeCreateInput = {
+  employeeNo: string;
+  name: string;
+  phone: string;
+  idCard: string;
+  email?: string;
+  legalEntityId?: string;
+  branchId?: string;
+  organizationUnitId: string;
+  positionId: string;
+  jobGradeId?: string;
+  onboardDate: string;
+  reason?: string;
+};
+
+function assertUniqueInternalEmployee(input: DemoInternalEmployeeCreateInput): void {
+  const normalizedEmployeeNo = input.employeeNo.trim().toUpperCase();
+  const normalizedPhone = input.phone.trim();
+  const normalizedIdCard = input.idCard.trim().toUpperCase();
+  if (internalEmployees.some((employee) => employee.employeeNo.toUpperCase() === normalizedEmployeeNo)) {
+    throw new Error("员工编号已存在");
+  }
+  if (internalEmployees.some((employee) => employee.phone === normalizedPhone)) {
+    throw new Error("手机号已存在");
+  }
+  if (internalEmployees.some((employee) => employee.idCard.toUpperCase() === normalizedIdCard)) {
+    throw new Error("身份证号已存在");
+  }
+}
+
+function createDemoInternalEmployee(input: DemoInternalEmployeeCreateInput): InternalEmployee {
+  assertUniqueInternalEmployee(input);
+  const legalEntity = demoOrganizationOptions.legalEntities.find((item) => item.id === input.legalEntityId)
+    ?? demoOrganizationOptions.legalEntities[0];
+  const branch = demoOrganizationOptions.branches.find((item) => item.id === input.branchId)
+    ?? demoOrganizationOptions.branches[0];
+  const organizationUnit = demoOrganizationOptions.organizationUnits.find((item) => item.id === input.organizationUnitId);
+  const position = demoOrganizationOptions.positions.find((item) => item.id === input.positionId);
+  const jobGrade = demoOrganizationOptions.jobGrades.find((item) => item.id === input.jobGradeId);
+  if (!organizationUnit || !position) throw new Error("部门和岗位必须来自当前组织架构");
+  const createdAt = new Date().toISOString();
+  const recordId = `demo-internal-${Date.now()}`;
+  const reason = input.reason?.trim() || "新员工入职";
+  const record: InternalEmployee = {
+    id: recordId,
+    employeeNo: input.employeeNo.trim().toUpperCase(),
+    userId: `demo-internal-user-${Date.now()}`,
+    name: input.name.trim(),
+    phone: input.phone.trim(),
+    idCard: input.idCard.trim().toUpperCase(),
+    email: input.email?.trim() || undefined,
+    legalEntityId: legalEntity?.id,
+    branchId: branch?.id,
+    organizationUnitId: organizationUnit.id,
+    positionId: position.id,
+    jobGradeId: jobGrade?.id,
+    status: "ACTIVE",
+    onboardDate: input.onboardDate,
+    version: 1,
+    legalEntity,
+    branch,
+    organizationUnit,
+    position,
+    jobGrade,
+    employments: [{
+      id: `${recordId}-employment-1`,
+      startedAt: input.onboardDate,
+      isPrimary: true,
+      reason,
+      legalEntity,
+      branch,
+      organizationUnit: { id: organizationUnit.id, name: organizationUnit.name },
+      position: { id: position.id, name: position.name },
+      jobGrade: jobGrade ? { id: jobGrade.id, name: jobGrade.name } : undefined
+    }],
+    changes: [{
+      id: `${recordId}-change-1`,
+      type: "ONBOARD",
+      effectiveAt: input.onboardDate,
+      reason,
+      after: {
+        legalEntityId: legalEntity?.id,
+        branchId: branch?.id,
+        organizationUnitId: organizationUnit.id,
+        positionId: position.id,
+        jobGradeId: jobGrade?.id
+      },
+      createdAt
+    }]
+  };
+  internalEmployees = [record, ...internalEmployees];
+  commitDemoState();
+  return record;
+}
+
+function transferDemoInternalEmployee(
+  employeeId: string,
+  input: {
+    expectedVersion: number;
+    effectiveDate: string;
+    organizationUnitId: string;
+    positionId: string;
+    branchId?: string;
+    reason: string;
+  }
+): InternalEmployee {
+  const previous = byId(internalEmployees, employeeId);
+  if (previous.status !== "ACTIVE") throw new Error("仅在职内部员工可以办理调动");
+  if (previous.version !== input.expectedVersion) throw new Error("员工档案已更新，请刷新后重试");
+  const organizationUnit = demoOrganizationOptions.organizationUnits.find((item) => item.id === input.organizationUnitId);
+  const position = demoOrganizationOptions.positions.find((item) => item.id === input.positionId);
+  const branch = demoOrganizationOptions.branches.find((item) => item.id === input.branchId)
+    ?? previous.branch;
+  if (!organizationUnit || !position) throw new Error("部门和岗位必须来自当前组织架构");
+  const before = {
+    branchId: previous.branchId,
+    organizationUnitId: previous.organizationUnitId,
+    positionId: previous.positionId
+  };
+  const endedEmployments = (previous.employments ?? []).map((employment) =>
+    employment.isPrimary && !employment.endedAt
+      ? { ...employment, endedAt: input.effectiveDate, isPrimary: false }
+      : employment
+  );
+  const currentEmployment = {
+    id: `${employeeId}-employment-${previous.version + 1}`,
+    startedAt: input.effectiveDate,
+    isPrimary: true,
+    reason: input.reason.trim(),
+    legalEntity: previous.legalEntity,
+    branch,
+    organizationUnit: { id: organizationUnit.id, name: organizationUnit.name },
+    position: { id: position.id, name: position.name },
+    jobGrade: previous.jobGrade ? { id: previous.jobGrade.id, name: previous.jobGrade.name } : undefined
+  };
+  const next: InternalEmployee = {
+    ...previous,
+    branchId: branch?.id,
+    organizationUnitId: organizationUnit.id,
+    positionId: position.id,
+    branch,
+    organizationUnit,
+    position,
+    version: previous.version + 1,
+    employments: [...endedEmployments, currentEmployment],
+    changes: [...(previous.changes ?? []), {
+      id: `${employeeId}-change-${previous.version + 1}`,
+      type: "TRANSFER",
+      effectiveAt: input.effectiveDate,
+      reason: input.reason.trim(),
+      before,
+      after: {
+        branchId: branch?.id,
+        organizationUnitId: organizationUnit.id,
+        positionId: position.id
+      },
+      createdAt: new Date().toISOString()
+    }]
+  };
+  internalEmployees = internalEmployees.map((employee) => employee.id === employeeId ? next : employee);
+  commitDemoState();
+  return next;
+}
+
+function offboardDemoInternalEmployee(
+  employeeId: string,
+  input: { expectedVersion: number; offboardDate: string; reason: string }
+): InternalEmployee {
+  const previous = byId(internalEmployees, employeeId);
+  if (previous.status !== "ACTIVE") throw new Error("仅在职内部员工可以办理离职");
+  if (previous.version !== input.expectedVersion) throw new Error("员工档案已更新，请刷新后重试");
+  const next: InternalEmployee = {
+    ...previous,
+    status: "LEFT",
+    offboardDate: input.offboardDate,
+    offboardReason: input.reason.trim(),
+    version: previous.version + 1,
+    employments: (previous.employments ?? []).map((employment) =>
+      employment.isPrimary && !employment.endedAt
+        ? { ...employment, endedAt: input.offboardDate, isPrimary: false }
+        : employment
+    ),
+    changes: [...(previous.changes ?? []), {
+      id: `${employeeId}-change-${previous.version + 1}`,
+      type: "OFFBOARD",
+      effectiveAt: input.offboardDate,
+      reason: input.reason.trim(),
+      before: { status: previous.status },
+      after: { status: "LEFT", offboardDate: input.offboardDate },
+      createdAt: new Date().toISOString()
+    }]
+  };
+  internalEmployees = internalEmployees.map((employee) => employee.id === employeeId ? next : employee);
+  commitDemoState();
+  return next;
+}
+
 export async function handleDemoRequest<T>(method: string, path: string, query: QueryRecord = {}, body?: unknown): Promise<T> {
   await ensureRealDemoData();
   const pageNumber = queryNumber(query, "page", 1);
@@ -1996,6 +2564,50 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
   const id = path.split("/").filter(Boolean).at(-1) ?? "";
 
   if (method === "GET" && path === "/auth/me") return demoUser as T;
+  if (method === "GET" && path === "/organization/options") return demoOrganizationOptions as T;
+  if (method === "GET" && path === "/organization/tree") return demoOrganizationOptions.organizationUnits as T;
+  if (method === "GET" && path === "/internal-employees") {
+    const keyword = String(query.keyword ?? "").trim().toLowerCase();
+    const status = String(query.status ?? "");
+    const branchId = String(query.branchId ?? "");
+    const organizationUnitId = String(query.organizationUnitId ?? "");
+    const filtered = internalEmployees.filter((employee) =>
+      (!keyword || `${employee.name} ${employee.employeeNo} ${employee.phone} ${employee.idCard}`.toLowerCase().includes(keyword)) &&
+      (!status || employee.status === status) &&
+      (!branchId || employee.branchId === branchId) &&
+      (!organizationUnitId || employee.organizationUnitId === organizationUnitId)
+    );
+    return page(filtered, pageNumber, pageSize) as T;
+  }
+  if (method === "GET" && /^\/internal-employees\/[^/]+$/.test(path)) {
+    return byId(internalEmployees, id) as T;
+  }
+  if (method === "POST" && path === "/internal-employees") {
+    return createDemoInternalEmployee(body as DemoInternalEmployeeCreateInput) as T;
+  }
+  if (method === "POST" && /^\/internal-employees\/[^/]+\/transfer$/.test(path)) {
+    const employeeId = path.split("/")[2] ?? "";
+    return transferDemoInternalEmployee(
+      employeeId,
+      body as Parameters<typeof transferDemoInternalEmployee>[1]
+    ) as T;
+  }
+  if (method === "POST" && /^\/internal-employees\/[^/]+\/offboard$/.test(path)) {
+    const employeeId = path.split("/")[2] ?? "";
+    return offboardDemoInternalEmployee(
+      employeeId,
+      body as Parameters<typeof offboardDemoInternalEmployee>[1]
+    ) as T;
+  }
+  if (method === "GET" && path === "/leadership/dashboard") {
+    return demoLeadershipDashboard() as T;
+  }
+  if (method === "GET" && path === "/reimbursements") {
+    return page(filterDemoReimbursements(query), pageNumber, pageSize) as T;
+  }
+  if (method === "GET" && /^\/reimbursements\/[^/]+$/.test(path)) {
+    return byId(reimbursements, id) as T;
+  }
   if (method === "GET" && path === "/statistics/overview") return filteredDashboard(query) as T;
   if (method === "GET" && path === "/demo/miniapp-snapshot") return miniappSnapshot() as T;
   if (method === "GET" && path === "/statistics/drilldown") return page(filterPeople(query), pageNumber, pageSize) as T;
@@ -2024,6 +2636,193 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
   if (method === "GET" && path === "/users") return page(users(), pageNumber, pageSize) as T;
   if (method === "GET" && path === "/audit-logs") return page(auditLogs(), pageNumber, pageSize) as T;
 
+  if (method === "POST" && path === "/reimbursements") {
+    return createDemoReimbursement(body as Parameters<typeof createDemoReimbursement>[0]) as T;
+  }
+  if (method === "PATCH" && /^\/reimbursements\/[^/]+$/.test(path)) {
+    const previous = byId(reimbursements, id);
+    const input = body as Partial<Reimbursement> & { expectedVersion?: number };
+    if (input.expectedVersion && input.expectedVersion !== previous.version) {
+      throw new Error("报销单已更新，请刷新后重试");
+    }
+    const next = {
+      ...previous,
+      title: input.title ?? previous.title,
+      version: previous.version + 1,
+      updatedAt: new Date().toISOString()
+    };
+    reimbursements = reimbursements.map((item) => item.id === id ? next : item);
+    commitDemoState();
+    return next as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/transition$/.test(path)) {
+    const batchId = path.split("/")[2] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const input = body as {
+      expectedVersion: number;
+      targetStatus: ReimbursementStatus;
+      comment?: string;
+    };
+    if (previous.version !== input.expectedVersion) throw new Error("报销单已更新，请刷新后重试");
+    if (previous.issues.some((issue) => issue.status === "OPEN")) throw new Error("仍有未解决问题，不能继续流转");
+    const next: Reimbursement = {
+      ...previous,
+      status: input.targetStatus,
+      version: previous.version + 1,
+      submittedAt: input.targetStatus === "DEPARTMENT_PREPARING" ? new Date().toISOString() : previous.submittedAt,
+      approvedAt: input.targetStatus === "APPROVED" ? new Date().toISOString() : previous.approvedAt,
+      updatedAt: new Date().toISOString(),
+      approvals: [...previous.approvals, {
+        id: `demo-approval-${Date.now()}`,
+        fromStatus: previous.status,
+        toStatus: input.targetStatus,
+        decision: "APPROVED",
+        comment: input.comment,
+        actor: { id: demoUser.id, displayName: demoUser.displayName },
+        createdAt: new Date().toISOString()
+      }]
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    commitDemoState();
+    return next as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/attachments$/.test(path)) {
+    const batchId = path.split("/")[2] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const lineId = String(query.lineId ?? "");
+    const type = String(query.type ?? "SUPPORTING") as "PAYMENT_VOUCHER" | "INVOICE" | "SUPPORTING";
+    const attachment = {
+      id: `demo-attachment-${Date.now()}`,
+      batchId,
+      lineId: lineId || undefined,
+      type,
+      originalName: type === "INVOICE" ? "新上传增值税发票.pdf" : "新上传付款凭证.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 186_000,
+      sha256: "d".repeat(64),
+      createdAt: new Date().toISOString()
+    };
+    const next: Reimbursement = {
+      ...previous,
+      attachments: [...previous.attachments, attachment],
+      lines: previous.lines.map((line) => line.id === lineId ? {
+        ...line,
+        attachments: [...line.attachments, attachment]
+      } : line),
+      updatedAt: new Date().toISOString(),
+      _count: {
+        lines: previous.lines.length,
+        issues: previous.issues.length,
+        attachments: previous.attachments.length + 1
+      }
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    commitDemoState();
+    return attachment as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/issues$/.test(path)) {
+    const batchId = path.split("/")[2] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const input = body as { lineId?: string; type: string; description: string };
+    const issue: ReimbursementIssue = {
+      id: `demo-issue-${Date.now()}`,
+      lineId: input.lineId,
+      type: input.type,
+      description: input.description,
+      status: "OPEN",
+      raisedBy: { id: demoUser.id, displayName: demoUser.displayName },
+      createdAt: new Date().toISOString()
+    };
+    const next: Reimbursement = {
+      ...previous,
+      issues: [issue, ...previous.issues],
+      updatedAt: new Date().toISOString()
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    commitDemoState();
+    return issue as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/issues\/[^/]+\/resolve$/.test(path)) {
+    const parts = path.split("/");
+    const batchId = parts[2] ?? "";
+    const issueId = parts[4] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const input = body as { resolution: string };
+    let resolved: ReimbursementIssue | undefined;
+    const next: Reimbursement = {
+      ...previous,
+      issues: previous.issues.map((issue) => {
+        if (issue.id !== issueId) return issue;
+        resolved = {
+          ...issue,
+          status: "RESOLVED",
+          resolution: input.resolution,
+          resolvedBy: { id: demoUser.id, displayName: demoUser.displayName },
+          resolvedAt: new Date().toISOString()
+        };
+        return resolved;
+      }),
+      updatedAt: new Date().toISOString()
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    if (!resolved) throw new Error("报销问题不存在");
+    commitDemoState();
+    return resolved as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/payments$/.test(path)) {
+    const batchId = path.split("/")[2] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const input = body as { amountCents: number; reference: string; paidAt: string };
+    if (input.amountCents !== previous.totalPaymentCents) throw new Error("打款金额必须与报销付款合计一致");
+    const next: Reimbursement = {
+      ...previous,
+      status: "PAID",
+      version: previous.version + 1,
+      paidAt: input.paidAt,
+      updatedAt: new Date().toISOString(),
+      payment: {
+        id: `demo-payment-${Date.now()}`,
+        amountCents: input.amountCents,
+        reference: input.reference,
+        paidAt: input.paidAt
+      },
+      approvals: [...previous.approvals, {
+        id: `demo-payment-approval-${Date.now()}`,
+        fromStatus: previous.status,
+        toStatus: "PAID",
+        decision: "APPROVED",
+        comment: `付款流水号：${input.reference}`,
+        actor: { id: demoUser.id, displayName: demoUser.displayName },
+        createdAt: new Date().toISOString()
+      }]
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    commitDemoState();
+    return next.payment as T;
+  }
+  if (method === "POST" && /^\/reimbursements\/[^/]+\/artifacts\/generate$/.test(path)) {
+    const batchId = path.split("/")[2] ?? "";
+    const previous = byId(reimbursements, batchId);
+    const input = body as { type: ReimbursementArtifact["type"] };
+    const artifact: ReimbursementArtifact = {
+      id: `demo-artifact-${Date.now()}`,
+      type: input.type,
+      status: "GENERATED",
+      originalName: `${previous.code}-${input.type === "REIMBURSEMENT_FORM" ? "报销单.xlsx" : input.type === "PAYMENT_PACKAGE" ? "付款凭证材料包.zip" : "发票材料包.zip"}`,
+      generatedAt: new Date().toISOString()
+    };
+    const next: Reimbursement = {
+      ...previous,
+      artifacts: [
+        ...previous.artifacts.filter((item) => item.type !== input.type),
+        artifact
+      ],
+      updatedAt: new Date().toISOString()
+    };
+    reimbursements = reimbursements.map((item) => item.id === batchId ? next : item);
+    commitDemoState();
+    return artifact as T;
+  }
   if (method === "POST" && path === "/projects") return createProjectRecord(body as Partial<Project>) as T;
   if (method === "PATCH" && path.startsWith("/projects/")) return patchProjectRecord(id, body as Partial<Project>) as T;
   if (method === "POST" && path === "/suppliers") return createSupplierRecord(body as Partial<Supplier>) as T;
@@ -2298,6 +3097,8 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
     realData = null;
     changedPersonIds = new Set<string>();
     candidateDemoPersonId = undefined;
+    internalEmployees = createDemoInternalEmployees();
+    reimbursements = createDemoReimbursements();
     await ensureRealDemoData();
     return { ok: true } as T;
   }

@@ -63,11 +63,11 @@ export function LoginPage() {
         </div>
         <Link className="login-product-link" to="/product">查看完整产品介绍 <span>→</span></Link>
       </section>
-      <Card className="login-card" bordered={false}>
+      <Card className="login-card" variant="borderless">
         <div className="login-logo">祥</div>
         <Typography.Title level={2}>登录管理端</Typography.Title>
         <Typography.Paragraph type="secondary">演示环境可使用验证码快速进入</Typography.Paragraph>
-        {error ? <Alert type="error" showIcon message={error} /> : null}
+        {error ? <Alert type="error" showIcon title={error} /> : null}
         <Tabs
           defaultActiveKey="code"
           items={[
@@ -76,7 +76,7 @@ export function LoginPage() {
               label: "验证码登录",
               children: (
                 <Form<CodeLoginValues> layout="vertical" size="large" onFinish={submitCode} requiredMark={false}>
-                  <Alert type="info" showIcon message="演示验证码：8888" className="demo-code-alert" />
+                  <Alert type="info" showIcon title="演示验证码：8888" className="demo-code-alert" />
                   <Form.Item name="code" label="验证码" rules={[{ required: true, message: "请输入验证码" }]}>
                     <Input prefix={<SafetyCertificateOutlined />} inputMode="numeric" maxLength={6} placeholder="请输入 8888" />
                   </Form.Item>
