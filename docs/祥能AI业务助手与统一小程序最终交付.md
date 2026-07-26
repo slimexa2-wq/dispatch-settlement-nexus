@@ -144,3 +144,13 @@ pnpm demo:reset-database
 | 浏览器实测 | PC AI 自由人员/电话/项目岗位查询、入职预览确认；手机内部端、供应商岗位详情、人员页面均通过 |
 
 非阻断提示：后台和门户生产构建仍有大 chunk 性能提示；不影响功能正确性，后续可继续拆分。当前机器没有 Docker 命令，因此本轮未在本机执行 Docker build；Dockerfile 与 Compose 已保留，GitHub CI 可继续验证。
+
+## 9. 最终交付定位
+
+- 公开演示：`https://xiangneng-hrms-demo-20260726.slimexa2.chatgpt.site`
+- 公开演示数据：只使用确定性合成业务快照，可直接登录和交互，不连接本机 PostgreSQL 或 Ollama。
+- 本地完整演示：PostgreSQL + Ollama `qwen3.5:4b`，支持真实系统数据查询、单人入职/离职预览确认和权限审计。
+- Git 分支：`codex/full-hrms-production`
+- 最终源码提交：以交付时 `git rev-parse HEAD` 为准。
+- 源码压缩包：桌面 `祥能HRMS-完整源码-<短提交号>.zip`，由 `git archive` 从最终提交生成。
+- GitHub 状态：本机 `GITHUB_TOKEN` 无效，因此未伪造 Push/PR/CI 成功；完成 `gh auth login -h github.com` 后可继续正常推送该分支并创建 PR，未经确认不合并 `main`。
