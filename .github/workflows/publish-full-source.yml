@@ -7,6 +7,12 @@ on:
     paths:
       - .github/source-publish.trigger
       - .github/workflows/publish-full-source.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/source-publish.trigger
+      - .github/workflows/publish-full-source.yml
   workflow_dispatch:
 
 permissions:
@@ -20,6 +26,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
       - name: Download complete source archive
         shell: bash
         run: |
@@ -39,4 +46,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git commit -m 'feat: publish complete HRMS source with internal HR and reimbursement' || exit 0
-          git push origin HEAD:agent/internal-hr-reimbursement-foundation
+          git push origin "HEAD:${GITHUB_HEAD_REF:-agent/internal-hr-reimbursement-foundation}"
