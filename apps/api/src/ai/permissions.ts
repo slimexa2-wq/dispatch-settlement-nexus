@@ -10,13 +10,17 @@ const readSkills: AiSkill[] = [
 
 export function allowedAiSkills(user: SessionUser): AiSkill[] {
   switch (user.role) {
+    case UserRole.GROUP_LEADER:
     case UserRole.HEADQUARTERS_MANAGER:
     case UserRole.BRANCH_MANAGER:
       return readSkills;
+    case UserRole.SUPER_ADMIN:
     case UserRole.PROJECT_OPERATOR:
     case UserRole.SYSTEM_ADMIN:
       return [...readSkills, "employee_entry", "employee_resignation"];
+    case UserRole.SUPPLIER_ADMIN:
     case UserRole.SUPPLIER:
+    case UserRole.OUTSOURCED_EMPLOYEE:
     case UserRole.EMPLOYEE:
       return ["employee_information_query"];
     default:

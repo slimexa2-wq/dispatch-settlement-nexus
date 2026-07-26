@@ -24,6 +24,7 @@ export function portalRole(role: SessionUser["role"]): "personal" | "group_leade
     case "PROJECT_OPERATOR":
       return "site_operator";
     case "SUPPLIER":
+    case "SUPPLIER_ADMIN":
       return "supplier";
     default:
       return "personal";

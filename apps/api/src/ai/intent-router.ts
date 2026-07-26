@@ -21,6 +21,18 @@ const skillMeaning: Record<AiSkill, string> = {
 const unsafeOrOutOfScope = /批量|所有人|全部人员|全员|删除.{0,8}(人员|档案)|自由\s*SQL|绕过权限|跨权限/;
 const unsupportedInformationalWords = /为什么.{0,8}(离职|辞职)|(?:离职|入职)政策/;
 const informationalWriteWords = /为什么.{0,8}(离职|辞职)|(?:离职|入职)政策|什么时候(?:入职|离职)|(?:入职|离职)(?:时间|日期|记录)/;
+const statisticalWriteWords = /人数|多少人|几个人|统计|趋势|报表|政策|记录|什么时候/;
+
+function explicitWriteSkill(message: string): Extract<AiSkill, "employee_entry" | "employee_resignation"> | undefined {
+  if (statisticalWriteWords.test(message)) return undefined;
+  if (/(?:办理|办|登记|状态改成).{0,40}(?:入职|在职)|(?:入职|在职).{0,12}(?:办理|登记)/.test(message)) {
+    return "employee_entry";
+  }
+  if (/(?:办理|办|登记|状态改成).{0,40}(?:离职|离岗)|(?:离职|离岗).{0,12}(?:办理|登记)/.test(message)) {
+    return "employee_resignation";
+  }
+  return undefined;
+}
 
 function chinaDate(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
@@ -82,7 +94,7 @@ function extractProjectName(message: string): string | undefined {
   const quoted = message.match(/[“\"]([^”\"]{2,30})[”\"]/)?.[1];
   if (quoted) return quoted.replace(/项目$/, "");
   const withProject = message.match(/([\u4e00-\u9fa5A-Za-z0-9（）()·-]{2,30})项目/)?.[1]
-    ?.replace(/^(查询|统计|看看|请查|本月|今年)/, "");
+    ?.replace(/^(请综合判断|综合判断|帮我看看|帮我看|查询|统计|看看|请查|本月|今年)/, "");
   if (withProject) return withProject;
   const talentSubject = message.match(/(?:综合判断|帮我看看|帮我看|查询|看看|请查)?([\u4e00-\u9fa5A-Za-z0-9（）()·-]{2,20})的人才/)?.[1];
   if (talentSubject) return talentSubject.replace(/^(请综合判断|综合判断|帮我看看|帮我看|查询|看看|请查)/, "");
@@ -94,6 +106,7 @@ function extractParameters(skill: AiSkill, message: string): Record<string, unkn
   const dates = explicitDates(message);
   const projectName = extractProjectName(message);
   const digits = message.match(/(?<!\d)(1\d{10}|\d{4,10})(?!\d)/)?.[1];
+  const personName = digits ? undefined : extractPersonName(message);
   switch (skill) {
     case "project_personnel_statistics": {
       const metrics: string[] = [];
@@ -106,7 +119,7 @@ function extractParameters(skill: AiSkill, message: string): Record<string, unkn
     }
     case "employee_information_query":
       return {
-        name: extractPersonName(message) ?? null,
+        name: personName ?? null,
         phone: digits?.length === 11 ? digits : null,
         phone_suffix: digits && digits.length < 11 ? digits : null,
         employee_id: null
@@ -123,7 +136,9 @@ function extractParameters(skill: AiSkill, message: string): Record<string, unkn
     case "employee_entry":
       return {
         employee_id: null,
-        employee_name: extractPersonName(message) ?? null,
+        employee_name: personName ?? null,
+        phone: digits?.length === 11 ? digits : null,
+        phone_suffix: digits && digits.length < 11 ? digits : null,
         entry_date: dates.start_date ?? chinaDate(),
         project_id: null,
         position_id: null,
@@ -134,7 +149,9 @@ function extractParameters(skill: AiSkill, message: string): Record<string, unkn
     case "employee_resignation":
       return {
         employee_id: null,
-        employee_name: extractPersonName(message) ?? null,
+        employee_name: personName ?? null,
+        phone: digits?.length === 11 ? digits : null,
+        phone_suffix: digits && digits.length < 11 ? digits : null,
         resignation_date: dates.start_date ?? chinaDate(),
         resignation_reason: message.match(/原因(?:是|为|：|:)?\s*([^，。；;]+)|因([^，。；;]+?)(?:离职|辞职)/)?.slice(1).find(Boolean) ?? null,
         remark: null
@@ -182,6 +199,21 @@ export class IntentRouter {
         needs_clarification: true,
         clarification_question: "该问题不是人员状态变更指令，AI 不会触发入职或离职写操作。",
         reason: "信息咨询禁止误触发写操作",
+        routeType: "rule"
+      };
+    }
+    const forcedWrite = explicitWriteSkill(message);
+    if (forcedWrite) {
+      const parameters = { ...extractParameters(forcedWrite, message), ...supplied };
+      const missingReason = forcedWrite === "employee_resignation" && !parameters.resignation_reason;
+      return {
+        skill: forcedWrite,
+        confidence: 1,
+        mode: "write",
+        parameters,
+        needs_clarification: missingReason,
+        clarification_question: missingReason ? "请提供离职原因后，我再生成离职预览。" : null,
+        reason: "明确单人状态变更指令",
         routeType: "rule"
       };
     }

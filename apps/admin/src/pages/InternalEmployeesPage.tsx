@@ -469,7 +469,7 @@ function InternalEmployeesContent() {
                 key: "base",
                 label: "完整档案",
                 children: (
-                  <Space direction="vertical" size={16} className="full-width">
+                  <Space orientation="vertical" size={16} className="full-width">
                     <Card size="small" title="身份与联系信息">
                       <Descriptions column={2}>
                         <Descriptions.Item label="员工编号">{detail.employeeNo}</Descriptions.Item>
@@ -500,7 +500,7 @@ function InternalEmployeesContent() {
                 key: "history",
                 label: "任职与变更记录",
                 children: (
-                  <Space direction="vertical" size={18} className="full-width">
+                  <Space orientation="vertical" size={18} className="full-width">
                     <Typography.Title level={5}>任职历史</Typography.Title>
                     <Table<InternalEmployment>
                       rowKey="id"
@@ -521,7 +521,7 @@ function InternalEmployeesContent() {
                       items={(detail.changes ?? []).map((change) => ({
                         dot: <ApartmentOutlined />,
                         children: (
-                          <Space direction="vertical" size={2}>
+                          <Space orientation="vertical" size={2}>
                             <Space>
                               <Tag color="blue">{changeLabels[change.type] ?? change.type}</Tag>
                               <Typography.Text strong>{formatDate(change.effectiveAt)}</Typography.Text>

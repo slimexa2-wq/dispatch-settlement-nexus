@@ -512,7 +512,7 @@ function PeopleContent() {
       modal.confirm({
         title: "确认导出人员数据",
         content: (
-          <Space direction="vertical">
+          <Space orientation="vertical">
             <Typography.Text>将导出当前筛选条件下的全部数据：{rows.length} 条。</Typography.Text>
             <Typography.Text>导出字段：{exportColumns.map((item) => item.title).join("、")}</Typography.Text>
           </Space>
@@ -627,7 +627,7 @@ function PeopleContent() {
           <Button key="ok" type="primary" onClick={() => setColumnSettingsOpen(false)}>完成</Button>
         ]}
       >
-        <Space direction="vertical" className="full-width" size={8}>
+        <Space orientation="vertical" className="full-width" size={8}>
           {columnOrder.map((key, index) => {
             const item = columnDefinitions[key];
             return (
@@ -720,7 +720,7 @@ function PeopleContent() {
                   key: "base",
                   label: "人员详情",
                   children: (
-                    <Space direction="vertical" size={14} className="full-width">
+                    <Space orientation="vertical" size={14} className="full-width">
                       <Card size="small" title="基本信息">
                         <div className="form-grid two-columns">
                           <Form.Item name="name" label="姓名" rules={[{ required: true, message: "请输入姓名" }]}><Input maxLength={64} /></Form.Item>
@@ -774,7 +774,7 @@ function PeopleContent() {
                       <Timeline
                         items={(detail.lifecycle ?? []).map((log) => ({
                           children: (
-                            <Space direction="vertical" size={2}>
+                            <Space orientation="vertical" size={2}>
                               <Space wrap>
                                 <Tag color="blue">{lifecycleTypeLabels[log.type] ?? log.type}</Tag>
                                 <Typography.Text strong>{log.result}</Typography.Text>
@@ -794,7 +794,7 @@ function PeopleContent() {
                   key: "files",
                   label: "档案资料",
                   children: (
-                    <Space direction="vertical" className="full-width">
+                    <Space orientation="vertical" className="full-width">
                       {canWrite ? (
                         <Upload customRequest={uploadFile} showUploadList={false} multiple>
                           <Button icon={<FileAddOutlined />}>上传附件</Button>

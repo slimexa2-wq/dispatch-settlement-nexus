@@ -318,7 +318,7 @@ function ImportsContent() {
                     <Alert
                       type="info"
                       showIcon
-                      message="使用已核验的组织架构与项目分布数据"
+                      title="使用已核验的组织架构与项目分布数据"
                       description="系统读取从唯一事实源 Excel 生成并完成哈希、合计行过滤和归属对账的派生工件；演示环境会按统一规则补齐负责人、联系方式、岗位说明与期限。"
                     />
                   </Col>
@@ -363,11 +363,11 @@ function ImportsContent() {
                     </Upload.Dragger>
                   </Col>
                   <Col xs={24} lg={9}>
-                    <Space direction="vertical" size="middle" className="full-width">
+                    <Space orientation="vertical" size="middle" className="full-width">
                       <Alert
                         type="warning"
                         showIcon
-                        message="身份证号作为人员查重依据"
+                        title="身份证号作为人员查重依据"
                         description="命中已有档案时在原档案上归并报名信息，不会重复创建人员。"
                       />
                       <Button block icon={<DownloadOutlined />} loading={working && !peopleOpen} onClick={() => void downloadPeopleTemplate()}>
@@ -411,7 +411,7 @@ function ImportsContent() {
           <Alert
             type="info"
             showIcon
-            message={working ? "正在读取已核验初始化数据" : "尚未读取初始化数据"}
+            title={working ? "正在读取已核验初始化数据" : "尚未读取初始化数据"}
             description="系统只使用由原始 Excel 生成并完成哈希与对账校验的派生工件，页面不会忽略或假装处理用户上传的文件。"
           />
         ) : (
@@ -426,7 +426,7 @@ function ImportsContent() {
             </Descriptions>
             <Divider titlePlacement="start">对账结果</Divider>
             <Space wrap>{Object.entries(preview.reconciliation).map(([key, value]) => <Tag color="blue" key={key}>{key}: {String(value)}</Tag>)}</Space>
-            {preview.warnings.length ? <Alert type="warning" showIcon message="预览警告" description={preview.warnings.slice(0, 8).map((item) => `${item.sourceRows?.length ? `源行 ${item.sourceRows.join(",")}：` : ""}${item.message}`).join("；")} className="preview-alert" /> : null}
+            {preview.warnings.length ? <Alert type="warning" showIcon title="预览警告" description={preview.warnings.slice(0, 8).map((item) => `${item.sourceRows?.length ? `源行 ${item.sourceRows.join(",")}：` : ""}${item.message}`).join("；")} className="preview-alert" /> : null}
             <Divider titlePlacement="start">可导入项目</Divider>
             <Table<OrganizationRow> rowKey={(row) => String(row.sourceRow ?? `${row.branchName}-${row.projectName}`)} size="small" columns={previewColumns} dataSource={preview.projects} pagination={false} scroll={{ x: 1000, y: 360 }} locale={{ emptyText: "没有可导入项目" }} />
           </>
@@ -458,7 +458,7 @@ function ImportsContent() {
         destroyOnHidden
       >
         {!peoplePreview ? (
-          <Alert type="info" showIcon message="正在解析并校验人员花名册" description="文件尚未写入数据库，请等待预览结果。" />
+          <Alert type="info" showIcon title="正在解析并校验人员花名册" description="文件尚未写入数据库，请等待预览结果。" />
         ) : peopleResult ? (
           <>
             <Descriptions bordered size="small" column={{ xs: 1, md: 4 }}>
@@ -469,7 +469,7 @@ function ImportsContent() {
               <Descriptions.Item label="失败 / 跳过">{peopleResult.failures.length}</Descriptions.Item>
               <Descriptions.Item label="源文件" span={3}>{peoplePreview.sourceFile}</Descriptions.Item>
             </Descriptions>
-            {peopleResult.failures.length ? <Alert className="preview-alert" type="warning" showIcon message="存在未写入行" description="请根据下方逐行原因修正文件后重新预览。" /> : <Alert className="preview-alert" type="success" showIcon message="全部可接收行已写入" />}
+            {peopleResult.failures.length ? <Alert className="preview-alert" type="warning" showIcon title="存在未写入行" description="请根据下方逐行原因修正文件后重新预览。" /> : <Alert className="preview-alert" type="success" showIcon title="全部可接收行已写入" />}
             <Divider titlePlacement="start">逐行处理结果</Divider>
             <Table<PeopleResultRow>
               size="small"
@@ -505,7 +505,7 @@ function ImportsContent() {
                 className="preview-alert"
                 type="warning"
                 showIcon
-                message="存在跳过或警告行"
+                title="存在跳过或警告行"
                 description={[
                   ...peoplePreview.skipped.slice(0, 8).map((item) => `源行 ${item.row ?? item.sourceRow ?? "—"}：${item.reason}`),
                   ...(peoplePreview.warnings ?? []).slice(0, 5).map((item) => `${item.row ? `源行 ${item.row}：` : ""}${item.message}`)

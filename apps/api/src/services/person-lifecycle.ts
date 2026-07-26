@@ -13,6 +13,7 @@ import { andWhere, personWhere } from "../data-scope.js";
 import { AppError, conflict, notFound } from "../errors.js";
 import { writeAudit } from "../audit.js";
 import { createKeyNotifications } from "../notifications.js";
+import { chinaDateLabel } from "../dates.js";
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
 export type OffboardingInput = z.infer<typeof offboardingSchema>;
@@ -118,13 +119,13 @@ export async function previewPersonOnboard(db: PrismaClient, user: SessionUser, 
       status: existing.status,
       projectId: existing.projectId,
       jobTitle: existing.jobTitle,
-      onboardDate: existing.onboardDate?.toISOString().slice(0, 10) ?? null
+      onboardDate: existing.onboardDate ? chinaDateLabel(existing.onboardDate) : null
     },
     after: {
       status: EmploymentStatus.ACTIVE,
       projectId: existing.projectId,
       jobTitle: existing.jobTitle,
-      onboardDate: input.onboardDate.toISOString().slice(0, 10),
+      onboardDate: chinaDateLabel(input.onboardDate),
       insuranceTypes: input.insuranceTypes,
       employeeNo: input.employeeNo ?? null
     },
@@ -138,12 +139,12 @@ export async function previewPersonOffboard(db: PrismaClient, user: SessionUser,
     person: existing,
     before: {
       status: existing.status,
-      onboardDate: existing.onboardDate?.toISOString().slice(0, 10) ?? null,
-      offboardDate: existing.offboardDate?.toISOString().slice(0, 10) ?? null
+      onboardDate: existing.onboardDate ? chinaDateLabel(existing.onboardDate) : null,
+      offboardDate: existing.offboardDate ? chinaDateLabel(existing.offboardDate) : null
     },
     after: {
       status: EmploymentStatus.LEFT,
-      offboardDate: input.offboardDate.toISOString().slice(0, 10),
+      offboardDate: chinaDateLabel(input.offboardDate),
       offboardReason: input.offboardReason,
       insuranceTypes: input.insuranceTypes
     },

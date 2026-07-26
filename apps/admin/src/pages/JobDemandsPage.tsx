@@ -244,7 +244,7 @@ function JobDemandsContent() {
               type="info"
               showIcon
               className="form-context-alert"
-              message={`${branchName(selectedCreateProject)} · ${selectedCreateProject.name}`}
+              title={`${branchName(selectedCreateProject)} · ${selectedCreateProject.name}`}
               description={`项目负责人：${displayText(selectedCreateProject.managerName)} / 联系方式：${displayText(selectedCreateProject.managerPhone)}。以上信息从项目档案自动读取。`}
             />
           ) : null}
@@ -279,7 +279,7 @@ function JobDemandsContent() {
                 <Form.Item name="supplierPolicyId" label="供应商政策"><ReferenceSelect options={policyOptions(PolicyType.SUPPLIER, selectedDetailProjectId)} /></Form.Item>
                 <Form.Item name="referralPolicyId" label="内部推荐政策"><ReferenceSelect options={policyOptions(PolicyType.EMPLOYEE_REFERRAL, selectedDetailProjectId)} /></Form.Item>
               </div>
-              <Alert type="info" showIcon className="form-context-alert" message={`项目负责人：${displayText(detail.project?.managerName)} / ${displayText(detail.project?.managerPhone)}`} description={`归属分子公司：${detail.project ? branchName(detail.project) : displayText(detail.branchName)}。负责人、联系方式、项目简介及实拍图由项目档案同步，不在岗位中重复维护。`} />
+              <Alert type="info" showIcon className="form-context-alert" title={`项目负责人：${displayText(detail.project?.managerName)} / ${displayText(detail.project?.managerPhone)}`} description={`归属分子公司：${detail.project ? branchName(detail.project) : displayText(detail.branchName)}。负责人、联系方式、项目简介及实拍图由项目档案同步，不在岗位中重复维护。`} />
               <Form.Item name="workContent" label="工作内容" rules={[{ required: true }]}><Input.TextArea rows={4} maxLength={5000} showCount /></Form.Item>
               <Form.Item name="requirements" label="岗位要求" rules={[{ required: true }]}><Input.TextArea rows={4} maxLength={5000} showCount /></Form.Item>
               <Form.Item name="notes" label="备注"><Input.TextArea rows={3} maxLength={2000} showCount /></Form.Item>

@@ -153,7 +153,7 @@ function SettingsContent() {
     <>
       <PageHeader title="权限与审计" description="角色决定功能权限，分子公司、项目和供应商范围决定可见业务数据。" />
       <ContentCard>
-        <Alert type="info" showIcon message="权限最小化原则" description="账号仅授予完成职责所需的角色与数据范围；关键业务修改自动写入审计日志。" className="table-alert" />
+        <Alert type="info" showIcon title="权限最小化原则" description="账号仅授予完成职责所需的角色与数据范围；关键业务修改自动写入审计日志。" className="table-alert" />
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}

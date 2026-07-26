@@ -27,9 +27,9 @@ type JsonRecord = Record<string, unknown>;
 type ChatEntry = { id: string; role: "assistant" | "user"; text: string; payload?: JsonRecord };
 
 const quickActions = [
-  { label: "项目人员数据", icon: <DatabaseOutlined />, message: "查询极米光电外包项目本月入职、离职、当前在职和净增减" },
+  { label: "项目人员数据", icon: <DatabaseOutlined />, message: "查询祥能智造示范项目本月入职、离职、当前在职和净增减" },
   { label: "人员信息", icon: <UserOutlined />, message: "查询邱玉彬现在在哪个项目" },
-  { label: "招聘进度", icon: <RobotOutlined />, message: "极米光电外包招人的达成情况怎么样" },
+  { label: "招聘进度", icon: <RobotOutlined />, message: "祥能智造示范项目招人的达成情况怎么样" },
   { label: "办理入职", icon: <UserAddOutlined />, message: "给武鑫办理今天入职" },
   { label: "办理离职", icon: <UserDeleteOutlined />, message: "给宋国栋办理今天离职，原因是个人原因辞职" }
 ] as const;
@@ -82,7 +82,7 @@ function ResultTable({ data }: { data: JsonRecord[] }) {
   return <Table<JsonRecord>
     size="small"
     pagination={data.length > 10 ? { pageSize: 10, showSizeChanger: false } : false}
-    rowKey={(item, index) => String(item.job_id ?? item.project_id ?? item.employee_id ?? index)}
+    rowKey={(item) => String(item.id ?? item.job_id ?? item.project_id ?? item.employee_id ?? JSON.stringify(item))}
     dataSource={data}
     columns={keys.map((key) => ({ title: labels[key] ?? key, dataIndex: key, key, render: (value: unknown) => displayValue(key, value) }))}
     scroll={{ x: true }}
@@ -103,7 +103,7 @@ function ClarificationForm({ payload, onSubmit }: { payload: JsonRecord; onSubmi
           ? [["employee_name", "姓名"], ["entry_date", "入职日期（YYYY-MM-DD）"]]
           : [["employee_name", "姓名"], ["resignation_date", "离职日期（YYYY-MM-DD）"], ["resignation_reason", "离职原因"]];
   return <Card size="small" title="补充必要信息" className="admin-ai-form-card">
-    <Space direction="vertical" style={{ width: "100%" }}>
+    <Space orientation="vertical" style={{ width: "100%" }}>
       {fields.map(([name, label]) => <Input key={name} placeholder={label} value={String(values[name] ?? "")} onChange={(event) => setValues((current) => ({ ...current, [name]: event.target.value }))} />)}
       <Button type="primary" onClick={() => onSubmit(values)}>继续</Button>
     </Space>
@@ -114,7 +114,7 @@ function QueryResult({ payload, onCandidate }: { payload: JsonRecord; onCandidat
   const result = record(payload.result);
   if (result.match === "ambiguous") {
     return <Card size="small" title="匹配到多位人员，请选择">
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <Space orientation="vertical" style={{ width: "100%" }}>
         {rows(result.candidates).map((candidate) => <Button key={String(candidate.employee_id)} block onClick={() => onCandidate(String(candidate.employee_id))}>
           {String(candidate.name)} · {String(candidate.phone)} · {String(candidate.project_name)}
         </Button>)}
@@ -138,10 +138,10 @@ function QueryResult({ payload, onCandidate }: { payload: JsonRecord; onCandidat
     </Descriptions>;
   }
   const totals = record(result.totals);
-  return <Space direction="vertical" style={{ width: "100%" }}>
+  return <Space orientation="vertical" style={{ width: "100%" }}>
     {Object.keys(totals).length ? <div className="admin-ai-totals">{Object.entries(totals).map(([key, value]) => <div key={key}><span>{labels[key] ?? key}</span><strong>{displayValue(key, value)}</strong></div>)}</div> : null}
     <ResultTable data={rows(result.rows)} />
-    {result.methodology ? <Alert type="info" showIcon message={`统计口径：${String(result.methodology)}`} /> : null}
+    {result.methodology ? <Alert type="info" showIcon title={`统计口径：${String(result.methodology)}`} /> : null}
     {result.updated_at ? <Typography.Text type="secondary">数据更新时间：{new Date(String(result.updated_at)).toLocaleString("zh-CN")}</Typography.Text> : null}
   </Space>;
 }
@@ -149,11 +149,11 @@ function QueryResult({ payload, onCandidate }: { payload: JsonRecord; onCandidat
 function KnowledgeResult({ payload }: { payload: JsonRecord }) {
   const result = record(payload.result);
   const records = rows(result.records);
-  return <Space direction="vertical" style={{ width: "100%" }}>
+  return <Space orientation="vertical" style={{ width: "100%" }}>
     {records.slice(0, 20).map((item, index) => <Card key={`${String(item.type)}-${String(item.title)}-${index}`} size="small" title={<Space><Tag color="blue">{item.type === "project" ? "项目" : item.type === "job" ? "岗位" : item.type === "supplier" ? "供应商" : "总览"}</Tag>{String(item.title)}</Space>}>
       <Descriptions size="small" column={2}>{Object.entries(record(item.fields)).map(([key, value]) => <Descriptions.Item key={key} label={key}>{displayValue(key, value)}</Descriptions.Item>)}</Descriptions>
     </Card>)}
-    {result.methodology ? <Alert type="info" showIcon message={String(result.methodology)} /> : null}
+    {result.methodology ? <Alert type="info" showIcon title={String(result.methodology)} /> : null}
     {result.updated_at ? <Typography.Text type="secondary">数据更新时间：{new Date(String(result.updated_at)).toLocaleString("zh-CN")}</Typography.Text> : null}
   </Space>;
 }
@@ -225,12 +225,12 @@ export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
     if (type === "query_result") return <QueryResult payload={payload} onCandidate={(employeeId) => void send(entry.text, { employee_id: employeeId })} />;
     if (type === "knowledge_result") return <KnowledgeResult payload={payload} />;
     if (type === "clarification") return <ClarificationForm payload={payload} onSubmit={(parameters) => void send(entry.text, parameters)} />;
-    if (type === "unsupported") return <Alert type="warning" showIcon message={String(payload.message ?? "当前仅支持五项业务能力")} />;
-    if (type === "error") return <Alert type="error" showIcon message="请求未执行，传统系统不受影响" />;
+    if (type === "unsupported") return <Alert type="warning" showIcon title={String(payload.message ?? "当前仅支持五项业务能力")} />;
+    if (type === "error") return <Alert type="error" showIcon title="请求未执行，传统系统不受影响" />;
     if (type === "action_preview") {
       const preview = record(payload.preview);
-      if (payload.cancelled) return <Alert type="info" showIcon message="本次预览已取消，数据库未发生变化" />;
-      if (payload.confirmed) return <Alert type="success" showIcon message="已确认并执行" />;
+      if (payload.cancelled) return <Alert type="info" showIcon title="本次预览已取消，数据库未发生变化" />;
+      if (payload.confirmed) return <Alert type="success" showIcon title="已确认并执行" />;
       return <Card size="small" title="写操作预览（尚未写库）" className="admin-ai-preview">
         <Descriptions size="small" bordered column={1}>
           <Descriptions.Item label="人员">{displayValue("person", record(preview.person).name)}</Descriptions.Item>
@@ -245,7 +245,7 @@ export function AiAssistantPanel({ compact = false }: { compact?: boolean }) {
         </Space>
       </Card>;
     }
-    if (type === "action_result") return <Alert type="success" showIcon message="事务执行成功" />;
+    if (type === "action_result") return <Alert type="success" showIcon title="事务执行成功" />;
     return null;
   };
 

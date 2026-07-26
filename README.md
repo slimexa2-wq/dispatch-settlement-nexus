@@ -1,6 +1,6 @@
 # 祥能人员与招聘信息管理系统 V2.0
 
-## 2026-07-22 统一 Portal 与本地 AI
+## 2026-07-26 统一 Portal、微信小程序与本地 AI
 
 `apps/portal` 已合并个人端、内部管理端和供应商端，并与 `apps/admin` 共用 Fastify、JWT/RBAC、Prisma 和 PostgreSQL。管理后台与内部端均内嵌“祥能AI业务助手”，模型固定为本机 Ollama `qwen3.5:4b`；模型只识别意图，实时查数、权限、事务、幂等和审计均由后端程序负责。
 
@@ -12,6 +12,7 @@ pnpm demo:start
 
 - Portal：`http://localhost:4320`
 - 管理后台：`http://localhost:5173`（演示验证码 `8888`）
+- 将隔离演示库完整恢复为确定性合成数据：`pnpm demo:reset-database`
 - 停止前后端：`pnpm demo:stop`
 - AI 集成验收：`pnpm verify:ai`
 - 本地模型验收：`pnpm verify:ollama`

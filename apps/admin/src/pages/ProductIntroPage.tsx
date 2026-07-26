@@ -734,8 +734,8 @@ export function ProductIntroPage() {
           <div className="pp-embedded-ai-console" aria-label="祥能AI业务助手能力演示">
             <div className="pp-ai-console-head"><span><ExperimentOutlined /></span><div><strong>祥能AI业务助手</strong><small>Qwen3.5 4B · Ollama 本地运行</small></div><em>运行正常</em></div>
             <div className="pp-ai-console-body">
-              <div className="pp-ai-user">极米光电外包项目现在有哪些招聘岗位？负责人电话是多少？</div>
-              <div className="pp-ai-answer"><strong>已按当前权限检索业务库</strong><p>项目招聘岗位、薪资、要求、缺口和负责人完整联系方式已汇总。结果来自当前 PostgreSQL 数据，更新时间 2026-07-22 14:30。</p></div>
+              <div className="pp-ai-user">祥能智造示范项目有哪些招聘岗位？负责人电话是多少？</div>
+              <div className="pp-ai-answer"><strong>已按系统管理员权限检索演示业务库</strong><p>返回操作工、仓库管理员的薪资、要求和招聘缺口；项目负责人演示负责人1，电话10000000301。演示数据快照日期 2026-07-26。</p></div>
               <div className="pp-ai-preview"><span>写操作安全链路</span><b>自然语言 → 操作预览 → 用户确认 → 事务执行 → 审计日志</b></div>
             </div>
             <div className="pp-ai-console-foot"><DatabaseOutlined /> 统一数据源 <ThunderboltOutlined /> 断网核心能力可运行 <SafetyCertificateOutlined /> 权限受控</div>

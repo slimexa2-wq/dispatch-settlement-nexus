@@ -14,6 +14,7 @@
     "dev:portal": "pnpm --filter @xiangneng/portal dev",
     "demo:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-demo.ps1",
     "demo:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-local-demo.ps1",
+    "demo:reset-database": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/reset-demo-database.ps1",
     "verify:ai": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-ai-integration.mts",
     "verify:ollama": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-ollama.mts",
     "dev:website": "pnpm --filter @xiangneng/website dev",

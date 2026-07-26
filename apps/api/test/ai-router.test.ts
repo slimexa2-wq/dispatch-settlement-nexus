@@ -33,6 +33,50 @@ describe("祥能 AI 规则优先路由与 Schema 安全门", () => {
     expect(decision.parameters).toMatchObject({ employee_name: "张三" });
   });
 
+  it("手机号夹在办理与入职/离职之间时仍优先识别写操作", async () => {
+    const model = { completeJson: async () => { throw new Error("should not run"); } } as unknown as OllamaClient;
+    const router = new IntentRouter(testConfig, schemas, model);
+    await router.load();
+
+    const entry = await router.route("给手机号10000000048办理2026-07-26入职", [
+      "employee_information_query", "employee_entry"
+    ]);
+    expect(entry).toMatchObject({
+      skill: "employee_entry",
+      mode: "write",
+      routeType: "rule",
+      parameters: { phone: "10000000048", entry_date: "2026-07-26" }
+    });
+
+    const resignation = await router.route("给手机号10000000009办理2026-07-26离职，原因是项目结束", [
+      "employee_information_query", "employee_resignation"
+    ]);
+    expect(resignation).toMatchObject({
+      skill: "employee_resignation",
+      mode: "write",
+      routeType: "rule",
+      parameters: {
+        phone: "10000000009",
+        resignation_date: "2026-07-26",
+        resignation_reason: "项目结束"
+      }
+    });
+  });
+
+  it("完整手机号人员查询不会被其他数字或姓名规则污染", async () => {
+    const model = { completeJson: async () => { throw new Error("should not run"); } } as unknown as OllamaClient;
+    const router = new IntentRouter(testConfig, schemas, model);
+    await router.load();
+    const decision = await router.route("查询手机号10000000004的完整人员信息", [
+      "project_personnel_statistics", "employee_information_query", "recruitment_progress_query"
+    ]);
+    expect(decision).toMatchObject({
+      skill: "employee_information_query",
+      routeType: "rule",
+      parameters: { name: null, phone: "10000000004", phone_suffix: null }
+    });
+  });
+
   it("含弱关键词时确定性路由到最高分技能，不调用模型", async () => {
     let modelCalled = false;
     const model = { completeJson: async () => { modelCalled = true; throw new Error("should not run"); } } as unknown as OllamaClient;
@@ -47,7 +91,7 @@ describe("祥能 AI 规则优先路由与 Schema 安全门", () => {
     const model = { completeJson: async () => { throw new Error("model offline"); } } as unknown as OllamaClient;
     const router = new IntentRouter(testConfig, schemas, model);
     await router.load();
-    const decision = await router.route("请综合判断宜宾时代的人才补充态势", ["recruitment_progress_query"]);
+    const decision = await router.route("请综合判断祥能智造示范项目的人才补充态势", ["recruitment_progress_query"]);
     expect(decision).toMatchObject({ skill: "unsupported", routeType: "form", needs_clarification: true });
   });
 
@@ -69,14 +113,14 @@ describe("祥能 AI 规则优先路由与 Schema 安全门", () => {
     } as unknown as OllamaClient;
     const router = new IntentRouter(testConfig, schemas, model);
     await router.load();
-    const decision = await router.route("请综合判断宜宾时代的人才补充态势", ["recruitment_progress_query"]);
+    const decision = await router.route("请综合判断祥能智造示范项目的人才补充态势", ["recruitment_progress_query"]);
     expect(modelCalled).toBe(true);
     expect(decision).toMatchObject({
       skill: "recruitment_progress_query",
       routeType: "model",
       mode: "read"
     });
-    expect(decision.parameters).toMatchObject({ project_name: "宜宾时代" });
+    expect(decision.parameters).toMatchObject({ project_name: "祥能智造示范" });
   });
 
   it("批量人员参数无法通过单人入职工具 Schema", () => {

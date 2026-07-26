@@ -254,13 +254,13 @@ function DashboardContent() {
         <Col xs={24} xl={10}>
           <ContentCard title="待办事项" extra={pendingItems.length ? <span className="danger-text">{pendingItems.length} 项待处理</span> : null}>
             {pendingItems.length ? (
-              <Space direction="vertical" size="small" className="full-width">
+              <Space orientation="vertical" size="small" className="full-width">
                 {pendingItems.slice(0, 5).map((item, index) => (
                   <Alert
                     key={item.id ?? `${item.title}-${index}`}
                     type={item.level ?? "info"}
                     showIcon
-                    message={item.title}
+                    title={item.title}
                     description={item.count === undefined ? undefined : `待处理 ${item.count} 项`}
                     action={item.path ? <Button size="small" onClick={() => navigate(item.path!)}>处理</Button> : undefined}
                   />
@@ -281,9 +281,9 @@ function DashboardContent() {
                 { title: "变更人", dataIndex: "operator", width: 120 }
               ]}
               dataSource={[
-                { key: "1", time: "2026-07-19", project: "真实项目数据", content: "已导入人员主档与项目经历明细", operator: "系统管理员" },
-                { key: "2", time: "2026-07-19", project: "招聘进度", content: "保留 18841 条报名/面试记录", operator: "系统管理员" },
-                { key: "3", time: "2026-07-19", project: "人员花名册", content: "详情页统一查看与编辑", operator: "系统管理员" }
+                { key: "1", time: "2026-07-26", project: "公开演示数据", content: "已校验 8 个完整项目与 48 份合成人员档案", operator: "系统管理员" },
+                { key: "2", time: "2026-07-26", project: "招聘进度", content: "12 个岗位需求与 48 条报名记录完成对账", operator: "系统管理员" },
+                { key: "3", time: "2026-07-26", project: "祥能 AI 助手", content: "本地 Qwen 查询、预览、确认与审计链路已启用", operator: "系统管理员" }
               ]}
               scroll={{ x: 760 }}
             />

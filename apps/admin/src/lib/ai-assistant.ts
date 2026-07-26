@@ -141,13 +141,17 @@ export async function processAiChat(
         };
       }
       return {
-        reply: `已识别离职登记请求：\n- 员工：${person.name}\n- 原因：${parsed.reason || "待补充"}\n- 时间：今天\n\n确认执行离职登记操作吗？`,
-        actions: [{
-          type: "offboard",
-          target: person.id,
-          payload: { reason: parsed.reason },
-          executed: false
-        }],
+        reply: parsed.reason
+          ? `已识别离职登记请求：\n- 员工：${person.name}\n- 原因：${parsed.reason}\n- 时间：今天\n\n确认执行离职登记操作吗？`
+          : `已找到员工 ${person.name}。请先提供离职原因，系统取得完整参数后才会生成操作预览。`,
+        actions: parsed.reason
+          ? [{
+              type: "offboard",
+              target: person.id,
+              payload: { reason: parsed.reason },
+              executed: false
+            }]
+          : [{ type: "query", executed: false }],
         data: { person }
       };
     }

@@ -69,6 +69,10 @@ function requirePermission(user: SessionUser, permission: Permission): void {
   }
 }
 
+function isSupplierPortalRole(user: SessionUser): boolean {
+  return user.role === UserRole.SUPPLIER || user.role === UserRole.SUPPLIER_ADMIN;
+}
+
 function portalJobWhere(user: SessionUser): Prisma.JobDemandWhereInput {
   if (user.role === UserRole.EMPLOYEE || user.role === UserRole.JOB_SEEKER) {
     return { status: JobStatus.RECRUITING, deadline: { gte: new Date() } };
@@ -177,7 +181,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
     const branchIds = [...new Set(projects.map((item) => item.branchId))];
     const companies = await app.prisma.branch.findMany({ where: { id: { in: branchIds } }, select: { id: true, name: true }, orderBy: { name: "asc" } });
     const suppliers = await app.prisma.supplier.findMany({
-      where: user.role === UserRole.SUPPLIER ? { id: user.supplierId ?? "00000000-0000-0000-0000-000000000000" } : { isActive: true },
+      where: isSupplierPortalRole(user) ? { id: user.supplierId ?? "00000000-0000-0000-0000-000000000000" } : { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
       take: 1000
@@ -606,7 +610,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/portal/appeals", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
-    const own = user.role === UserRole.EMPLOYEE || user.role === UserRole.JOB_SEEKER || user.role === UserRole.SUPPLIER;
+    const own = user.role === UserRole.EMPLOYEE || user.role === UserRole.JOB_SEEKER || isSupplierPortalRole(user);
     const rows = await app.prisma.portalAppeal.findMany({ where: own ? { creatorUserId: user.id } : {}, include: { creator: { select: { displayName: true, role: true } } }, orderBy: { createdAt: "desc" }, take: 200 });
     return rows.map((item) => ({ id: item.id, creatorName: item.creator.displayName, creatorRole: item.creator.role, type: item.type, description: item.description, requested_amount: item.requestedAmount ? amount(item.requestedAmount) : undefined, expected_status: item.expectedStatus, status: item.status, reply: item.reply, created_at: dateTime(item.createdAt) }));
   });
@@ -642,7 +646,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/portal/settlements", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
-    if (user.role !== UserRole.SUPPLIER || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以查看结算");
+    if (!isSupplierPortalRole(user) || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以查看结算");
     const { month } = z.object({ month: monthSchema.default("2026-07") }).parse(request.query);
     const row = await app.prisma.portalSettlement.findUnique({ where: { supplierId_month: { supplierId: user.supplierId, month } }, include: { items: { include: { person: { include: { project: true } } }, orderBy: { person: { name: "asc" } } } } });
     if (!row) return { month, overview: { dueAmount: 0, confirmedAmount: 0, pendingAmount: 0, disputedAmount: 0 }, items: [] };
@@ -655,7 +659,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
 
   app.post("/portal/settlements/:id/confirm", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
-    if (user.role !== UserRole.SUPPLIER || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以确认结算");
+    if (!isSupplierPortalRole(user) || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以确认结算");
     const { id } = z.object({ id: uuidSchema }).parse(request.params);
     const row = await app.prisma.portalSettlement.findFirst({ where: { id, supplierId: user.supplierId } });
     if (!row) notFound("结算单");
@@ -665,7 +669,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/portal/supplier/profile", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
-    if (user.role !== UserRole.SUPPLIER || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以查看");
+    if (!isSupplierPortalRole(user) || !user.supplierId) throw new AppError(403, "FORBIDDEN", "仅供应商可以查看");
     const supplier = await app.prisma.supplier.findUnique({ where: { id: user.supplierId }, include: { projectLinks: true, _count: { select: { people: true } } } });
     if (!supplier) notFound("供应商");
     return { id: supplier.id, name: supplier.name, contact: supplier.contactName ?? user.displayName, phone: supplier.contactPhone ?? "", grade: supplier.level ?? "A", projectCount: supplier.projectLinks.length, monthlyPeople: await app.prisma.person.count({ where: { supplierId: supplier.id, createdAt: { gte: monthBounds("2026-07").start, lt: monthBounds("2026-07").end } } }) };

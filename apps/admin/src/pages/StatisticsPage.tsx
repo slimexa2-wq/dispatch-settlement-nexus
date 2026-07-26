@@ -112,10 +112,10 @@ function StatisticsContent() {
 
       <ContentCard title="数据一致性异常" extra={<Space><Typography.Text type="secondary">当前筛选范围</Typography.Text></Space>}>
         {data?.anomalies === undefined
-          ? <Alert type="warning" showIcon message="异常检测结果暂不可用" description="当前接口未返回统计一致性异常清单，不能据此判定没有差异。" />
+          ? <Alert type="warning" showIcon title="异常检测结果暂不可用" description="当前接口未返回统计一致性异常清单，不能据此判定没有差异。" />
           : data.anomalies.length
-            ? <Alert type="error" showIcon message={`发现 ${data.anomalies.length} 项统计差异，请下钻核对明细。`} className="table-alert" />
-            : <Alert type="success" showIcon message="未发现统计口径差异" />}
+            ? <Alert type="error" showIcon title={`发现 ${data.anomalies.length} 项统计差异，请下钻核对明细。`} className="table-alert" />
+            : <Alert type="success" showIcon title="未发现统计口径差异" />}
         <Table<StatisticsAnomaly> rowKey="id" columns={anomalyColumns} dataSource={data?.anomalies ?? []} loading={resource.loading} pagination={false} scroll={{ x: 800 }} locale={{ emptyText: "当前范围没有异常" }} />
       </ContentCard>
     </>

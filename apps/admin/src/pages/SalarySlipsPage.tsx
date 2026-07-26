@@ -210,7 +210,7 @@ function SalarySlipsContent() {
       >
         {!preview ? (
           <>
-            <Alert type="info" showIcon message="导入不会直接发布" description="系统按身份证号或员工编号匹配人员。预览阶段不写数据库，未匹配数据会单独列出。" />
+            <Alert type="info" showIcon title="导入不会直接发布" description="系统按身份证号或员工编号匹配人员。预览阶段不写数据库，未匹配数据会单独列出。" />
             <Upload.Dragger
               accept=".xlsx,.xls"
               maxCount={1}
@@ -232,7 +232,7 @@ function SalarySlipsContent() {
               <Tag color={preview.skipped.length ? "red" : "default"}>跳过 {preview.skipped.length}</Tag>
               <Tag color={previewWarnings.length ? "gold" : "default"}>警告 {previewWarnings.length}</Tag>
             </Space>
-            {previewWarnings.length ? <Alert type="warning" showIcon message="预览存在警告" description={previewWarnings.slice(0, 5).map((item) => `第 ${item.row ?? "?"} 行：${item.message}`).join("；")} /> : null}
+            {previewWarnings.length ? <Alert type="warning" showIcon title="预览存在警告" description={previewWarnings.slice(0, 5).map((item) => `第 ${item.row ?? "?"} 行：${item.message}`).join("；")} /> : null}
             <Table<PreviewRow> rowKey={(row) => String(row.row ?? `${row.idCard}-${row.employeeNo}`)} size="small" columns={previewColumns} dataSource={preview.accepted as PreviewRow[]} scroll={{ x: 900, y: 360 }} pagination={false} locale={{ emptyText: "没有可导入记录" }} />
           </>
         )}
@@ -240,7 +240,7 @@ function SalarySlipsContent() {
 
       <Drawer title="工资条详情" width={600} open={Boolean(detail)} onClose={() => setDetail(undefined)}>
         {detail ? <>
-          <Alert type="info" showIcon message="仅员工本人可在员工端查看此工资条" />
+          <Alert type="info" showIcon title="仅员工本人可在员工端查看此工资条" />
           <Descriptions bordered column={1} size="small" className="detail-descriptions">
             <Descriptions.Item label="姓名">{detail.person?.name ?? "—"}</Descriptions.Item>
             <Descriptions.Item label="工资月份">{detail.salaryMonth}</Descriptions.Item>

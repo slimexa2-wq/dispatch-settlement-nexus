@@ -9,8 +9,10 @@ $postgresRoot = Join-Path $env:LOCALAPPDATA "Programs\PostgreSQL\17-portable\pgs
 $postgresExe = Join-Path $postgresRoot "bin\postgres.exe"
 $psqlExe = Join-Path $postgresRoot "bin\psql.exe"
 $createdbExe = Join-Path $postgresRoot "bin\createdb.exe"
+$dropdbExe = Join-Path $postgresRoot "bin\dropdb.exe"
 $postgresData = Join-Path $postgresRoot "data"
 $pnpmExe = (Get-Command pnpm.cmd -ErrorAction Stop).Source
+$demoDataFile = Join-Path $repoRoot "data\synthetic\demo-data.json"
 
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
@@ -63,7 +65,7 @@ do {
 } while ((Get-Date) -lt $pgReadyDeadline)
 if ($LASTEXITCODE -ne 0) { throw "PostgreSQL did not become ready within 30 seconds." }
 
-$databaseExists = (& $psqlExe -h 127.0.0.1 -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$databaseName'").Trim()
+$databaseExists = ((& $psqlExe -h 127.0.0.1 -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$databaseName'") | Out-String).Trim()
 if ($databaseExists -ne "1") {
   & $createdbExe -h 127.0.0.1 -U postgres $databaseName
 }
@@ -82,11 +84,29 @@ $env:XIANGNENG_LLM_MODEL = "qwen3.5:4b"
 $env:XIANGNENG_LLM_API_KEY = "ollama-local"
 $env:AI_MODEL_TIMEOUT_MS = "10000"
 
-& $pnpmExe --filter @xiangneng/api exec prisma migrate deploy --schema ../../prisma/schema.prisma
-if ($LASTEXITCODE -ne 0) { throw "Database migration failed." }
+function Invoke-DemoMigrations {
+  & $pnpmExe --filter @xiangneng/api exec prisma migrate deploy --schema ../../prisma/schema.prisma
+  if ($LASTEXITCODE -ne 0) { throw "Database migration failed." }
+}
+
+Invoke-DemoMigrations
 
 $personCount = [int]((& $psqlExe -h 127.0.0.1 -U postgres -d $databaseName -tAc 'SELECT COUNT(*) FROM people').Trim())
-if ($personCount -eq 0) {
+$projectCount = [int]((& $psqlExe -h 127.0.0.1 -U postgres -d $databaseName -tAc 'SELECT COUNT(*) FROM projects').Trim())
+$demoData = Get-Content -LiteralPath $demoDataFile -Raw -Encoding UTF8 | ConvertFrom-Json
+$expectedPersonCount = @($demoData.people).Count
+$expectedProjectCount = @($demoData.projects).Count
+
+if ($personCount -eq 0 -and $projectCount -eq 0) {
+  & $pnpmExe --filter @xiangneng/api db:import-demo
+  if ($LASTEXITCODE -ne 0) { throw "Demo business data import failed." }
+} elseif ($personCount -ne $expectedPersonCount -or $projectCount -ne $expectedProjectCount) {
+  Write-Host "Rebuilding isolated demo database because its data version does not match the repository snapshot." -ForegroundColor Yellow
+  & $dropdbExe -h 127.0.0.1 -U postgres --if-exists --force $databaseName
+  if ($LASTEXITCODE -ne 0) { throw "Failed to remove the isolated demo database." }
+  & $createdbExe -h 127.0.0.1 -U postgres $databaseName
+  if ($LASTEXITCODE -ne 0) { throw "Failed to recreate the isolated demo database." }
+  Invoke-DemoMigrations
   & $pnpmExe --filter @xiangneng/api db:import-demo
   if ($LASTEXITCODE -ne 0) { throw "Demo business data import failed." }
 }

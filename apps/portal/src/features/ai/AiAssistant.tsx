@@ -85,9 +85,9 @@ function getConversationId(): string {
 }
 
 const quickActions = [
-  { label: '查项目人员', icon: Database, text: '查询极米光电外包项目本月入职、离职、当前在职和净增减' },
+  { label: '查项目人员', icon: Database, text: '查询祥能智造示范项目本月入职、离职、当前在职和净增减' },
   { label: '查人员信息', icon: UserRound, text: '查询邱玉彬现在在哪个项目' },
-  { label: '查招聘进度', icon: BriefcaseBusiness, text: '查询极米光电外包项目还差多少人' },
+  { label: '查招聘进度', icon: BriefcaseBusiness, text: '查询祥能智造示范项目还差多少人' },
   { label: '办理入职', icon: UserRoundCheck, text: '给武鑫办理入职' },
   { label: '办理离职', icon: UserRoundX, text: '给宋国栋办理离职，原因是个人原因辞职' }
 ] as const;

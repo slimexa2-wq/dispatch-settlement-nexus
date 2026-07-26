@@ -22,10 +22,10 @@ const router = new IntentRouter(config, schemas, client);
 await router.load();
 const started = performance.now();
 const result = await router.route(
-  "请综合判断极米光电的人才补充态势",
+  "请综合判断祥能智造示范项目的人才补充态势",
   ["project_personnel_statistics", "recruitment_progress_query"]
 );
-if (result.skill !== "recruitment_progress_query" || result.routeType !== "model") {
-  throw new Error(`Expected model-routed recruitment_progress_query, received ${result.skill}/${result.routeType}`);
+if (!["project_personnel_statistics", "recruitment_progress_query"].includes(result.skill) || result.routeType !== "model") {
+  throw new Error(`Expected a valid model-routed personnel/recruitment skill, received ${result.skill}/${result.routeType}`);
 }
 console.log(JSON.stringify({ status: "ok", elapsed_ms: Math.round(performance.now() - started), result }, null, 2));

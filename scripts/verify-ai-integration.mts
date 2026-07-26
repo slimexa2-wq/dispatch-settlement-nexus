@@ -41,9 +41,9 @@ try {
   report.checks.push("health_database_model_rules");
 
   const readonlyCases = [
-    ["project_personnel_statistics", "查询极米光电外包项目本月入职、离职、当前在职和净增减"],
-    ["employee_information_query", "查询邱玉彬现在在哪个项目"],
-    ["recruitment_progress_query", "极米光电外包招人的达成情况怎么样"]
+    ["project_personnel_statistics", "查询祥能智造示范项目本月入职、离职、当前在职和净增减"],
+    ["employee_information_query", "查询手机号10000000004的完整人员信息"],
+    ["recruitment_progress_query", "祥能智造示范项目招人的达成情况怎么样"]
   ] as const;
   for (const [expectedSkill, message] of readonlyCases) {
     const result = await chat(adminToken, message);
@@ -52,7 +52,7 @@ try {
   }
   report.checks.push("three_readonly_skills_live_data");
 
-  const resignation = await chat(adminToken, "给宋国栋办理离职，原因是个人原因辞职");
+  const resignation = await chat(adminToken, "给手机号10000000004办理2026-07-26离职，原因是个人原因辞职");
   assert(resignation.type === "action_preview" && resignation.preview?.confirmation_required === true, "Resignation did not produce a confirmation preview");
   const resignationAction = resignation.preview as JsonRecord;
   const previewState = await call(`/ai/actions/${resignationAction.action_id}`, adminToken);
@@ -72,6 +72,8 @@ try {
   };
   const resignationConfirmed = await call("/ai/actions/confirm", adminToken, { method: "POST", body: JSON.stringify(resignationPayload) });
   assert(resignationConfirmed.status === 200 && resignationConfirmed.body.data?.status === "EXECUTED", "Resignation confirmation failed");
+  const resignedPerson = await chat(adminToken, "查询手机号10000000004的完整人员信息");
+  assert(resignedPerson.result?.employee?.offboard_date === "2026-07-26", "Resignation business date changed after database persistence");
   const resignationRepeated = await call("/ai/actions/confirm", adminToken, { method: "POST", body: JSON.stringify(resignationPayload) });
   assert(resignationRepeated.status === 200 && resignationRepeated.body.data?.status === "EXECUTED", "Idempotent resignation replay failed");
   report.checks.push("resignation_preview_token_transaction_idempotency");
@@ -79,13 +81,15 @@ try {
   const resetAfterResignation = await call("/ai/demo/reset", adminToken, { method: "POST", body: "{}" });
   assert(resetAfterResignation.status === 200 && resetAfterResignation.body.data?.restored_people >= 1, "Demo reset did not restore resignation data");
 
-  const entry = await chat(adminToken, "给武鑫办理入职");
+  const entry = await chat(adminToken, "给手机号10000000003办理2026-07-26入职");
   assert(entry.type === "action_preview" && entry.preview?.confirmation_required === true, "Entry did not produce a confirmation preview");
   const entryAction = entry.preview as JsonRecord;
   const entryKey = crypto.randomUUID();
   const entryPayload = { actionId: entryAction.action_id, actionToken: entryAction.action_token, idempotencyKey: entryKey };
   const entryConfirmed = await call("/ai/actions/confirm", adminToken, { method: "POST", body: JSON.stringify(entryPayload) });
   assert(entryConfirmed.status === 200 && entryConfirmed.body.data?.status === "EXECUTED", "Entry confirmation failed");
+  const onboardedPerson = await chat(adminToken, "查询手机号10000000003的完整人员信息");
+  assert(onboardedPerson.result?.employee?.onboard_date === "2026-07-26", "Entry business date changed after database persistence");
   const entryRepeated = await call("/ai/actions/confirm", adminToken, { method: "POST", body: JSON.stringify(entryPayload) });
   assert(entryRepeated.status === 200 && entryRepeated.body.data?.status === "EXECUTED", "Idempotent entry replay failed");
   report.checks.push("entry_preview_transaction_idempotency");
@@ -93,7 +97,7 @@ try {
   const employeeToken = await demoLogin("employee");
   const deniedWrite = await call("/ai/chat", employeeToken, {
     method: "POST",
-    body: JSON.stringify({ message: "给宋国栋办理离职，原因是个人原因辞职", parameters: {} })
+    body: JSON.stringify({ message: "给手机号10000000004办理2026-07-26离职，原因是个人原因辞职", parameters: {} })
   });
   assert(deniedWrite.status >= 400 || deniedWrite.body.data?.type !== "action_preview", "Employee role received an unauthorized write preview");
   report.checks.push("role_permission_denial");

@@ -22,9 +22,9 @@ export function ErrorBlock({ error, onRetry }: { error: unknown; onRetry?: () =>
     <Alert
       type="error"
       showIcon
-      message="数据加载失败"
+      title="数据加载失败"
       description={
-        <Space direction="vertical">
+        <Space orientation="vertical">
           <span>{getErrorMessage(error)}</span>
           {onRetry ? (
             <Button size="small" icon={<ReloadOutlined />} onClick={onRetry}>

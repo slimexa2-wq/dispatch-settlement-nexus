@@ -12,6 +12,7 @@ import {
   previewPersonOnboard
 } from "../services/person-lifecycle.js";
 import type { AppConfig } from "../config.js";
+import { parseDateOnly } from "../dates.js";
 import type { AiRouteType, AiSkill } from "./types.js";
 import { aiScopeSummary } from "./permissions.js";
 import { resolveUniqueEmployee, type EmployeeQueryInput } from "./data-tools.js";
@@ -150,7 +151,7 @@ export async function createWritePreview(
     }
     schemas.validateToolInput(input.skill, tool, toolInput);
     preview = await previewPersonOnboard(db, user, current.id, {
-      onboardDate: new Date(`${toolInput.entry_date}T00:00:00+08:00`),
+      onboardDate: parseDateOnly(String(toolInput.entry_date)),
       insuranceTypes: insuranceValues(input.parameters.insurance_types, current.insuranceTypes),
       employeeNo: current.employeeNo,
       notes: toolInput.remark as string | null
@@ -169,7 +170,7 @@ export async function createWritePreview(
     }
     schemas.validateToolInput(input.skill, tool, toolInput);
     preview = await previewPersonOffboard(db, user, current.id, {
-      offboardDate: new Date(`${toolInput.resignation_date}T00:00:00+08:00`),
+      offboardDate: parseDateOnly(String(toolInput.resignation_date)),
       offboardReason: reason!,
       insuranceTypes: insuranceValues(input.parameters.insurance_types, current.insuranceTypes),
       notes: toolInput.remark as string | null
@@ -257,14 +258,14 @@ export async function confirmWriteAction(
       let result: unknown;
       if (action.skill === "employee_entry") {
         result = await onboardPerson(tx, config, request, user, personId, {
-          onboardDate: new Date(`${String(parameters.entry_date)}T00:00:00+08:00`),
+          onboardDate: parseDateOnly(String(parameters.entry_date)),
           insuranceTypes: insuranceValues(undefined, current.insuranceTypes),
           employeeNo: current.employeeNo,
           notes: typeof parameters.remark === "string" ? parameters.remark : null
         });
       } else if (action.skill === "employee_resignation") {
         result = await offboardPerson(tx, config, request, user, personId, {
-          offboardDate: new Date(`${String(parameters.resignation_date)}T00:00:00+08:00`),
+          offboardDate: parseDateOnly(String(parameters.resignation_date)),
           offboardReason: String(parameters.resignation_reason),
           insuranceTypes: insuranceValues(undefined, current.insuranceTypes),
           notes: typeof parameters.remark === "string" ? parameters.remark : null

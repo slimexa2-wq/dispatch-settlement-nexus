@@ -393,7 +393,7 @@ export function ReimbursementsPage() {
       title: "报销单",
       width: 280,
       render: (_, row) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <Typography.Text strong>{row.title}</Typography.Text>
           <Typography.Text type="secondary" copyable>{row.code}</Typography.Text>
         </Space>
@@ -403,7 +403,7 @@ export function ReimbursementsPage() {
       title: "申请与范围",
       width: 220,
       render: (_, row) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <span>{row.applicant?.displayName ?? "—"}</span>
           <Typography.Text type="secondary">
             {row.branch?.name ?? "集团"} / {row.organizationUnit?.name ?? "未分部门"}
@@ -421,7 +421,7 @@ export function ReimbursementsPage() {
       title: "发票金额 / 票额差",
       width: 190,
       render: (_, row) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <span>{currency(row.totalInvoiceCents)}</span>
           <Typography.Text type="success">多票 {currency(row.invoiceExcessCents)}</Typography.Text>
         </Space>
@@ -463,7 +463,7 @@ export function ReimbursementsPage() {
     const artifact = detail?.artifacts.find((item) => item.type === type);
     return (
       <Card key={type} size="small" title={artifactLabels[type]}>
-        <Space direction="vertical" style={{ width: "100%" }}>
+        <Space orientation="vertical" style={{ width: "100%" }}>
           <Tag color={artifact?.status === "GENERATED" ? "green" : artifact?.status === "FAILED" ? "red" : "default"}>
             {artifact?.status === "GENERATED" ? "已生成" : artifact?.status === "FAILED" ? "生成失败" : "尚未生成"}
           </Tag>
@@ -628,7 +628,7 @@ export function ReimbursementsPage() {
         }
       >
         {detail ? (
-          <Space direction="vertical" size={20} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={20} style={{ width: "100%" }}>
             <Steps
               size="small"
               current={statusItems.findIndex((item) => item.value === detail.status)}
@@ -705,7 +705,7 @@ export function ReimbursementsPage() {
                   key: "issues",
                   label: `问题记录（${detail.issues.length}）`,
                   children: (
-                    <Space direction="vertical" style={{ width: "100%" }}>
+                    <Space orientation="vertical" style={{ width: "100%" }}>
                       <Button icon={<FileAddOutlined />} onClick={() => setIssueOpen(true)}>
                         记录问题
                       </Button>
@@ -807,7 +807,7 @@ export function ReimbursementsPage() {
           </Row>
           <Form.List name="lines">
             {(fields, { add, remove }) => (
-              <Space direction="vertical" style={{ width: "100%" }}>
+              <Space orientation="vertical" style={{ width: "100%" }}>
                 {fields.map((field, index) => (
                   <Card key={field.key} size="small" title={`报销明细 ${index + 1}`} extra={fields.length > 1 ? <Button type="link" danger onClick={() => remove(field.name)}>移除</Button> : null}>
                     <Row gutter={12}>

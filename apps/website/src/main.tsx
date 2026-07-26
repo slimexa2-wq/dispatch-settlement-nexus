@@ -13,7 +13,7 @@ const modules = [
   },
   {
     title: "组织项目",
-    text: "分子公司和项目来自 Excel 初始化清单，保留当前在职为 0 的项目，缺失字段标记待维护。"
+    text: "分公司、项目、负责人、岗位和合作供应商形成完整主数据，项目图片、简介和联系方式可直接查看。"
   },
   {
     title: "供应商协同",
@@ -26,16 +26,24 @@ const modules = [
   {
     title: "权限与审计",
     text: "按角色、分子公司、项目和供应商做数据范围控制，关键修改保留操作日志。"
+  },
+  {
+    title: "祥能 AI 业务助手",
+    text: "本地 Qwen3.5 4B 在权限范围内检索人员、项目和招聘数据，单人入离职必须预览并由用户确认。"
+  },
+  {
+    title: "报销与领导驾驶舱",
+    text: "覆盖制单、审核、复核、出纳、支付和归档，领导端汇总人员、招聘、项目和费用口径。"
   }
 ];
 
-const stages = ["岗位发布", "多入口报名", "面试跟进", "入职转在职", "工资条发布"];
+const stages = ["岗位发布", "多入口报名", "面试跟进", "入职转在职", "员工服务", "AI 检索与受控操作"];
 
 const stats = [
-  ["7", "分子公司"],
-  ["243", "真实项目"],
-  ["3", "报名入口"],
-  ["1", "统一人员档案"]
+  ["3", "演示分公司"],
+  ["8", "完整项目"],
+  ["12", "招聘岗位"],
+  ["48", "合成人员档案"]
 ];
 
 function App() {
@@ -58,10 +66,10 @@ function App() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <p className="eyebrow">人员管理、招聘发布、供应商协同共用一个后台</p>
-          <h1>把花名册和招聘过程放回同一套真实业务系统</h1>
+          <p className="eyebrow">PC 后台、微信小程序、本地 AI 与统一业务数据</p>
+          <h1>从招聘到员工服务，一套系统完成全流程协同</h1>
           <p className="lead">
-            面向祥能人资日常运营的演示官网。系统围绕人员主档持续更新，项目、供应商、政策和工资条都从业务明细关联和统计。
+            面向祥能人资、项目运营、供应商和员工的一体化系统。人员、项目、招聘、报销、工资、推荐和本地 AI 助手使用统一权限与数据口径。
           </p>
           <div className="hero-actions">
             <a className="primary-button" href="#demo">查看演示入口</a>
@@ -86,10 +94,10 @@ function App() {
           <img src="/screenshots/projects-mobile.png" alt="移动端项目列表截图" />
         </div>
         <div>
-          <p className="eyebrow">电脑端适合批量处理，小程序适合现场操作</p>
-          <h2>一个后台支撑管理端、小程序和微信触达</h2>
+          <p className="eyebrow">电脑端适合管理，小程序适合现场和员工服务</p>
+          <h2>桌面后台与手机小程序各自保持合适的交互形态</h2>
           <p>
-            管理端负责搜索、导入导出、批量操作和统计下钻；小程序承担岗位浏览、报名、现场跟进、工资条查看和内部推荐。
+            管理端负责搜索、导入导出、审核和统计下钻；手机端承担岗位浏览、报名、现场跟进、工资条、推荐和个人服务，两端由同一 API 联动。
           </p>
         </div>
       </section>
@@ -112,9 +120,9 @@ function App() {
       <section className="workflow" id="workflow">
         <div className="workflow-copy">
           <p className="eyebrow">Business Flow</p>
-          <h2>从岗位需求到员工工资条，数据不再断裂</h2>
+          <h2>从岗位需求到员工服务，数据和权限不再断裂</h2>
           <p>
-            每一步都更新同一份人员档案，招聘统计和项目人数从明细实时计算，后台卡片和图表可以下钻到人员名单。
+            每一步都更新同一份人员档案，招聘统计和项目人数从明细实时计算；AI 只通过受控业务工具查数和执行，不直接修改数据库。
           </p>
         </div>
         <ol className="timeline">
@@ -141,16 +149,19 @@ function App() {
       <section className="demo" id="demo">
         <div>
           <p className="eyebrow">Demo Entry</p>
-          <h2>演示入口</h2>
+          <h2>可交互演示入口</h2>
           <p>
-            官网用于展示系统定位和能力。要体验业务操作，可启动管理端和接口服务后使用测试账号登录；小程序端通过 Taro 项目预览。
+            管理后台使用电脑布局；统一门户使用手机布局并可切换个人、供应商和内部管理角色。演示数据全部为完整合成数据。
           </p>
         </div>
         <div className="demo-card">
           <a className="primary-button" href="http://127.0.0.1:5173" target="_blank" rel="noreferrer">
             打开管理端演示
           </a>
-          <small>默认管理端地址；若端口变化，以本地启动输出为准。</small>
+          <a className="secondary-button" href="http://127.0.0.1:4320" target="_blank" rel="noreferrer">
+            打开手机小程序演示
+          </a>
+          <small>本地默认地址；公开部署时以交付网址为准。</small>
         </div>
       </section>
     </main>

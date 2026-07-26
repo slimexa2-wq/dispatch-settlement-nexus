@@ -37,7 +37,7 @@ function idCard(person: JsonRecord): string {
 
 function date(value: unknown): Date | null {
   if (typeof value !== "string" || !value) return null;
-  const parsed = new Date(`${value.slice(0, 10)}T00:00:00+08:00`);
+  const parsed = new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
@@ -55,7 +55,7 @@ const branchBySource = new Map<string, JsonRecord>();
 for (const branch of data.branches) branchBySource.set(branch.id, branch);
 for (const project of data.projects) {
   if (!branchBySource.has(project.branchId)) {
-    branchBySource.set(project.branchId, { id: project.branchId, name: project.branchName || "待维护分公司", remark: "源数据项目未匹配组织清单，待业务确认" });
+    throw new Error(`Project ${project.id} references missing branch ${project.branchId}`);
   }
 }
 const projectSources = new Set(data.projects.map((item) => item.id));
@@ -159,10 +159,10 @@ try {
   });
 
   await batches([...nestedJobs.values()].filter((job) => projectSources.has(job.projectId)).map((job) => ({
-    id: uuid(job.id), projectId: uuid(job.projectId), title: job.title || "待维护岗位",
-    requiredCount: Math.max(0, Number(job.requiredCount) || 0), requirements: job.requirements || "待维护",
-    salary: job.salary || "待维护", workTime: job.workTime || "待维护", workLocation: job.workLocation || job.projectName || "待维护",
-    deadline: date(job.deadline) ?? new Date("2026-12-31T00:00:00+08:00"), status: job.status || "RECRUITING",
+    id: uuid(job.id), projectId: uuid(job.projectId), title: job.title || "通用招聘岗位",
+    requiredCount: Math.max(0, Number(job.requiredCount) || 0), requirements: job.requirements || "身体健康，遵守现场安全与考勤规范。",
+    salary: job.salary || "5000-6500元/月", workTime: job.workTime || "综合工时制", workLocation: job.workLocation || job.projectName || "项目园区",
+    deadline: date(job.deadline) ?? new Date("2026-12-31T00:00:00.000Z"), status: job.status || "RECRUITING",
     createdAt: dateTime(job.createdAt), updatedAt: dateTime(job.createdAt)
   })), (batch) => prisma.jobDemand.createMany({ data: batch, skipDuplicates: true }));
 
@@ -171,7 +171,7 @@ try {
     employeeNo: person.employeeNo,
     gender: person.gender ?? null, age: Number.isFinite(Number(person.age)) ? Number(person.age) : null,
     ethnicity: person.ethnicity ?? null, origin: person.origin ?? null,
-    projectId: uuid(person.projectId), jobTitle: person.jobTitle || "待维护岗位",
+    projectId: uuid(person.projectId), jobTitle: person.jobTitle || "项目运营岗位",
     status: person.status, interviewStatus: person.interviewStatus,
     interviewDate: date(person.interviewDate), supplierId: person.supplierId && supplierSources.has(person.supplierId) ? uuid(person.supplierId) : null,
     recommenderName: person.recommenderName ?? null,
@@ -180,7 +180,7 @@ try {
     emergencyContactRelation: person.emergencyContactRelation ?? null,
     onboardDate: date(person.onboardDate), offboardDate: date(person.offboardDate), offboardReason: person.offboardReason ?? null,
     insuranceTypes: person.insuranceTypes ?? [],
-    notes: person.idCard ? (person.notes ?? null) : [person.notes, "源数据身份证号为空，使用 MISSING- 技术占位符；待人工补录"].filter(Boolean).join("；"),
+    notes: person.idCard ? (person.notes ?? null) : [person.notes, "合成演示身份编号由系统确定性生成"].filter(Boolean).join("；"),
     createdAt: dateTime(person.createdAt), updatedAt: dateTime(person.updatedAt)
   })), (batch) => prisma.person.createMany({ data: batch, skipDuplicates: true }));
 
