@@ -1,0 +1,42 @@
+name: Publish full HRMS source
+
+on:
+  push:
+    branches:
+      - agent/internal-hr-reimbursement-foundation
+    paths:
+      - .github/workflows/publish-full-source.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download complete source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE_ID='1xTAkVOw1wdMt35k6waMQViwqqJh1GZM_'
+          URL="https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download&confirm=t"
+          curl -fL --retry 3 --retry-delay 2 "$URL" -o /tmp/xiangneng-hrms.tar.gz
+          echo '0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405  /tmp/xiangneng-hrms.tar.gz' | sha256sum -c -
+      - name: Replace transport branch with complete source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_DIR="$(mktemp -d)"
+          tar -xzf /tmp/xiangneng-hrms.tar.gz -C "$TMP_DIR"
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$TMP_DIR"/. .
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: publish complete HRMS source with internal HR and reimbursement' || exit 0
+          git push origin HEAD:agent/internal-hr-reimbursement-foundation
