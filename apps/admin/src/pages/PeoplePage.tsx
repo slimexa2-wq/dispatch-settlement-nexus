@@ -161,7 +161,7 @@ function isSelfRecruit(row: Person): boolean {
 
 function recommenderLabel(row: Person): string {
   if (!isSelfRecruit(row)) return "—";
-  return row.recommender?.displayName || row.recommender?.name || row.recommenderName || "待补推荐人";
+  return row.recommender?.displayName || row.recommender?.name || row.recommenderName || row.supplier?.name || row.supplierName || "祥能自招";
 }
 
 function unifiedStatus(row: Person): string {

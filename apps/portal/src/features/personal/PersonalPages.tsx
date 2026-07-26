@@ -157,10 +157,18 @@ export function ApplicationsPage({ session }: { session: Session }) {
 }
 
 export function FavoritesPage() {
+  const [applyJob, setApplyJob] = useState<Job | null>(null);
   const queryClient = useQueryClient();
   const favorites = useQuery({ queryKey: ['favorites'], queryFn: () => api<Job[]>('/api/favorites') });
   const remove = useMutation({ mutationFn: (id: string) => api(`/api/favorites/${id}`, { method: 'PUT' }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }) });
-  return <><PageHeader title="收藏岗位" back />{favorites.isLoading ? <LoadingScreen /> : favorites.data?.length ? <div className="job-list">{favorites.data.map((job) => <div className="favorite-job" key={job.id}><JobCard job={job} onApply={() => undefined} /><button type="button" className="favorite-remove" onClick={() => remove.mutate(job.id)}><Bookmark size={14} fill="currentColor" />取消收藏</button></div>)}</div> : <EmptyState title="暂无收藏岗位" detail="在岗位详情点击星标，方便稍后查看" action={<Link className="primary-button" to="/personal/home">去看看岗位</Link>} />}</>;
+  const apply = useMutation({
+    mutationFn: (jobId: string) => api(`/api/jobs/${jobId}/apply`, { method: 'POST' }),
+    onSuccess: async () => {
+      setApplyJob(null);
+      await queryClient.invalidateQueries({ queryKey: ['my-person'] });
+    }
+  });
+  return <><PageHeader title="收藏岗位" back />{favorites.isLoading ? <LoadingScreen /> : favorites.data?.length ? <div className="job-list">{favorites.data.map((job) => <div className="favorite-job" key={job.id}><JobCard job={job} onApply={setApplyJob} /><button type="button" className="favorite-remove" onClick={() => remove.mutate(job.id)}><Bookmark size={14} fill="currentColor" />取消收藏</button></div>)}</div> : <EmptyState title="暂无收藏岗位" detail="在岗位详情点击星标，方便稍后查看" action={<Link className="primary-button" to="/personal/home">去看看岗位</Link>} />}<Modal open={Boolean(applyJob)} title="确认报名" onClose={() => setApplyJob(null)} footer={<><button className="ghost-button" type="button" onClick={() => setApplyJob(null)}>取消</button><button className="primary-button" type="button" disabled={apply.isPending} onClick={() => applyJob && apply.mutate(applyJob.id)}>{apply.isPending ? '提交中…' : '确认报名'}</button></>}><p>确认报名“{applyJob?.projectName} · {applyJob?.title}”吗？</p>{apply.error && <p className="form-error">{apply.error.message}</p>}</Modal></>;
 }
 
 interface Payroll { id: string; month: string; gross: number; net: number; details: Record<string, number>; publishedAt: string; }

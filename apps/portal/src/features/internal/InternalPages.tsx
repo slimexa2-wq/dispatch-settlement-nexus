@@ -133,7 +133,17 @@ function JobManageModal({ open, job, pending, error, onClose, onSubmit }: { open
 }
 
 function QrModal({ open, qr, job, onClose, onRegenerate }: { open: boolean; qr: { dataUrl: string; createdAt: string; expiresAt: string; signupUrl: string } | null; job: Job; onClose: () => void; onRegenerate: () => void }) {
-  return <Modal open={open} title="生成报名二维码" onClose={onClose}><div className="qr-panel"><h2>{job.projectName} - {job.title}</h2><p>求职者扫码后自动带入项目、岗位和当天面试日期。</p>{qr && <img src={qr.dataUrl} alt="现场报名二维码" />}<dl><div><dt>二维码生成</dt><dd>{qr ? new Date(qr.createdAt).toLocaleString('zh-CN') : '—'}</dd></div><div><dt>失效时间</dt><dd>{qr ? new Date(qr.expiresAt).toLocaleString('zh-CN') : '—'}（24小时）</dd></div></dl><div className="qr-actions"><a className="secondary-button" href={qr?.dataUrl} download="报名二维码.png"><Save size={16} />保存图片</a><button className="secondary-button" type="button"><QrCode size={16} />分享</button><button className="ghost-button" type="button" onClick={onRegenerate}><RefreshCw size={16} />重新生成</button></div></div></Modal>;
+  const share = async () => {
+    if (!qr) return;
+    const url = new URL(qr.signupUrl, window.location.origin).toString();
+    if (navigator.share) {
+      await navigator.share({ title: `${job.projectName} · ${job.title}报名`, text: '祥能现场报名入口，二维码24小时内有效。', url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    window.alert('报名链接已复制，可直接发送给求职者。');
+  };
+  return <Modal open={open} title="生成报名二维码" onClose={onClose}><div className="qr-panel"><h2>{job.projectName} - {job.title}</h2><p>求职者扫码后自动带入项目、岗位和当天面试日期。</p>{qr && <img src={qr.dataUrl} alt="现场报名二维码" />}<dl><div><dt>二维码生成</dt><dd>{qr ? new Date(qr.createdAt).toLocaleString('zh-CN') : '—'}</dd></div><div><dt>失效时间</dt><dd>{qr ? new Date(qr.expiresAt).toLocaleString('zh-CN') : '—'}（24小时）</dd></div></dl><div className="qr-actions"><a className="secondary-button" href={qr?.dataUrl} download="报名二维码.png"><Save size={16} />保存图片</a><button className="secondary-button" type="button" disabled={!qr} onClick={() => void share()}><QrCode size={16} />分享</button><button className="ghost-button" type="button" onClick={onRegenerate}><RefreshCw size={16} />重新生成</button></div></div></Modal>;
 }
 
 interface AppealRecord { id: string; creatorName: string; creatorRole: string; type: string; description: string; requested_amount?: number; status: string; reply?: string; created_at: string; }

@@ -16,7 +16,7 @@ export function JobCard({ job, portal = 'personal', onApply }: { job: Job; porta
       {portal === 'supplier' && <dl className="compact-grid"><div><dt>已报名</dt><dd>{job.appliedCount}人</dd></div><div><dt>剩余缺口</dt><dd>{gap}人</dd></div><div><dt>截止时间</dt><dd>{job.deadline}</dd></div></dl>}
       {portal === 'supplier' && <p className="job-policy">适用政策：{job.supplier_policy}</p>}
       {portal === 'personal' && <p className="job-published">发布于 {job.created_at.slice(0, 10)}</p>}
-      <div className="job-actions"><Link className="secondary-button" to={detailPath}>查看详情</Link>{portal === 'supplier' ? <Link className="primary-button" to={`/supplier/people?jobId=${job.id}`}>报名人员</Link> : portal !== 'internal' && <button className="primary-button" type="button" onClick={() => onApply?.(job)}>立即报名</button>}</div>
+      <div className="job-actions"><Link className="secondary-button" to={detailPath}>查看详情</Link>{portal === 'supplier' ? <Link className="primary-button" to={`/supplier/people?jobId=${job.id}`}>报名人员</Link> : portal !== 'internal' && onApply && <button className="primary-button" type="button" onClick={() => onApply(job)}>立即报名</button>}</div>
     </div>
   </article>;
 }

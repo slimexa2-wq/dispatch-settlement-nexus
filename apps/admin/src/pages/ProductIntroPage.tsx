@@ -99,8 +99,11 @@ const ARCH_MODULES_LEFT = [
 const ARCH_MODULES_RIGHT = [
   { icon: <SafetyCertificateOutlined />, label: "政策管理" },
   { icon: <FundOutlined />, label: "工资与结算" },
+  { icon: <FundOutlined />, label: "报销闭环" },
+  { icon: <BarChartOutlined />, label: "领导驾驶舱" },
+  { icon: <ExperimentOutlined />, label: "AI业务助手" },
   { icon: <NotificationOutlined />, label: "消息通知" },
-  { icon: <LockOutlined />, label: "权限管理" }
+  { icon: <LockOutlined />, label: "权限与审计" }
 ];
 
 function LockOutlined(props?: Record<string, unknown>) {
@@ -117,7 +120,9 @@ const SYNC_ITEMS = [
   { icon: <MobileOutlined />, label: "个人端进度" },
   { icon: <TeamOutlined />, label: "供应商状态" },
   { icon: <UserSwitchOutlined />, label: "祥能自招" },
-  { icon: <IdcardOutlined />, label: "人员档案" }
+  { icon: <IdcardOutlined />, label: "人员档案" },
+  { icon: <FundOutlined />, label: "报销闭环" },
+  { icon: <ExperimentOutlined />, label: "AI助手" }
 ];
 
 const PORTS: Array<{
@@ -185,7 +190,7 @@ const PORTS: Array<{
 const LIFECYCLE_STEPS = [
   { num: "01", title: "报名", sub: "登记基础信息", icon: <SolutionOutlined /> },
   { num: "02", title: "面试", sub: "记录结果与时间", icon: <UserSwitchOutlined /> },
-  { num: "03", title: "待入职", sub: "待补外发资料", icon: <FileTextOutlined /> },
+  { num: "03", title: "待入职", sub: "核验入职资料", icon: <FileTextOutlined /> },
   { num: "04", title: "入职", sub: "办理入职并同步", icon: <IdcardOutlined /> },
   { num: "05", title: "在职", sub: "在职管理与服务", icon: <LaptopOutlined /> },
   { num: "06", title: "离职", sub: "离职留档", icon: <AuditOutlined /> }
@@ -288,10 +293,10 @@ const DEMO_ROLES = [
 ];
 
 const ROADMAP = [
-  { icon: <RocketOutlined />, title: "正式部署", desc: "服务器上线、稳定运行" },
-  { icon: <MobileOutlined />, title: "小程序接入", desc: "微信端便捷使用" },
-  { icon: <DatabaseOutlined />, title: "数据迁移", desc: "历史数据安全迁移" },
-  { icon: <LineChartOutlined />, title: "试点推广", desc: "试点优化、逐步推广" }
+  { icon: <RocketOutlined />, title: "生产发布", desc: "容器化部署、健康检查与故障恢复" },
+  { icon: <MobileOutlined />, title: "微信上架", desc: "已编译小程序提交审核并配置业务域名" },
+  { icon: <DatabaseOutlined />, title: "正式迁移", desc: "历史数据校验、分批迁移与结果对账" },
+  { icon: <LineChartOutlined />, title: "运营推广", desc: "权限培训、试点运行与持续优化" }
 ];
 
 /* ------------------------------------------------------------------ */
@@ -893,7 +898,7 @@ export function ProductIntroPage() {
             ))}
           </div>
           <p className="pp-roadmap-note">
-            当前作品为可交互的系统演示版本，已经完成核心业务结构、主要页面和数据联动验证。
+            当前参赛版本已具备完整 PC 管理后台、手机小程序、领导驾驶舱、报销闭环和本地 AI 助手；正式落地只需按环境脚本配置服务器、数据库、COS、域名与微信审核信息。
           </p>
         </div>
       </section>
