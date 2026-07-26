@@ -101,8 +101,8 @@ const summary = await assetSummary(clientDir);
 await writeFile(join(distDir, "build-summary.json"), `${JSON.stringify({
   generatedAt: new Date().toISOString(),
   assets: summary,
-  adminIndex: relative(distDir, join(clientDir, "index.html")).replaceAll("\\\\", "/"),
-  portalIndex: relative(distDir, join(clientDir, "portal", "index.html")).replaceAll("\\\\", "/")
+  adminIndex: relative(distDir, join(clientDir, "index.html")).replaceAll("\\", "/"),
+  portalIndex: relative(distDir, join(clientDir, "portal", "index.html")).replaceAll("\\", "/")
 }, null, 2)}\n`, "utf8");
 
 const adminHtml = await readFile(join(clientDir, "index.html"), "utf8");
