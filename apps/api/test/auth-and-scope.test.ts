@@ -183,4 +183,38 @@ describe("认证与数据权限", () => {
     expect(response.statusCode).toBe(501);
     expect(response.json()).toMatchObject({ error: { code: "WECHAT_NOT_CONFIGURED" } });
   });
+
+  it("分公司内部人事读取审计日志时查询必须包含登录态分公司范围", async () => {
+    const branchId = "20000000-0000-4000-8000-000000000001";
+    const user = userFixture({
+      username: "hr",
+      role: UserRole.INTERNAL_HR,
+      branchId,
+      passwordHash: await passwordHash()
+    });
+    let auditWhere: unknown;
+    const prisma = createPrismaMock({
+      user: { findUnique: async () => user },
+      auditLog: {
+        findMany: async (raw) => {
+          auditWhere = (raw as { where: unknown }).where;
+          return [];
+        },
+        count: async () => 0,
+        create: async () => ({ id: "audit" })
+      }
+    });
+    const app = await buildTestApp(prisma);
+    apps.push(app);
+    const token = await login(app, "hr");
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/audit-logs",
+      headers: { authorization: `Bearer ${token}` }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.stringify(auditWhere)).toContain(branchId);
+  });
 });

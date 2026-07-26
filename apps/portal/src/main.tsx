@@ -28,7 +28,7 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.VITE_ROUTER_BASENAME || undefined}>
         <SessionProvider><App /></SessionProvider>
       </BrowserRouter>
     </QueryClientProvider>

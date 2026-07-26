@@ -30,8 +30,8 @@ const quickActions = [
   { label: "项目人员数据", icon: <DatabaseOutlined />, message: "查询祥能智造示范项目本月入职、离职、当前在职和净增减" },
   { label: "人员信息", icon: <UserOutlined />, message: "查询邱玉彬现在在哪个项目" },
   { label: "招聘进度", icon: <RobotOutlined />, message: "祥能智造示范项目招人的达成情况怎么样" },
-  { label: "办理入职", icon: <UserAddOutlined />, message: "给武鑫办理今天入职" },
-  { label: "办理离职", icon: <UserDeleteOutlined />, message: "给宋国栋办理今天离职，原因是个人原因辞职" }
+  { label: "办理入职", icon: <UserAddOutlined />, message: "给手机号10000000003的人员办理今天入职" },
+  { label: "办理离职", icon: <UserDeleteOutlined />, message: "给手机号10000000004的人员办理今天离职，原因是个人原因辞职" }
 ] as const;
 
 const labels: Record<string, string> = {

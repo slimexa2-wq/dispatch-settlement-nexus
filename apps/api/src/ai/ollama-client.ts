@@ -124,7 +124,7 @@ export class OllamaClient {
     opts: { temperature?: number; maxTokens?: number; timeoutMs?: number; responseFormat?: { type: "json_object" }; bypassCircuit?: boolean }
   ): Promise<string> {
     const bypassCircuit = opts.bypassCircuit ?? false;
-    if (!bypassCircuit && this.circuitOpen()) throw new Error("云端模型熔断中，请使用标准表单");
+    if (!bypassCircuit && this.circuitOpen()) throw new Error("本地模型熔断中，请使用标准表单");
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? this.config.AI_MODEL_TIMEOUT_MS);
     try {
@@ -145,10 +145,10 @@ export class OllamaClient {
         },
         body: JSON.stringify(body)
       });
-      if (!response.ok) throw new Error(`云端模型返回 HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`本地模型返回 HTTP ${response.status}`);
       const value = await response.json() as OpenAIChatResponse;
       const content = value.choices?.[0]?.message?.content?.trim();
-      if (!content) throw new Error("云端模型没有返回回答");
+      if (!content) throw new Error("本地模型没有返回回答");
       if (!bypassCircuit) this.failures = 0;
       return content;
     } catch (error) {
@@ -156,7 +156,7 @@ export class OllamaClient {
         this.failures += 1;
         if (this.failures >= 3) this.circuitOpenedAt = Date.now();
       }
-      if (error instanceof DOMException && error.name === "AbortError") throw new Error("云端模型响应超时");
+      if (error instanceof DOMException && error.name === "AbortError") throw new Error("本地模型响应超时");
       throw error;
     } finally {
       clearTimeout(timer);
@@ -181,7 +181,7 @@ export class OllamaClient {
       });
       const firstBrace = content.indexOf("{");
       const lastBrace = content.lastIndexOf("}");
-      if (firstBrace < 0 || lastBrace <= firstBrace) throw new Error("云端模型未返回完整 JSON");
+      if (firstBrace < 0 || lastBrace <= firstBrace) throw new Error("本地模型未返回完整 JSON");
       const parsed = JSON.parse(content.slice(firstBrace, lastBrace + 1)) as Record<string, unknown>;
       const skill = typeof parsed.skill === "string" ? parsed.skill : "unsupported";
       return {
@@ -191,7 +191,7 @@ export class OllamaClient {
         parameters: typeof parsed.parameters === "object" && parsed.parameters ? parsed.parameters : {},
         needs_clarification: skill === "unsupported",
         clarification_question: skill === "unsupported" ? "请从固定能力中选择或补充业务对象。" : null,
-        reason: "云端模型语义匹配"
+        reason: "本地模型语义匹配"
       };
     }
     const response = await this.request("/api/chat", {

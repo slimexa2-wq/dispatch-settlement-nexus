@@ -301,7 +301,7 @@ function knowledgeResult(message: string, context: DemoAiContext): JsonRecord | 
     answer,
     result: {
       records,
-      methodology: "结果来自当前演示业务状态的权限内检索；正式环境由后端权限过滤后再提供给本地模型组织答案。",
+      methodology: "结果来自当前演示业务状态的权限内检索；正式环境由后端权限过滤和确定性业务工具直接生成，模型只识别意图与参数。",
       updated_at: new Date().toISOString()
     },
     route_type: "demo_retrieval",

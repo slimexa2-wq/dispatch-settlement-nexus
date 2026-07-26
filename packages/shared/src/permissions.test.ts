@@ -27,6 +27,10 @@ describe("共享业务规则", () => {
     }
   });
 
+  it("项目运营不能读取包含其他项目完整前后数据的集团审计日志", () => {
+    expect(hasPermission(UserRole.PROJECT_OPERATOR, Permission.AUDIT_READ)).toBe(false);
+  });
+
   it("资源人员不获得人员敏感明细或全局统计下钻权限", () => {
     expect(hasPermission(UserRole.RESOURCE_SPECIALIST, Permission.PEOPLE_READ)).toBe(false);
     expect(hasPermission(UserRole.RESOURCE_SPECIALIST, Permission.PEOPLE_EXPORT)).toBe(false);

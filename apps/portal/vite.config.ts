@@ -8,7 +8,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    VitePWA({
+    ...(process.env.VITE_DISABLE_PWA === '1' ? [] : [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['brand-mark.svg'],
       manifest: {
@@ -27,7 +27,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html'
       }
-    })
+    })])
   ],
   server: {
     host: true,

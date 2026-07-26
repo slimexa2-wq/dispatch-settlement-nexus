@@ -87,7 +87,7 @@ export async function writeAiAudit(
   user: SessionUser,
   input: {
     rawInstruction: string;
-    skill: AiSkill | "business_knowledge_query" | "general_chat";
+    skill: AiSkill | "business_knowledge_query";
     parameters: Record<string, unknown>;
     tool: string;
     before?: unknown;

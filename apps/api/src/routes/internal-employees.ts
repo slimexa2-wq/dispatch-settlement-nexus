@@ -6,7 +6,11 @@ import {
   isWithinDataScope
 } from "@xiangneng/shared";
 import { z } from "zod";
-import { andWhere, internalEmployeeWhere } from "../data-scope.js";
+import {
+  andWhere,
+  internalEmployeeWhere,
+  organizationUnitWhere
+} from "../data-scope.js";
 import { AppError, notFound } from "../errors.js";
 import { paginationMeta, parsePagination, success } from "../http.js";
 import { getSession } from "../plugins/auth.js";
@@ -41,10 +45,13 @@ const employeeCreateSchema = z.object({
   onboardDate: z.coerce.date(),
   reason: z.string().trim().max(500).optional()
 });
-const employeePatchSchema = employeeCreateSchema
-  .omit({ employeeNo: true, onboardDate: true })
-  .partial()
-  .extend({ expectedVersion: z.number().int().positive() });
+const employeePatchSchema = z.object({
+  name: z.string().trim().min(1).max(64).optional(),
+  phone: z.string().trim().regex(/^1\d{10}$/).optional(),
+  idCard: z.string().trim().min(15).max(32).optional(),
+  email: z.string().trim().email().max(200).optional().nullable(),
+  expectedVersion: z.number().int().positive()
+}).strict();
 const transferSchema = z.object({
   expectedVersion: z.number().int().positive(),
   effectiveDate: z.coerce.date(),
@@ -85,8 +92,9 @@ export async function internalEmployeeRoutes(app: FastifyInstance): Promise<void
   app.get("/organization/tree", {
     preHandler: [app.authenticate, app.requirePermission(Permission.ORG_READ)]
   }, async (request) => {
+    const user = getSession(request);
     const items = await app.prisma.organizationUnit.findMany({
-      where: { isActive: true },
+      where: andWhere(organizationUnitWhere(user), { isActive: true }),
       include: {
         legalEntity: { select: { id: true, code: true, name: true } },
         branch: { select: { id: true, name: true } }
@@ -99,14 +107,39 @@ export async function internalEmployeeRoutes(app: FastifyInstance): Promise<void
   app.get("/organization/options", {
     preHandler: [app.authenticate, app.requirePermission(Permission.ORG_READ)]
   }, async (request) => {
-    const [legalEntities, branches, organizationUnits, positions, jobGrades] =
-      await Promise.all([
-        app.prisma.legalEntity.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
-        app.prisma.branch.findMany({ orderBy: { name: "asc" } }),
-        app.prisma.organizationUnit.findMany({ where: { isActive: true }, orderBy: [{ path: "asc" }, { sortOrder: "asc" }] }),
-        app.prisma.position.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
-        app.prisma.jobGrade.findMany({ where: { isActive: true }, orderBy: { level: "asc" } })
-      ]);
+    const user = getSession(request);
+    const organizationUnits = await app.prisma.organizationUnit.findMany({
+      where: andWhere(organizationUnitWhere(user), { isActive: true }),
+      orderBy: [{ path: "asc" }, { sortOrder: "asc" }]
+    });
+    const organizationUnitIds = organizationUnits.map((unit) => unit.id);
+    const legalEntityIds = [
+      ...new Set(organizationUnits.map((unit) => unit.legalEntityId).filter((id): id is string => Boolean(id)))
+    ];
+    const branchIds = [
+      ...new Set(organizationUnits.map((unit) => unit.branchId).filter((id): id is string => Boolean(id)))
+    ];
+    const [legalEntities, branches, positions, jobGrades] = await Promise.all([
+      app.prisma.legalEntity.findMany({
+        where: { isActive: true, id: { in: legalEntityIds } },
+        orderBy: { name: "asc" }
+      }),
+      app.prisma.branch.findMany({
+        where: { id: { in: branchIds } },
+        orderBy: { name: "asc" }
+      }),
+      app.prisma.position.findMany({
+        where: {
+          isActive: true,
+          organizationUnitId: { in: organizationUnitIds }
+        },
+        orderBy: { name: "asc" }
+      }),
+      app.prisma.jobGrade.findMany({
+        where: { isActive: true },
+        orderBy: { level: "asc" }
+      })
+    ]);
     return success(request, {
       legalEntities,
       branches,
@@ -338,6 +371,38 @@ export async function internalEmployeeRoutes(app: FastifyInstance): Promise<void
       select: { id: true }
     });
     if (!scoped) notFound("内部员工");
+    const targetWithinScope = isWithinDataScope(
+      {
+        userId: user.id,
+        roles: user.roles,
+        bindings: user.scopeBindings.map((binding) => ({
+          type: binding.type,
+          entityId:
+            binding.type === DataScopeType.BRANCH
+              ? binding.branchId
+              : binding.organizationUnitId
+        }))
+      },
+      {
+        branchId: input.branchId,
+        orgUnitIds: [input.organizationUnitId]
+      }
+    );
+    if (!targetWithinScope) {
+      throw new AppError(403, "OUT_OF_SCOPE", "不能把员工调入当前登录态数据范围之外");
+    }
+    const target = await app.prisma.organizationUnit.findFirst({
+      where: {
+        id: input.organizationUnitId,
+        isActive: true,
+        branchId: input.branchId ?? undefined,
+        positions: { some: { id: input.positionId, isActive: true } }
+      },
+      select: { id: true }
+    });
+    if (!target) {
+      throw new AppError(400, "INVALID_TRANSFER_TARGET", "目标组织或岗位不存在、已停用或归属不一致");
+    }
     const result = await transferInternalEmployee(app.prisma, {
       employeeId: id,
       actorId: user.id,

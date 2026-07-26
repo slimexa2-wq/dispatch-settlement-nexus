@@ -20,6 +20,7 @@
     "dev:website": "pnpm --filter @xiangneng/website dev",
     "dev:miniapp": "pnpm --filter @xiangneng/miniapp dev:weapp",
     "build:website": "pnpm --filter @xiangneng/website build",
+    "build:public-demo": "pnpm --filter @xiangneng/sites-demo build",
     "demo:compact": "node scripts/compact-demo-data.mjs",
     "demo:enrich": "pnpm --filter @xiangneng/api exec tsx ../../scripts/enrich-demo-data.mts",
     "demo:generate": "pnpm --filter @xiangneng/api exec tsx ../../scripts/generate-synthetic-demo-data.mts",

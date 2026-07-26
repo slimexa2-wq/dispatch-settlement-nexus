@@ -110,6 +110,25 @@ export async function transferInternalEmployee(
         revokedById: input.actorId
       }
     });
+    if (typeof employee.userId === "string") {
+      await tx.dataScopeBinding.create({
+        data: {
+          userId: employee.userId,
+          type: input.branchId ? "BRANCH" : "ORG_UNIT",
+          branchId: input.branchId ?? null,
+          organizationUnitId: input.branchId ? null : input.organizationUnitId,
+          validFrom: input.effectiveDate,
+          createdById: input.actorId
+        }
+      });
+      await tx.user.updateMany({
+        where: { id: employee.userId, isActive: true },
+        data: {
+          branchId: input.branchId ?? null,
+          tokenVersion: { increment: 1 }
+        }
+      });
+    }
     await tx.internalEmployment.create({
       data: {
         employeeId: input.employeeId,

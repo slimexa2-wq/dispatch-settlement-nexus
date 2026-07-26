@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { z } from "zod";
 import {
   ApplicationSource,
+  DataScopeType,
   EmploymentStatus,
   InsuranceType,
   InterviewStatus,
@@ -71,6 +72,69 @@ function requirePermission(user: SessionUser, permission: Permission): void {
 
 function isSupplierPortalRole(user: SessionUser): boolean {
   return user.role === UserRole.SUPPLIER || user.role === UserRole.SUPPLIER_ADMIN;
+}
+
+function portalAppealWhere(user: SessionUser): Prisma.PortalAppealWhereInput {
+  if (
+    user.role === UserRole.EMPLOYEE ||
+    user.role === UserRole.JOB_SEEKER ||
+    isSupplierPortalRole(user)
+  ) {
+    return { creatorUserId: user.id };
+  }
+  if (
+    user.roles.some((role) =>
+      role === UserRole.SUPER_ADMIN ||
+      role === UserRole.SYSTEM_ADMIN ||
+      role === UserRole.GROUP_LEADER ||
+      role === UserRole.HEADQUARTERS_MANAGER
+    ) ||
+    user.scopeBindings.some((binding) => binding.type === DataScopeType.GROUP)
+  ) {
+    return {};
+  }
+  const branchIds = user.scopeBindings
+    .filter((binding) => binding.type === DataScopeType.BRANCH)
+    .map((binding) => binding.branchId)
+    .filter((value): value is string => Boolean(value));
+  const projectIds = user.scopeBindings
+    .filter((binding) => binding.type === DataScopeType.PROJECT)
+    .map((binding) => binding.projectId)
+    .filter((value): value is string => Boolean(value));
+  const supplierIds = user.scopeBindings
+    .filter((binding) => binding.type === DataScopeType.SUPPLIER)
+    .map((binding) => binding.supplierId)
+    .filter((value): value is string => Boolean(value));
+  const organizationUnitIds = user.scopeBindings
+    .filter((binding) => binding.type === DataScopeType.ORG_UNIT || binding.type === DataScopeType.CENTER)
+    .map((binding) => binding.organizationUnitId)
+    .filter((value): value is string => Boolean(value));
+  const creatorConditions: Prisma.UserWhereInput[] = [];
+  if (branchIds.length) {
+    creatorConditions.push(
+      { branchId: { in: branchIds } },
+      { person: { is: { project: { branchId: { in: branchIds } } } } },
+      { internalEmployee: { is: { branchId: { in: branchIds } } } }
+    );
+  }
+  if (projectIds.length) {
+    creatorConditions.push({
+      person: { is: { projectId: { in: projectIds } } }
+    });
+  }
+  if (supplierIds.length) {
+    creatorConditions.push({ supplierId: { in: supplierIds } });
+  }
+  if (organizationUnitIds.length) {
+    creatorConditions.push({
+      internalEmployee: {
+        is: { organizationUnitId: { in: organizationUnitIds } }
+      }
+    });
+  }
+  return creatorConditions.length
+    ? { creator: { OR: creatorConditions } }
+    : { creatorUserId: user.id };
 }
 
 function portalJobWhere(user: SessionUser): Prisma.JobDemandWhereInput {
@@ -610,8 +674,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/portal/appeals", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
-    const own = user.role === UserRole.EMPLOYEE || user.role === UserRole.JOB_SEEKER || isSupplierPortalRole(user);
-    const rows = await app.prisma.portalAppeal.findMany({ where: own ? { creatorUserId: user.id } : {}, include: { creator: { select: { displayName: true, role: true } } }, orderBy: { createdAt: "desc" }, take: 200 });
+    const rows = await app.prisma.portalAppeal.findMany({ where: portalAppealWhere(user), include: { creator: { select: { displayName: true, role: true } } }, orderBy: { createdAt: "desc" }, take: 200 });
     return rows.map((item) => ({ id: item.id, creatorName: item.creator.displayName, creatorRole: item.creator.role, type: item.type, description: item.description, requested_amount: item.requestedAmount ? amount(item.requestedAmount) : undefined, expected_status: item.expectedStatus, status: item.status, reply: item.reply, created_at: dateTime(item.createdAt) }));
   });
 
@@ -627,9 +690,20 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
     requirePermission(user, Permission.PEOPLE_WRITE);
     const { id } = z.object({ id: uuidSchema }).parse(request.params);
     const body = z.object({ decision: z.enum(["processing", "resolved", "rejected"]), reply: z.string().trim().min(1).max(1000) }).parse(request.body);
-    const row = await app.prisma.portalAppeal.findUnique({ where: { id } });
+    const row = await app.prisma.portalAppeal.findFirst({
+      where: andWhere(portalAppealWhere(user), { id })
+    });
     if (!row) notFound("申诉");
-    await app.prisma.portalAppeal.update({ where: { id }, data: { status: body.decision, reply: body.reply, handlerUserId: user.id } });
+    await app.prisma.$transaction(async (tx) => {
+      await tx.portalAppeal.update({ where: { id }, data: { status: body.decision, reply: body.reply, handlerUserId: user.id } });
+      await writeAudit(tx, request, {
+        action: "portal.appeal.resolve",
+        resourceType: "PortalAppeal",
+        resourceId: id,
+        before: { status: row.status },
+        after: { status: body.decision, handlerUserId: user.id }
+      });
+    });
     await addNotification(app, row.creatorUserId, "申诉处理结果已更新", body.reply, "/personal/me/appeals");
     return { ok: true };
   });
@@ -675,12 +749,28 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
     return { id: supplier.id, name: supplier.name, contact: supplier.contactName ?? user.displayName, phone: supplier.contactPhone ?? "", grade: supplier.level ?? "A", projectCount: supplier.projectLinks.length, monthlyPeople: await app.prisma.person.count({ where: { supplierId: supplier.id, createdAt: { gte: monthBounds("2026-07").start, lt: monthBounds("2026-07").end } } }) };
   });
 
-  app.post("/portal/qrcodes", { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.post("/portal/qrcodes", {
+    preHandler: [app.authenticate],
+    config: { rateLimit: { max: 20, timeWindow: "1 minute" } }
+  }, async (request, reply) => {
     const user = getSession(request);
     requirePermission(user, Permission.APPLICATION_CREATE);
     const body = z.object({ projectId: uuidSchema, jobId: uuidSchema.optional() }).parse(request.body);
     const project = await app.prisma.project.findFirst({ where: andWhere(projectWhere(user), { id: body.projectId }) });
     if (!project) throw new AppError(403, "OUT_OF_SCOPE", "只能为授权项目生成报名二维码");
+    if (body.jobId) {
+      const job = await app.prisma.jobDemand.findFirst({
+        where: {
+          id: body.jobId,
+          projectId: body.projectId,
+          status: JobStatus.RECRUITING
+        },
+        select: { id: true }
+      });
+      if (!job) {
+        throw new AppError(400, "PROJECT_JOB_MISMATCH", "岗位不属于目标项目或当前不可报名");
+      }
+    }
     const createdAt = new Date();
     const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
     const token = randomBytes(24).toString("hex");
@@ -698,7 +788,9 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
     return { token, projectId: row.projectId, projectName: row.project.name, jobId: row.jobDemandId ?? undefined, jobTitle: row.jobDemand?.title, interviewDate: dateOnly(new Date()), source: "现场扫码报名", expiresAt: dateTime(row.expiresAt) };
   });
 
-  app.post("/portal/qrcodes/:token/register", async (request, reply) => {
+  app.post("/portal/qrcodes/:token/register", {
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } }
+  }, async (request, reply) => {
     const { token } = z.object({ token: z.string().min(32).max(64) }).parse(request.params);
     const row = await app.prisma.portalQrCode.findUnique({ where: { token }, include: { jobDemand: true } });
     if (!row) notFound("报名二维码");

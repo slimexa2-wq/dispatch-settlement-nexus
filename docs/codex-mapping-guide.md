@@ -111,4 +111,4 @@ pnpm verify:ollama
 pnpm verify:ai
 ```
 
-2026-07-26 的真实结果：Schema/Client、数据完整性、公开数据安全、128 项自动化测试、PC/Portal/API/官网/小程序构建、Qwen 语义路由、五项 AI 真接口、数据库业务日期和演示重置全部通过。
+2026-07-26 的真实结果：Schema/Client、数据完整性、公开数据安全、138 项自动化测试、PC/Portal/API/官网/小程序/公开演示构建、Qwen 语义路由、五项 AI 真接口、数据库业务日期和演示重置全部通过。

@@ -143,8 +143,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.JOB_READ,
     Permission.JOB_WRITE,
     Permission.APPLICATION_CREATE,
-    Permission.CONTRACT_MANAGE,
-    Permission.AUDIT_READ
+    Permission.CONTRACT_MANAGE
   ],
   [UserRole.RESOURCE_SPECIALIST]: [
     Permission.PROJECT_READ,

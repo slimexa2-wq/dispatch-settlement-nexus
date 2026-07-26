@@ -209,6 +209,29 @@ export function internalEmployeeWhere(
   return conditions.length ? { OR: conditions } : { id: NO_ACCESS_ID };
 }
 
+export function organizationUnitWhere(
+  user: SessionUser
+): Prisma.OrganizationUnitWhereInput {
+  if (hasGlobalScope(user)) return {};
+  const branchIds = scopeIds(user, DataScopeType.BRANCH, "branchId");
+  const organizationUnitIds = [
+    ...scopeIds(user, DataScopeType.ORG_UNIT, "organizationUnitId"),
+    ...scopeIds(user, DataScopeType.CENTER, "organizationUnitId")
+  ];
+  const conditions: Prisma.OrganizationUnitWhereInput[] = [];
+  if (branchIds.length) conditions.push({ branchId: { in: branchIds } });
+  if (organizationUnitIds.length) {
+    conditions.push({
+      OR: [
+        { id: { in: organizationUnitIds } },
+        ...organizationUnitIds.map((id) => ({ path: { contains: id } }))
+      ]
+    });
+  }
+  if (conditions.length === 1) return conditions[0] ?? { id: NO_ACCESS_ID };
+  return conditions.length ? { OR: conditions } : { id: NO_ACCESS_ID };
+}
+
 export function reimbursementWhere(
   user: SessionUser
 ): Prisma.ReimbursementBatchWhereInput {

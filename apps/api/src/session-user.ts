@@ -36,6 +36,7 @@ export type SessionUserRecord = {
   employeeType: string | null;
   projectLinks: Array<{ projectId: string }>;
   roleAssignments?: SessionRoleAssignmentRecord[];
+  dataScopeBindings?: SessionScopeRecord[];
 };
 
 const knownRoles = new Set<string>(Object.values(UserRole));
@@ -129,6 +130,15 @@ export function toSessionUser(
         supplierId: scope.supplierId
       }))
   );
+  const directScopes = (user.dataScopeBindings ?? [])
+    .filter((scope) => scope.isActive && isCurrent(scope, now))
+    .map((scope) => ({
+      type: scope.type,
+      organizationUnitId: scope.organizationUnitId,
+      branchId: scope.branchId,
+      projectId: scope.projectId,
+      supplierId: scope.supplierId
+    }));
 
   return {
     id: user.id,
@@ -142,8 +152,8 @@ export function toSessionUser(
     employeeType: user.employeeType,
     projectIds: user.projectLinks.map((link) => link.projectId),
     permissions: permissionsForRoles(roles),
-    scopeBindings: assignedScopes.length
-      ? assignedScopes
+    scopeBindings: assignedScopes.length || directScopes.length
+      ? [...assignedScopes, ...directScopes]
       : legacyScopeBindings(user)
   };
 }
@@ -167,6 +177,19 @@ export const sessionUserInclude = {
           validTo: true
         }
       }
+    }
+  },
+  dataScopeBindings: {
+    where: { isActive: true, roleAssignmentId: null },
+    select: {
+      type: true,
+      organizationUnitId: true,
+      branchId: true,
+      projectId: true,
+      supplierId: true,
+      isActive: true,
+      validFrom: true,
+      validTo: true
     }
   }
 } as const;

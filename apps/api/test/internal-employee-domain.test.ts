@@ -20,6 +20,8 @@ describe("内部员工生命周期", () => {
     const employmentUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
     const employmentCreate = vi.fn().mockResolvedValue({ id: "employment-new" });
     const scopeUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
+    const scopeCreate = vi.fn().mockResolvedValue({ id: "scope-new" });
+    const userUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
     const employeeUpdate = vi.fn().mockResolvedValue({
       id: "employee-1",
       organizationUnitId: "org-b",
@@ -32,6 +34,7 @@ describe("内部员工生命周期", () => {
       internalEmployee: {
         findUnique: vi.fn().mockResolvedValue({
           id: "employee-1",
+          userId: "user-1",
           status: "ACTIVE",
           organizationUnitId: "org-a",
           positionId: "position-a",
@@ -44,7 +47,8 @@ describe("内部员工生命周期", () => {
         updateMany: employmentUpdateMany,
         create: employmentCreate
       },
-      dataScopeBinding: { updateMany: scopeUpdateMany },
+      dataScopeBinding: { updateMany: scopeUpdateMany, create: scopeCreate },
+      user: { updateMany: userUpdateMany },
       internalEmployeeChange: { create: changeCreate }
     });
 
@@ -69,6 +73,21 @@ describe("内部员工生命周期", () => {
         where: expect.objectContaining({ user: { internalEmployee: { id: "employee-1" } } })
       })
     );
+    expect(scopeCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "user-1",
+        type: "BRANCH",
+        branchId: "branch-b",
+        createdById: "actor-1"
+      })
+    });
+    expect(userUpdateMany).toHaveBeenCalledWith({
+      where: { id: "user-1", isActive: true },
+      data: {
+        branchId: "branch-b",
+        tokenVersion: { increment: 1 }
+      }
+    });
     expect(employmentCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

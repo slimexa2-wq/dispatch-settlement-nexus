@@ -191,18 +191,49 @@ function scopeContext(user: SessionUser) {
   };
 }
 
-function assertCreateScope(
+type ReimbursementCreateScope = Pick<
+  z.infer<typeof createSchema>,
+  "branchId" | "organizationUnitId" | "projectId" | "supplierId"
+>;
+
+function normalizeCreateScope(
   user: SessionUser,
-  input: Pick<z.infer<typeof createSchema>, "branchId" | "organizationUnitId" | "projectId" | "supplierId">
-): void {
+  input: ReimbursementCreateScope
+): ReimbursementCreateScope {
   if (
     user.permissions.includes(Permission.REIMBURSEMENT_SELF) &&
     !user.permissions.includes(Permission.REIMBURSEMENT_MANAGE)
   ) {
-    if (user.branchId && input.branchId && user.branchId !== input.branchId) {
-      throw new AppError(403, "OUT_OF_SCOPE", "不能为其他分公司创建报销单");
+    const allowed = {
+      branchId: [
+        user.branchId,
+        ...user.scopeBindings.filter((binding) => binding.type === DataScopeType.BRANCH).map((binding) => binding.branchId)
+      ].filter((value): value is string => Boolean(value)),
+      organizationUnitId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.ORG_UNIT || binding.type === DataScopeType.CENTER)
+        .map((binding) => binding.organizationUnitId)
+        .filter((value): value is string => Boolean(value)),
+      projectId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.PROJECT)
+        .map((binding) => binding.projectId)
+        .filter((value): value is string => Boolean(value)),
+      supplierId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.SUPPLIER)
+        .map((binding) => binding.supplierId)
+        .filter((value): value is string => Boolean(value))
+    };
+    for (const key of ["branchId", "organizationUnitId", "projectId", "supplierId"] as const) {
+      const requested = input[key];
+      if (requested && !allowed[key].includes(requested)) {
+        throw new AppError(403, "OUT_OF_SCOPE", "员工自助报销不能指定当前登录态范围外的业务归属");
+      }
     }
-    return;
+    return {
+      branchId: input.branchId ?? allowed.branchId[0] ?? null,
+      organizationUnitId: input.organizationUnitId ?? null,
+      projectId: input.projectId ?? null,
+      supplierId: input.supplierId ?? null
+    };
   }
   if (
     !isWithinDataScope(scopeContext(user), {
@@ -215,6 +246,7 @@ function assertCreateScope(
   ) {
     throw new AppError(403, "OUT_OF_SCOPE", "报销单不在当前账号的数据范围内");
   }
+  return input;
 }
 
 function transitionPermission(
@@ -329,17 +361,17 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
     input.lines.forEach(validateReimbursementLine);
     const { lineCount: _lineCount, ...summary } =
       summarizeReimbursement(input.lines);
-    assertCreateScope(user, input);
+    const createScope = normalizeCreateScope(user, input);
     const created = await app.prisma.$transaction(async (tx) => {
       const batch = await tx.reimbursementBatch.create({
         data: {
           code: nextCode(),
           title: input.title,
           applicantUserId: user.id,
-          branchId: input.branchId,
-          organizationUnitId: input.organizationUnitId,
-          projectId: input.projectId,
-          supplierId: input.supplierId,
+          branchId: createScope.branchId,
+          organizationUnitId: createScope.organizationUnitId,
+          projectId: createScope.projectId,
+          supplierId: createScope.supplierId,
           ...summary,
           lines: {
             create: input.lines.map((line) => ({

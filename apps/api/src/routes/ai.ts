@@ -7,13 +7,10 @@ import { AppError, notFound } from "../errors.js";
 import { AiSchemaRegistry } from "../ai/schema-registry.js";
 import { OllamaClient } from "../ai/ollama-client.js";
 import { IntentRouter } from "../ai/intent-router.js";
-import { aiSkills, type AiSkill, type ChatResult } from "../ai/types.js";
+import { aiSkills, type AiSkill } from "../ai/types.js";
 import { aiScopeSummary, allowedAiSkills, assertAiSkillAllowed } from "../ai/permissions.js";
 import { queryBusinessKnowledge } from "../ai/business-knowledge.js";
-import { ConversationMemory } from "../ai/conversation-memory.js";
-import { GeneralChat } from "../ai/general-chat.js";
-import { buildSystemPrompt } from "../ai/system-prompt.js";
-import { fastPathReply, isCasualChat } from "../ai/chat-fastpath.js";
+import { fastPathReply } from "../ai/chat-fastpath.js";
 import { dateTimeReply } from "../ai/date-time.js";
 import {
   getProjectPersonnelStatistics,
@@ -55,8 +52,6 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
   const schemas = new AiSchemaRegistry(app.config);
   const model = new OllamaClient(app.config);
   const router = new IntentRouter(app.config, schemas, model);
-  const memory = new ConversationMemory();
-  const generalChat = new GeneralChat(model, app.config);
   await schemas.load();
   await router.load();
 
@@ -67,7 +62,6 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
   app.post("/ai/chat", { preHandler: [app.authenticate] }, async (request) => {
     const input = chatSchema.parse(request.body);
     const user = getSession(request);
-    const userId = user.id;
     const conversationId = input.conversationId ?? "default";
     const allowed = allowedAiSkills(user);
     if (!allowed.length) throw new AppError(403, "AI_NOT_AVAILABLE_FOR_ROLE", "当前角色没有可用的 AI 业务能力");
@@ -75,14 +69,6 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
     if (directKnowledgeQuestion) {
       const knowledge = await queryBusinessKnowledge(app.prisma, user, input.message);
       if (knowledge) {
-        let answer = knowledge.answer;
-        let routeType: "model" | "rule" = "rule";
-        try {
-          answer = await model.answerGrounded(input.message, knowledge);
-          routeType = "model";
-        } catch {
-          // Stable grounded answer remains available if the local model times out.
-        }
         await writeAiAudit(app.prisma, user, {
           rawInstruction: input.message,
           skill: "business_knowledge_query",
@@ -90,14 +76,13 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
           tool: "query_scoped_business_knowledge",
           confirmed: false,
           result: knowledge,
-          model: routeType === "model" ? app.config.XIANGNENG_LLM_MODEL : undefined,
-          routeType
+          routeType: "rule"
         });
         return success(request, {
           type: "knowledge_result",
-          answer,
+          answer: knowledge.answer,
           result: knowledge,
-          route_type: routeType === "model" ? "retrieval+model" : "retrieval",
+          route_type: "retrieval",
           confidence: 1
         });
       }
@@ -128,14 +113,6 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
     if (decision.skill === "unsupported") {
       const knowledge = await queryBusinessKnowledge(app.prisma, user, input.message);
       if (knowledge) {
-        let answer = knowledge.answer;
-        let routeType: "model" | "rule" = "rule";
-        try {
-          answer = await model.answerGrounded(input.message, knowledge);
-          routeType = "model";
-        } catch {
-          // Deterministic retrieval answer keeps the competition demo usable when Ollama is unavailable.
-        }
         await writeAiAudit(app.prisma, user, {
           rawInstruction: input.message,
           skill: "business_knowledge_query",
@@ -143,58 +120,24 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
           tool: "query_scoped_business_knowledge",
           confirmed: false,
           result: knowledge,
-          model: routeType === "model" ? app.config.XIANGNENG_LLM_MODEL : undefined,
-          routeType
+          routeType: "rule"
         });
         return success(request, {
           type: "knowledge_result",
-          answer,
+          answer: knowledge.answer,
           result: knowledge,
-          route_type: routeType === "model" ? "retrieval+model" : "retrieval",
+          route_type: "retrieval",
           confidence: 1
         });
       }
-      // 通用对话通道（业务未命中）：多轮闲聊 / 身份问答 / 寒暄
-      const history = memory.get(userId, conversationId);
-      const systemPrompt = buildSystemPrompt();
-      try {
-        const chatModel = isCasualChat(input.message) ? app.config.XIANGNENG_LLM_CHAT_MODEL : app.config.XIANGNENG_LLM_MODEL;
-        const gen = await generalChat.respond({ userId, conversationId, message: input.message, history, systemPrompt, chatModel });
-        memory.add(userId, conversationId, { role: "user", content: input.message, at: Date.now() });
-        memory.add(userId, conversationId, { role: "assistant", content: gen.message, at: Date.now() });
-        try {
-          await writeAiAudit(app.prisma, user, {
-            rawInstruction: input.message,
-            skill: "general_chat",
-            parameters: {},
-            tool: "general_chat",
-            confirmed: false,
-            result: { message: gen.message },
-            model: gen.model,
-            routeType: "general"
-          });
-        } catch {
-          // 审计写入失败不应影响对话返回
-        }
-        const result: ChatResult = {
-          type: "chat_result",
-          message: gen.message,
-          conversation_id: conversationId,
-          route_type: "general",
-          model: gen.model,
-          degraded: gen.degraded
-        };
-        return success(request, result);
-      } catch {
-        return success(request, {
-          type: "chat_result",
-          message: "抱歉，本地模型暂时不可用，请稍后再试或联系管理员。",
-          conversation_id: conversationId,
-          route_type: "general",
-          model: app.config.XIANGNENG_LLM_MODEL,
-          degraded: true
-        });
-      }
+      return success(request, {
+        type: "clarification",
+        skill: "unsupported",
+        message: "当前助手仅支持项目人员数据、人员信息、招聘进度、单人入职和单人离职；也可查询权限范围内的项目、岗位和供应商档案。",
+        extracted_parameters: {},
+        route_type: "form",
+        standard_form_available: true
+      });
     }
     assertAiSkillAllowed(user, decision.skill);
     if (decision.needs_clarification && Object.keys(input.parameters).length === 0) {
