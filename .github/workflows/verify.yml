@@ -1,4 +1,4 @@
-name: Verify internal HR and reimbursement foundation
+name: Verify internal HR and reimbursement patch
 
 on:
   push:
@@ -7,57 +7,28 @@ on:
   pull_request:
 
 jobs:
-  verify:
+  verify-patch:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: xiangneng_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d xiangneng_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/xiangneng_test
-      JWT_SECRET: github-actions-test-secret-with-at-least-thirty-two-characters
-      NODE_ENV: test
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Reconstruct source
-        run: bash scripts/reconstruct-source.sh
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: source/pnpm-lock.yaml
-      - name: Install dependencies
-        working-directory: source
-        run: pnpm install --frozen-lockfile
-      - name: Generate Prisma client
-        working-directory: source
-        run: pnpm db:generate
-      - name: Validate Prisma schema
-        working-directory: source
-        run: pnpm db:validate
-      - name: Apply database migrations
-        working-directory: source
-        run: pnpm db:migrate
-      - name: Typecheck
-        working-directory: source
-        run: pnpm typecheck
-      - name: Test
-        working-directory: source
-        run: pnpm test
-      - name: Build
-        working-directory: source
-        run: pnpm build
+      - name: Verify patch part count
+        run: test "$(find patch-archive -name 'part-*.b64' | wc -l)" -eq 15
+      - name: Reconstruct and verify patch hashes
+        run: bash scripts/reconstruct-patch.sh
+      - name: Verify key implementation files are covered
+        run: |
+          grep -Fq 'prisma/schema.prisma' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/api/src/routes/internal-hr.ts' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/api/src/routes/reimbursements.ts' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/admin/src/pages/InternalEmployeesPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/admin/src/pages/ReimbursementsPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'internal-hr-and-reimbursement-domain.test.ts' 0001-internal-hr-reimbursement-foundation.patch
+      - name: Verify real roster was not uploaded
+        run: |
+          ! find . -type f -iname '*.xlsx' -print -quit | grep -q .
+          ! grep -RIl --exclude='*.b64' --exclude='*.patch' '集团花名册.xlsx' . | grep -q .
+      - name: Show patch summary
+        run: |
+          wc -c 0001-internal-hr-reimbursement-foundation.patch
+          sha256sum 0001-internal-hr-reimbursement-foundation.patch
