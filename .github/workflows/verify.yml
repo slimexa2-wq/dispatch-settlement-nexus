@@ -1,0 +1,39 @@
+name: Verify internal HR and reimbursement patch
+
+on:
+  push:
+    branches:
+      - agent/internal-hr-reimbursement-foundation
+  pull_request:
+
+jobs:
+  verify-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify patch part count
+        run: test "$(find patch-archive -name 'part-*.b64' | wc -l)" -eq 15
+      - name: Reconstruct and verify patch hashes
+        run: bash scripts/reconstruct-patch.sh
+      - name: Verify key implementation files are covered
+        run: |
+          grep -Fq 'prisma/schema.prisma' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/api/src/routes/internal-hr.ts' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/api/src/routes/reimbursements.ts' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/admin/src/pages/InternalEmployeesPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'apps/admin/src/pages/ReimbursementsPage.tsx' 0001-internal-hr-reimbursement-foundation.patch
+          grep -Fq 'internal-hr-and-reimbursement-domain.test.ts' 0001-internal-hr-reimbursement-foundation.patch
+      - name: Run core domain rules
+        run: node --experimental-strip-types scripts/verify-domain-rules.mjs
+      - name: Verify real roster files were not uploaded
+        run: |
+          test -z "$(find . -type f \( -iname '*.xlsx' -o -iname '*.xls' -o -iname '*.csv' \) -print -quit)"
+          test -z "$(find . -type f \( -iname '*花名册*' -o -iname '*roster*' \) -print -quit)"
+      - name: Show patch summary
+        run: |
+          wc -c 0001-internal-hr-reimbursement-foundation.patch
+          sha256sum 0001-internal-hr-reimbursement-foundation.patch

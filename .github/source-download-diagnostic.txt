@@ -1,0 +1,35 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    38  100    38    0     0    232      0 --:--:-- --:--:-- --:--:--   233
+HTTP_CODE=404
+FINAL_URL=https://slack-files.com/T0BFT4B96G6-F0BKVTYPD26-5b2597be52
+SIZE=38
+--- HEADERS ---
+HTTP/2 404 
+date: Sun, 26 Jul 2026 13:45:13 GMT
+server: Apache
+vary: Accept-Encoding
+content-type: text/html; charset=utf-8
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+referrer-policy: no-referrer
+content-security-policy: script-src 'none';
+x-slack-unique-id: amYPae6w4LpaVTu5RQNh0QAAEBY
+x-frame-options: SAMEORIGIN
+content-length: 38
+via: 1.1 slack-prod.tinyspeck.com, ingress-www-iad-external-prod-07e9e76d41b641aee,envoy-edge-cmh-wjlysnqw
+x-envoy-upstream-service-time: 28
+x-backend: main_normal
+x-server: slack-www-hhvm-main-iad-f546lntu27a7
+x-slack-shared-secret-outcome: no-match
+x-edge-backend: envoy-www
+timing-allow-origin: *
+alt-svc: h3=":443"; ma=2592000, h3-29=":443"; ma=2592000, quic=":443"; ma=2592000
+x-slack-edge-shared-secret-outcome: no-match
+
+--- FILE ---
+-rw-r--r-- 1 runner runner 38 Jul 26 13:45 /tmp/xiangneng-hrms.tar.gz
+/tmp/xiangneng-hrms.tar.gz: ASCII text, with no line terminators
+--- FIRST64_BASE64 ---
+VGhlIHJlcXVlc3RlZCBmaWxlIGNvdWxkIG5vdCBiZSBmb3VuZC4=
+--- SHA256 ---
+3330853c0205ef33ff3ecde19a3374e413bb6bcba1a9a026ed297e9a4f8f4931  /tmp/xiangneng-hrms.tar.gz
