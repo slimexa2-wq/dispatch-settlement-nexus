@@ -2,13 +2,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARCHIVE="$ROOT_DIR/xiangneng-hrms-source.tar.gz"
-SOURCE_DIR="$ROOT_DIR/source"
-EXPECTED_SHA="0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405"
+GZIP_PATCH="$ROOT_DIR/0001-internal-hr-reimbursement-foundation.patch.gz"
+PATCH_FILE="$ROOT_DIR/0001-internal-hr-reimbursement-foundation.patch"
+EXPECTED_GZIP_SHA="6d39c88d8f1ee7b1354b700c60c605c3a1c76cb60dbfc936c3548c63df8aa989"
+EXPECTED_PATCH_SHA="b9f6760b63bf43faa79190c81a0ff910cfc656c9390a2bdc3f98525818f90cb4"
 
-cat "$ROOT_DIR"/source-archive/part-*.b64 | base64 --decode > "$ARCHIVE"
-echo "$EXPECTED_SHA  $ARCHIVE" | sha256sum --check --status
-rm -rf "$SOURCE_DIR"
-mkdir -p "$SOURCE_DIR"
-tar -xzf "$ARCHIVE" -C "$SOURCE_DIR"
-echo "Source reconstructed in $SOURCE_DIR"
+cat "$ROOT_DIR"/patch-archive/part-*.b64 | base64 --decode > "$GZIP_PATCH"
+echo "$EXPECTED_GZIP_SHA  $GZIP_PATCH" | sha256sum --check
+gzip -dc "$GZIP_PATCH" > "$PATCH_FILE"
+echo "$EXPECTED_PATCH_SHA  $PATCH_FILE" | sha256sum --check
+
+echo "Patch reconstructed: $PATCH_FILE"
