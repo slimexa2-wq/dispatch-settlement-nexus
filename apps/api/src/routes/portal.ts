@@ -23,6 +23,7 @@ import { writeAudit } from "../audit.js";
 import { andWhere, personWhere, projectWhere } from "../data-scope.js";
 import { AppError, notFound } from "../errors.js";
 import { getSession } from "../plugins/auth.js";
+import { auditScopeWhere } from "./audit.js";
 import { registerPerson } from "../services/registration.js";
 import { attachRecruitmentProgress } from "../services/recruitment-progress.js";
 import { offboardPerson, onboardPerson } from "../services/person-lifecycle.js";
@@ -805,7 +806,7 @@ export async function portalRoutes(app: FastifyInstance): Promise<void> {
   app.get("/portal/audit-logs", { preHandler: [app.authenticate] }, async (request) => {
     const user = getSession(request);
     requirePermission(user, Permission.AUDIT_READ);
-    const rows = await app.prisma.auditLog.findMany({ where: user.role === UserRole.PROJECT_OPERATOR ? { OR: user.projectIds.map((projectId) => ({ after: { path: ["projectId"], equals: projectId } })) } : {}, include: { actor: { select: { displayName: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+    const rows = await app.prisma.auditLog.findMany({ where: auditScopeWhere(user), include: { actor: { select: { displayName: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
     return rows.map((item) => ({ id: item.id, actorName: item.actor?.displayName ?? "系统", action: item.action, entityType: item.resourceType, detail: item.resourceId ?? "", created_at: dateTime(item.createdAt) }));
   });
 }

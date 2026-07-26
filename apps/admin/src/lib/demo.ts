@@ -1082,7 +1082,7 @@ function createRewards(): ReferralReward[] {
       policy: policies[1],
       amount: 0,
       status: RewardStatus.PENDING,
-      notes: "推荐人来自唯一数据.xls，奖励金额按员工政策原文维护",
+      notes: "推荐关系来自合成演示数据，奖励金额按演示员工政策维护",
       createdAt: now
     }));
 }
@@ -1965,7 +1965,7 @@ function filteredDashboard(query: QueryRecord = {}): DashboardData {
 function previewImport(): ImportPreview {
   return {
     importId: "real-demo-import",
-    sourceFile: "唯一数据.xls",
+    sourceFile: "祥能HRMS_合成演示数据.xlsx",
     sourceHash: realDemoMeta.sourceHash,
     totalRows: realDemoMeta.sourceRows,
     accepted: people.slice(0, 200),
@@ -2665,7 +2665,7 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
   if (method === "GET" && path === "/electronic-contracts") return page(filterElectronicContracts(query), pageNumber, pageSize) as T;
   if (method === "GET" && path.startsWith("/electronic-contracts/")) return byId(electronicContracts, id) as T;
   if (method === "GET" && path === "/registration-qrs") return page(registrationQrs, pageNumber, pageSize) as T;
-  if (method === "GET" && path === "/imports") return page([{ id: "import-1", type: "PEOPLE", sourceFile: "唯一数据.xls", status: ImportStatus.PREVIEW, totalRows: realDemoMeta.sourceRows, successCount: realDemoMeta.applicationRecords, failedCount: 0, createdAt: now }], pageNumber, pageSize) as T;
+  if (method === "GET" && path === "/imports") return page([{ id: "import-1", type: "PEOPLE", sourceFile: "祥能HRMS_合成演示数据.xlsx", status: ImportStatus.PREVIEW, totalRows: realDemoMeta.sourceRows, successCount: realDemoMeta.applicationRecords, failedCount: 0, createdAt: now }], pageNumber, pageSize) as T;
   if (method === "GET" && path === "/users") return page(users(), pageNumber, pageSize) as T;
   if (method === "GET" && path === "/audit-logs") return page(auditLogs(), pageNumber, pageSize) as T;
 

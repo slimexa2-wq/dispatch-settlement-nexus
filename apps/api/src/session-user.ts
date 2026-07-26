@@ -118,7 +118,15 @@ export function toSessionUser(
   const assignedRoles = activeAssignments
     .map((assignment) => assignment.role.code)
     .filter(isUserRole);
-  const roles = [...new Set(assignedRoles.length ? assignedRoles : [user.role])];
+  const hasManagedAssignments = Boolean(user.roleAssignments?.length);
+  const hasManagedDirectScopes = Boolean(user.dataScopeBindings?.length);
+  const roles = [...new Set(
+    assignedRoles.length
+      ? assignedRoles
+      : hasManagedAssignments
+        ? []
+        : [user.role]
+  )];
   const assignedScopes = activeAssignments.flatMap((assignment) =>
     assignment.scopes
       .filter((scope) => scope.isActive && isCurrent(scope, now))
@@ -154,18 +162,18 @@ export function toSessionUser(
     permissions: permissionsForRoles(roles),
     scopeBindings: assignedScopes.length || directScopes.length
       ? [...assignedScopes, ...directScopes]
-      : legacyScopeBindings(user)
+      : hasManagedAssignments || hasManagedDirectScopes
+        ? []
+        : legacyScopeBindings(user)
   };
 }
 
 export const sessionUserInclude = {
   projectLinks: { select: { projectId: true } },
   roleAssignments: {
-    where: { status: "ACTIVE" as const },
     include: {
       role: { select: { code: true } },
       scopes: {
-        where: { isActive: true },
         select: {
           type: true,
           organizationUnitId: true,
@@ -180,7 +188,7 @@ export const sessionUserInclude = {
     }
   },
   dataScopeBindings: {
-    where: { isActive: true, roleAssignmentId: null },
+    where: { roleAssignmentId: null },
     select: {
       type: true,
       organizationUnitId: true,

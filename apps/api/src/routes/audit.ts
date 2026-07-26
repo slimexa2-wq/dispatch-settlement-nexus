@@ -23,7 +23,7 @@ const auditQuerySchema = z.object({
   ,keyword: z.string().trim().max(100).optional()
 });
 
-function auditScopeWhere(user: SessionUser): Prisma.AuditLogWhereInput {
+export function auditScopeWhere(user: SessionUser): Prisma.AuditLogWhereInput {
   if (
     user.roles.some((role) =>
       role === UserRole.SUPER_ADMIN ||

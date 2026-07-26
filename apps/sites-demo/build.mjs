@@ -47,6 +47,19 @@ async function assetSummary(directory) {
   return { files, bytes };
 }
 
+async function artifactText(directory) {
+  let output = "";
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      output += await artifactText(path);
+    } else if (/\.(?:html|js|json|css)$/.test(entry.name)) {
+      output += await readFile(path, "utf8");
+    }
+  }
+  return output;
+}
+
 await rm(stageDir, { recursive: true, force: true });
 await rm(distDir, { recursive: true, force: true });
 await mkdir(stageDir, { recursive: true });
@@ -67,7 +80,7 @@ await cp(join(stageDir, "portal"), join(clientDir, "portal"), { recursive: true 
 await removeSourceMaps(clientDir);
 
 await mkdir(join(distDir, "server"), { recursive: true });
-await writeFile(join(distDir, "server", "index.js"), `const worker = {
+const workerSource = `const worker = {
   async fetch(request, env) {
     const response = await env.ASSETS.fetch(request);
     if (response.status !== 404 || request.method !== "GET") return response;
@@ -81,7 +94,8 @@ await writeFile(join(distDir, "server", "index.js"), `const worker = {
   }
 };
 export default worker;
-`, "utf8");
+`;
+await writeFile(join(distDir, "server", "index.js"), workerSource, "utf8");
 
 const summary = await assetSummary(clientDir);
 await writeFile(join(distDir, "build-summary.json"), `${JSON.stringify({
@@ -95,6 +109,27 @@ const adminHtml = await readFile(join(clientDir, "index.html"), "utf8");
 const portalHtml = await readFile(join(clientDir, "portal", "index.html"), "utf8");
 if (!adminHtml.includes("祥能") || !portalHtml.includes("祥能")) {
   throw new Error("Public demo indexes do not contain the expected product identity.");
+}
+if (
+  !workerSource.includes('url.pathname === "/portal"') ||
+  !workerSource.includes('url.pathname.startsWith("/portal/")') ||
+  !workerSource.includes('"/portal/index.html"')
+) {
+  throw new Error("Public demo worker does not preserve the /portal SPA fallback.");
+}
+
+const bundledText = await artifactText(clientDir);
+if (
+  !bundledText.includes("xiangneng-portal-offline-demo") ||
+  !bundledText.includes("synthetic-person-001") ||
+  !bundledText.includes("SYN-E00001")
+) {
+  throw new Error("Public demo artifact is missing the offline synthetic-data runtime.");
+}
+for (const forbiddenMarker of ["唯一数据.xls", "唯一数据.xlsx", "demo-data.full.json", "data/derived/"]) {
+  if (bundledText.toLowerCase().includes(forbiddenMarker.toLowerCase())) {
+    throw new Error(`Public demo artifact contains forbidden source marker: ${forbiddenMarker}`);
+  }
 }
 
 console.log(JSON.stringify({ status: "ok", ...summary }));
