@@ -12,7 +12,6 @@ import {
   Permission,
   PolicyType,
   UserRole,
-  hasPermission,
   onboardingSchema,
   offboardingSchema,
   personRegistrationSchema,
@@ -35,12 +34,13 @@ import {
   portalPersonStatus,
   portalSession
 } from "../portal/mappers.js";
+import { sessionUserInclude, toSessionUser } from "../session-user.js";
 
 const uuidSchema = z.string().uuid();
 const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 const personaSchema = z.enum(["personal", "headquarters", "branch", "project", "operator", "supplier"]);
 
-const userInclude = { projectLinks: { select: { projectId: true } } } as const;
+const userInclude = sessionUserInclude;
 const personInclude = {
   project: { include: { branch: { select: { id: true, name: true } } } },
   supplier: { select: { id: true, name: true } },
@@ -63,33 +63,8 @@ const jobInclude = {
   referralPolicy: true
 };
 
-function toSessionUser(user: {
-  id: string;
-  username: string;
-  displayName: string;
-  role: SessionUser["role"];
-  branchId: string | null;
-  supplierId: string | null;
-  personId: string | null;
-  employeeType: string | null;
-  projectLinks: Array<{ projectId: string }>;
-}): SessionUser {
-  return {
-    id: user.id,
-    username: user.username,
-    displayName: user.displayName,
-    role: user.role,
-    branchId: user.branchId,
-    supplierId: user.supplierId,
-    personId: user.personId,
-    employeeType: user.employeeType,
-    projectIds: user.projectLinks.map((item) => item.projectId),
-    permissions: []
-  };
-}
-
 function requirePermission(user: SessionUser, permission: Permission): void {
-  if (!hasPermission(user.role, permission)) {
+  if (!user.permissions.includes(permission)) {
     throw new AppError(403, "FORBIDDEN", "当前身份没有此操作权限");
   }
 }

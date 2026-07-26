@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { InsuranceType, UserRole } from "./enums.js";
-import { Permission, hasPermission } from "./permissions.js";
+import {
+  DataScopeType,
+  Permission,
+  hasAnyRolePermission,
+  hasPermission,
+  isWithinDataScope,
+  permissionsForRoles
+} from "./permissions.js";
 import { onboardingSchema, personRegistrationSchema } from "./schemas.js";
 
 describe("共享业务规则", () => {
@@ -26,6 +33,78 @@ describe("共享业务规则", () => {
     expect(hasPermission(UserRole.RESOURCE_SPECIALIST, Permission.DASHBOARD_READ)).toBe(false);
     expect(hasPermission(UserRole.RESOURCE_SPECIALIST, Permission.SUPPLIER_WRITE)).toBe(true);
     expect(hasPermission(UserRole.RESOURCE_SPECIALIST, Permission.POLICY_WRITE)).toBe(true);
+  });
+
+  it("多角色权限取并集，但不会绕过数据范围", () => {
+    const roles = [UserRole.INTERNAL_HR, UserRole.FINANCE_REVIEWER];
+
+    expect(hasAnyRolePermission(roles, Permission.INTERNAL_EMPLOYEE_WRITE)).toBe(true);
+    expect(hasAnyRolePermission(roles, Permission.REIMBURSEMENT_FINANCE_REVIEW)).toBe(
+      true
+    );
+    expect(permissionsForRoles(roles)).toContain(Permission.INTERNAL_EMPLOYEE_READ);
+
+    const context = {
+      userId: "user-1",
+      roles,
+      bindings: [{ type: DataScopeType.BRANCH, entityId: "branch-a" }]
+    };
+
+    expect(isWithinDataScope(context, { branchId: "branch-a" })).toBe(true);
+    expect(isWithinDataScope(context, { branchId: "branch-b" })).toBe(false);
+  });
+
+  it("本人、项目、供应商和集团范围逐级生效", () => {
+    expect(
+      isWithinDataScope(
+        {
+          userId: "employee-1",
+          roles: [UserRole.EMPLOYEE],
+          bindings: [{ type: DataScopeType.SELF }]
+        },
+        { ownerUserId: "employee-1" }
+      )
+    ).toBe(true);
+    expect(
+      isWithinDataScope(
+        {
+          userId: "employee-1",
+          roles: [UserRole.EMPLOYEE],
+          bindings: [{ type: DataScopeType.SELF }]
+        },
+        { ownerUserId: "employee-2" }
+      )
+    ).toBe(false);
+    expect(
+      isWithinDataScope(
+        {
+          userId: "operator-1",
+          roles: [UserRole.PROJECT_OPERATOR],
+          bindings: [{ type: DataScopeType.PROJECT, entityId: "project-a" }]
+        },
+        { projectId: "project-a", branchId: "branch-a" }
+      )
+    ).toBe(true);
+    expect(
+      isWithinDataScope(
+        {
+          userId: "supplier-1",
+          roles: [UserRole.SUPPLIER_ADMIN],
+          bindings: [{ type: DataScopeType.SUPPLIER, entityId: "supplier-a" }]
+        },
+        { supplierId: "supplier-b" }
+      )
+    ).toBe(false);
+    expect(
+      isWithinDataScope(
+        {
+          userId: "leader-1",
+          roles: [UserRole.GROUP_LEADER],
+          bindings: [{ type: DataScopeType.GROUP }]
+        },
+        { branchId: "any-branch" }
+      )
+    ).toBe(true);
   });
 
   it("报名身份证统一转大写并拒绝无效格式", () => {

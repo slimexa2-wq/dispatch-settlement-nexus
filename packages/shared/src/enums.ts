@@ -1,12 +1,22 @@
 export const UserRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  SYSTEM_ADMIN: "SYSTEM_ADMIN",
+  GROUP_LEADER: "GROUP_LEADER",
   HEADQUARTERS_MANAGER: "HEADQUARTERS_MANAGER",
   BRANCH_MANAGER: "BRANCH_MANAGER",
+  DEPARTMENT_MANAGER: "DEPARTMENT_MANAGER",
+  INTERNAL_HR: "INTERNAL_HR",
+  RECRUITER: "RECRUITER",
   PROJECT_OPERATOR: "PROJECT_OPERATOR",
   RESOURCE_SPECIALIST: "RESOURCE_SPECIALIST",
+  FINANCE_REVIEWER: "FINANCE_REVIEWER",
+  CASHIER: "CASHIER",
+  DEPARTMENT_REIMBURSEMENT_CLERK: "DEPARTMENT_REIMBURSEMENT_CLERK",
+  SUPPLIER_ADMIN: "SUPPLIER_ADMIN",
   SUPPLIER: "SUPPLIER",
+  OUTSOURCED_EMPLOYEE: "OUTSOURCED_EMPLOYEE",
   EMPLOYEE: "EMPLOYEE",
-  JOB_SEEKER: "JOB_SEEKER",
-  SYSTEM_ADMIN: "SYSTEM_ADMIN"
+  JOB_SEEKER: "JOB_SEEKER"
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
@@ -113,14 +123,24 @@ export type NotificationStatus =
 
 export const labels = {
   roles: {
+    [UserRole.SUPER_ADMIN]: "超级管理员",
+    [UserRole.SYSTEM_ADMIN]: "系统管理员",
+    [UserRole.GROUP_LEADER]: "集团领导",
+    [UserRole.DEPARTMENT_MANAGER]: "部门负责人",
+    [UserRole.INTERNAL_HR]: "内部人事",
+    [UserRole.RECRUITER]: "招聘专员",
+    [UserRole.FINANCE_REVIEWER]: "财务审核",
+    [UserRole.CASHIER]: "出纳",
+    [UserRole.DEPARTMENT_REIMBURSEMENT_CLERK]: "部门报销制单员",
+    [UserRole.SUPPLIER_ADMIN]: "供应商管理员",
+    [UserRole.OUTSOURCED_EMPLOYEE]: "外包员工",
     [UserRole.HEADQUARTERS_MANAGER]: "总部管理者",
     [UserRole.BRANCH_MANAGER]: "分子公司负责人",
     [UserRole.PROJECT_OPERATOR]: "项目运营人员",
     [UserRole.RESOURCE_SPECIALIST]: "资源人员",
     [UserRole.SUPPLIER]: "供应商",
     [UserRole.EMPLOYEE]: "内部员工",
-    [UserRole.JOB_SEEKER]: "求职者",
-    [UserRole.SYSTEM_ADMIN]: "系统管理员"
+    [UserRole.JOB_SEEKER]: "求职者"
   },
   interviewStatus: {
     [InterviewStatus.PENDING_ARRIVAL]: "待到场",

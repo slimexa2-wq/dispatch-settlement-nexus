@@ -10,14 +10,24 @@ datasource db {
 }
 
 enum UserRole {
+  SUPER_ADMIN
+  SYSTEM_ADMIN
+  GROUP_LEADER
   HEADQUARTERS_MANAGER
   BRANCH_MANAGER
+  DEPARTMENT_MANAGER
+  INTERNAL_HR
+  RECRUITER
   PROJECT_OPERATOR
   RESOURCE_SPECIALIST
+  FINANCE_REVIEWER
+  CASHIER
+  DEPARTMENT_REIMBURSEMENT_CLERK
+  SUPPLIER_ADMIN
   SUPPLIER
+  OUTSOURCED_EMPLOYEE
   EMPLOYEE
   JOB_SEEKER
-  SYSTEM_ADMIN
 }
 
 enum ProjectStatus {
@@ -104,6 +114,46 @@ enum AiActionStatus {
   FAILED
 }
 
+enum OrganizationUnitType {
+  GROUP
+  LEGAL_ENTITY
+  BRANCH
+  CENTER
+  DEPARTMENT
+}
+
+enum InternalEmployeeStatus {
+  ACTIVE
+  DISABLED
+  LEFT
+  ARCHIVED
+}
+
+enum InternalEmployeeChangeType {
+  ONBOARD
+  TRANSFER
+  DISABLE
+  ENABLE
+  OFFBOARD
+  ARCHIVE
+}
+
+enum RoleAssignmentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum DataScopeType {
+  SELF
+  ORG_UNIT
+  CENTER
+  BRANCH
+  PROJECT
+  SUPPLIER
+  GROUP
+}
+
 model Branch {
   id         String    @id @default(uuid()) @db.Uuid
   sourceCode String?   @unique @map("source_code") @db.VarChar(64)
@@ -113,8 +163,173 @@ model Branch {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   projects   Project[]
   users      User[]
+  organizationUnits OrganizationUnit[]
+  internalEmployees InternalEmployee[]
+  internalEmployments InternalEmployment[]
+  dataScopeBindings DataScopeBinding[]
 
   @@map("branches")
+}
+
+model LegalEntity {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @unique @db.VarChar(200)
+  taxNumber   String?  @unique @map("tax_number") @db.VarChar(64)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  organizationUnits OrganizationUnit[]
+  internalEmployees InternalEmployee[]
+  employments InternalEmployment[]
+
+  @@index([isActive, name])
+  @@map("legal_entities")
+}
+
+model OrganizationUnit {
+  id            String               @id @default(uuid()) @db.Uuid
+  code          String               @unique @db.VarChar(64)
+  name          String               @db.VarChar(200)
+  type          OrganizationUnitType
+  parentId      String?              @map("parent_id") @db.Uuid
+  legalEntityId String?              @map("legal_entity_id") @db.Uuid
+  branchId      String?              @map("branch_id") @db.Uuid
+  path          String               @db.VarChar(1000)
+  sortOrder     Int                  @default(0) @map("sort_order")
+  isActive      Boolean              @default(true) @map("is_active")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  parent        OrganizationUnit?    @relation("OrganizationUnitTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children      OrganizationUnit[]   @relation("OrganizationUnitTree")
+  legalEntity   LegalEntity?         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch        Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  positions     Position[]
+  internalEmployees InternalEmployee[]
+  employments   InternalEmployment[]
+  dataScopeBindings DataScopeBinding[]
+
+  @@unique([parentId, name])
+  @@index([parentId, sortOrder])
+  @@index([legalEntityId, type, isActive])
+  @@index([branchId, type, isActive])
+  @@index([path])
+  @@map("organization_units")
+}
+
+model Position {
+  id                 String   @id @default(uuid()) @db.Uuid
+  code               String   @unique @db.VarChar(64)
+  name               String   @db.VarChar(120)
+  organizationUnitId String?  @map("organization_unit_id") @db.Uuid
+  description        String?  @db.Text
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  organizationUnit   OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  internalEmployees  InternalEmployee[]
+  employments        InternalEmployment[]
+
+  @@index([organizationUnitId, isActive])
+  @@index([name])
+  @@map("positions")
+}
+
+model JobGrade {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @unique @db.VarChar(120)
+  level       Int
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  internalEmployees InternalEmployee[]
+  employments InternalEmployment[]
+
+  @@index([level, isActive])
+  @@map("job_grades")
+}
+
+model InternalEmployee {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  employeeNo         String                 @unique @map("employee_no") @db.VarChar(64)
+  userId             String?                @unique @map("user_id") @db.Uuid
+  name               String                 @db.VarChar(64)
+  phone              String                 @unique @db.VarChar(32)
+  idCard             String                 @unique @map("id_card") @db.VarChar(32)
+  email              String?                @db.VarChar(200)
+  legalEntityId      String?                @map("legal_entity_id") @db.Uuid
+  branchId           String?                @map("branch_id") @db.Uuid
+  organizationUnitId String?                @map("organization_unit_id") @db.Uuid
+  positionId         String?                @map("position_id") @db.Uuid
+  jobGradeId         String?                @map("job_grade_id") @db.Uuid
+  status             InternalEmployeeStatus @default(ACTIVE)
+  onboardDate        DateTime               @map("onboard_date") @db.Date
+  offboardDate       DateTime?              @map("offboard_date") @db.Date
+  offboardReason     String?                @map("offboard_reason") @db.VarChar(500)
+  version            Int                    @default(1)
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+  user               User?                  @relation("InternalEmployeeUser", fields: [userId], references: [id], onDelete: Restrict)
+  legalEntity        LegalEntity?           @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch             Branch?                @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit?      @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position           Position?              @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  jobGrade           JobGrade?              @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
+  employments        InternalEmployment[]
+  changes            InternalEmployeeChange[]
+
+  @@unique([id, version])
+  @@index([status, branchId, organizationUnitId])
+  @@index([legalEntityId, status])
+  @@index([positionId, status])
+  @@index([name])
+  @@map("internal_employees")
+}
+
+model InternalEmployment {
+  id                 String   @id @default(uuid()) @db.Uuid
+  employeeId         String   @map("employee_id") @db.Uuid
+  legalEntityId      String?  @map("legal_entity_id") @db.Uuid
+  branchId           String?  @map("branch_id") @db.Uuid
+  organizationUnitId String   @map("organization_unit_id") @db.Uuid
+  positionId         String   @map("position_id") @db.Uuid
+  jobGradeId         String?  @map("job_grade_id") @db.Uuid
+  startedAt          DateTime @map("started_at") @db.Date
+  endedAt            DateTime? @map("ended_at") @db.Date
+  isPrimary          Boolean  @default(true) @map("is_primary")
+  reason             String?  @db.VarChar(500)
+  createdAt          DateTime @default(now()) @map("created_at")
+  employee           InternalEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  legalEntity        LegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch             Branch? @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position           Position @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  jobGrade           JobGrade? @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, endedAt])
+  @@index([organizationUnitId, endedAt])
+  @@index([branchId, endedAt])
+  @@index([positionId, endedAt])
+  @@map("internal_employments")
+}
+
+model InternalEmployeeChange {
+  id          String                     @id @default(uuid()) @db.Uuid
+  employeeId  String                     @map("employee_id") @db.Uuid
+  actorId     String?                    @map("actor_id") @db.Uuid
+  type        InternalEmployeeChangeType
+  effectiveAt DateTime                   @map("effective_at") @db.Date
+  reason      String?                    @db.VarChar(500)
+  before      Json?
+  after       Json?
+  createdAt   DateTime                   @default(now()) @map("created_at")
+  employee    InternalEmployee           @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, effectiveAt])
+  @@index([actorId, createdAt])
+  @@map("internal_employee_changes")
 }
 
 model Project {
@@ -142,6 +357,7 @@ model Project {
   supplierLinks    SupplierProject[]
   userLinks        UserProject[]
   portalQrCodes    PortalQrCode[]
+  dataScopeBindings DataScopeBinding[]
 
   @@unique([branchId, name])
   @@index([branchId, status])
@@ -178,6 +394,7 @@ model Supplier {
   policies          Policy[]
   applications      Application[]
   users             User[]
+  dataScopeBindings DataScopeBinding[]
   portalSettlements PortalSettlement[]
 
   @@map("suppliers")
@@ -457,6 +674,106 @@ model SalarySlip {
   @@map("salary_slips")
 }
 
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @db.VarChar(120)
+  description String?  @db.Text
+  isSystem    Boolean  @default(false) @map("is_system")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+
+  @@index([isActive, name])
+  @@map("roles")
+}
+
+model PermissionDefinition {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(120)
+  name        String   @db.VarChar(120)
+  module      String   @db.VarChar(64)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  roleLinks   RolePermission[]
+
+  @@index([module, code])
+  @@map("permission_definitions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   PermissionDefinition @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  id          String               @id @default(uuid()) @db.Uuid
+  userId      String               @map("user_id") @db.Uuid
+  roleId      String               @map("role_id") @db.Uuid
+  status      RoleAssignmentStatus @default(ACTIVE)
+  validFrom   DateTime             @default(now()) @map("valid_from")
+  validTo     DateTime?            @map("valid_to")
+  createdById String?              @map("created_by_id") @db.Uuid
+  revokedById String?              @map("revoked_by_id") @db.Uuid
+  revokedAt   DateTime?            @map("revoked_at")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  user        User                 @relation("UserAssignedRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role        Role                 @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  scopes      DataScopeBinding[]
+
+  @@unique([userId, roleId, validFrom])
+  @@index([userId, status, validTo])
+  @@index([roleId, status])
+  @@index([createdById, createdAt])
+  @@index([revokedById, revokedAt])
+  @@map("user_role_assignments")
+}
+
+model DataScopeBinding {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  roleAssignmentId   String?       @map("role_assignment_id") @db.Uuid
+  type               DataScopeType
+  organizationUnitId String?       @map("organization_unit_id") @db.Uuid
+  branchId           String?       @map("branch_id") @db.Uuid
+  projectId          String?       @map("project_id") @db.Uuid
+  supplierId         String?       @map("supplier_id") @db.Uuid
+  isActive           Boolean       @default(true) @map("is_active")
+  validFrom          DateTime      @default(now()) @map("valid_from")
+  validTo            DateTime?     @map("valid_to")
+  createdById        String?       @map("created_by_id") @db.Uuid
+  revokedById        String?       @map("revoked_by_id") @db.Uuid
+  revokedAt          DateTime?     @map("revoked_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  user               User          @relation("UserDataScopes", fields: [userId], references: [id], onDelete: Cascade)
+  roleAssignment     UserRoleAssignment? @relation(fields: [roleAssignmentId], references: [id], onDelete: Cascade)
+  organizationUnit   OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: Cascade)
+  branch             Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  project            Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier           Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive, validTo])
+  @@index([roleAssignmentId, isActive])
+  @@index([organizationUnitId, isActive])
+  @@index([branchId, isActive])
+  @@index([projectId, isActive])
+  @@index([supplierId, isActive])
+  @@index([createdById, createdAt])
+  @@index([revokedById, revokedAt])
+  @@map("data_scope_bindings")
+}
+
 model User {
   id                      String                   @id @default(uuid()) @db.Uuid
   username                String                   @unique @db.VarChar(64)
@@ -477,6 +794,9 @@ model User {
   branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
   supplier                Supplier?                @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   person                  Person?                  @relation("PersonUser", fields: [personId], references: [id], onDelete: Restrict)
+  internalEmployee        InternalEmployee?        @relation("InternalEmployeeUser")
+  roleAssignments         UserRoleAssignment[]     @relation("UserAssignedRoles")
+  dataScopeBindings       DataScopeBinding[]       @relation("UserDataScopes")
   projectLinks            UserProject[]
   createdJobDemands       JobDemand[]              @relation("CreatedJobDemands")
   recommendedPeople       Person[]                 @relation("RecommendedPeople")

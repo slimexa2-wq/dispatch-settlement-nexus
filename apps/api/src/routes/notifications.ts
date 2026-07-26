@@ -3,15 +3,14 @@ import { z } from "zod";
 import {
   Permission,
   NotificationStatus,
-  idSchema,
-  rolePermissions,
-  type SessionUser
+  idSchema
 } from "@xiangneng/shared";
 import { AppError, notFound } from "../errors.js";
 import { paginationMeta, parsePagination, success } from "../http.js";
 import { getSession } from "../plugins/auth.js";
 import { writeAudit } from "../audit.js";
 import { createReferralShare } from "../services/referral-share.js";
+import { sessionUserInclude, toSessionUser } from "../session-user.js";
 
 const wxCodeSchema = z.object({ code: z.string().trim().min(1).max(256) });
 
@@ -50,43 +49,18 @@ async function exchangeWechatCode(app: FastifyInstance, code: string): Promise<{
   return { openId: payload.openid, unionId: payload.unionid };
 }
 
-function toSession(user: {
-  id: string;
-  username: string;
-  displayName: string;
-  role: SessionUser["role"];
-  branchId: string | null;
-  supplierId: string | null;
-  personId: string | null;
-  employeeType: string | null;
-  projectLinks: Array<{ projectId: string }>;
-}): SessionUser {
-  return {
-    id: user.id,
-    username: user.username,
-    displayName: user.displayName,
-    role: user.role,
-    branchId: user.branchId,
-    supplierId: user.supplierId,
-    personId: user.personId,
-    employeeType: user.employeeType,
-    projectIds: user.projectLinks.map((item) => item.projectId),
-    permissions: [...rolePermissions[user.role]]
-  };
-}
-
 export async function notificationRoutes(app: FastifyInstance): Promise<void> {
   const loginWithWechat = async (request: FastifyRequest) => {
     const input = wxCodeSchema.parse(request.body);
     const identity = await exchangeWechatCode(app, input.code);
     const user = await app.prisma.user.findUnique({
       where: { wechatMiniappOpenId: identity.openId },
-      include: { projectLinks: { select: { projectId: true } } }
+      include: sessionUserInclude
     });
     if (!user || !user.isActive) {
       throw new AppError(409, "WECHAT_NOT_BOUND", "该微信身份尚未绑定系统账号，请先使用账号密码登录后绑定");
     }
-    const sessionUser = toSession(user);
+    const sessionUser = toSessionUser(user);
     const token = app.jwt.sign({ sub: user.id, tokenVersion: user.tokenVersion });
     return success(request, { token, user: sessionUser });
   };

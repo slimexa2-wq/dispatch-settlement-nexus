@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { UserRole } from "@xiangneng/shared";
+import { DataScopeType, Permission, UserRole } from "@xiangneng/shared";
 import type { FastifyInstance } from "fastify";
 import { buildTestApp, createPrismaMock, login, passwordHash, userFixture } from "./helpers.js";
 
@@ -26,6 +26,72 @@ describe("认证与数据权限", () => {
     const denied = await app.inject({ method: "POST", url: "/api/auth/login", payload: { username: "admin", password: "bad-password" } });
     expect(denied.statusCode).toBe(401);
     expect(denied.json()).toMatchObject({ error: { code: "INVALID_CREDENTIALS" } });
+  });
+
+  it("登录态加载有效多角色及后端数据范围，而非相信前端参数", async () => {
+    const user = userFixture({
+      role: UserRole.EMPLOYEE,
+      passwordHash: await passwordHash(),
+      roleAssignments: [
+        {
+          status: "ACTIVE",
+          validFrom: new Date("2026-01-01T00:00:00.000Z"),
+          validTo: null,
+          role: { code: UserRole.INTERNAL_HR },
+          scopes: [
+            {
+              type: DataScopeType.BRANCH,
+              branchId: "branch-a",
+              organizationUnitId: null,
+              projectId: null,
+              supplierId: null,
+              isActive: true,
+              validFrom: new Date("2026-01-01T00:00:00.000Z"),
+              validTo: null
+            }
+          ]
+        },
+        {
+          status: "ACTIVE",
+          validFrom: new Date("2026-01-01T00:00:00.000Z"),
+          validTo: null,
+          role: { code: UserRole.FINANCE_REVIEWER },
+          scopes: []
+        }
+      ]
+    });
+    const prisma = createPrismaMock({
+      user: { findUnique: async () => user },
+      auditLog: { create: async () => ({ id: "audit" }) }
+    });
+    const app = await buildTestApp(prisma);
+    apps.push(app);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { username: "admin", password: "Password123!" }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      data: {
+        user: {
+          role: UserRole.INTERNAL_HR,
+          roles: [UserRole.INTERNAL_HR, UserRole.FINANCE_REVIEWER],
+          permissions: expect.arrayContaining([
+            Permission.INTERNAL_EMPLOYEE_WRITE,
+            Permission.REIMBURSEMENT_FINANCE_REVIEW
+          ]),
+          scopeBindings: [
+            expect.objectContaining({
+              type: DataScopeType.BRANCH,
+              branchId: "branch-a"
+            })
+          ]
+        }
+      }
+    });
   });
 
   it("资源专员不能借我的报名接口读取全量报名", async () => {

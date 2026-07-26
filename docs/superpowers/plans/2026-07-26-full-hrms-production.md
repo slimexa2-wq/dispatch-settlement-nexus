@@ -37,7 +37,7 @@
 - Produces: `assertPublicDataSafe(root: string): Promise<void>`
 - Consumed by: Prisma seed、Demo 重置、CI。
 
-- [ ] **Step 1: 编写公开数据安全失败测试**
+- [x] **Step 1: 编写公开数据安全失败测试**
 
 ```ts
 it("rejects files containing a real-roster source marker", async () => {
@@ -53,21 +53,21 @@ it("accepts deterministic synthetic identities", async () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认因生成器和扫描器不存在而失败**
+- [x] **Step 2: 运行测试并确认因生成器和扫描器不存在而失败**
 
 Run: `pnpm exec vitest run tests/public-data-safety.test.mts`
 
 Expected: FAIL，提示模块或导出不存在。
 
-- [ ] **Step 3: 实现最小生成器和安全扫描器**
+- [x] **Step 3: 实现最小生成器和安全扫描器**
 
 生成 3 个分公司、8 个项目、6 个供应商、12 个岗位需求、48 个人员、6 个内部员工、工资条、推荐和通知。身份证、手机号、银行卡、合同编号均使用明确的合成规则并带 `synthetic: true` 元数据。
 
-- [ ] **Step 4: 改造 Seed 和脚本**
+- [x] **Step 4: 改造 Seed 和脚本**
 
 `prisma/seed.ts` 只读取 `data/synthetic/demo-data.json`；Demo 重置重新导入同一份合成数据；删除对 `data/derived/demo-data.full.json` 和原始 Excel 哈希的运行依赖。
 
-- [ ] **Step 5: 验证**
+- [x] **Step 5: 验证**
 
 Run:
 
@@ -80,7 +80,7 @@ pnpm exec tsx scripts/verify-public-data-safety.mts
 
 Expected: 全部 PASS，安全扫描输出 `public_data_safe=true`。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```powershell
 git add .gitignore package.json prisma/seed.ts scripts data/synthetic tests/public-data-safety.test.mts
@@ -106,7 +106,7 @@ git commit -m "build: establish synthetic public data baseline"
 - Produces: `transferInternalEmployee(tx, command): Promise<InternalEmployeeView>`
 - Produces: `offboardInternalEmployee(tx, command): Promise<InternalEmployeeView>`
 
-- [ ] **Step 1: 编写多角色和范围失败测试**
+- [x] **Step 1: 编写多角色和范围失败测试**
 
 ```ts
 it("combines active role permissions but never trusts request scope", () => {
@@ -121,25 +121,25 @@ it("combines active role permissions but never trusts request scope", () => {
 });
 ```
 
-- [ ] **Step 2: 运行并确认 RED**
+- [x] **Step 2: 运行并确认 RED**
 
 Run: `pnpm --filter @xiangneng/shared test && pnpm --filter @xiangneng/api test -- internal-employee-domain.test.ts`
 
 Expected: FAIL，缺少新角色、权限和服务。
 
-- [ ] **Step 3: 增加 Prisma 模型与迁移**
+- [x] **Step 3: 增加 Prisma 模型与迁移**
 
 增加 `LegalEntity`、`OrganizationUnit`、`Position`、`JobGrade`、`InternalEmployee`、`InternalEmployment`、`InternalEmployeeChange`、`Role`、`PermissionDefinition`、`RolePermission`、`UserRoleAssignment`、`DataScopeBinding`，为全部外键和范围查询增加索引。
 
-- [ ] **Step 4: 实现授权上下文**
+- [x] **Step 4: 实现授权上下文**
 
 后端从有效角色、有效期、内部员工状态和范围绑定构造上下文；停用或离职员工返回拒绝；集团范围只能来自高权限授权。
 
-- [ ] **Step 5: 实现调动与离职事务**
+- [x] **Step 5: 实现调动与离职事务**
 
 调动必须结束旧主任职、创建新任职、结束旧组织范围绑定并记录变动；离职必须结束全部任职和授权。物理删除只有零业务关联时允许。
 
-- [ ] **Step 6: 验证**
+- [x] **Step 6: 验证**
 
 Run:
 
@@ -152,7 +152,7 @@ pnpm --filter @xiangneng/api test -- internal-employee-domain.test.ts
 
 Expected: PASS。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```powershell
 git add prisma packages/shared apps/api/src/services apps/api/test/internal-employee-domain.test.ts
@@ -704,4 +704,3 @@ PR 标题使用 `feat: deliver full Xiangneng HRMS platform`，正文列出模�
 - [ ] **Step 7: 完成验收报告**
 
 记录仓库、分支、Commit、PR、CI、演示网址、演示账号、测试命令与真实结果、微信/COS/数据库/域名配置入口、已知限制和对现有系统的影响。
-

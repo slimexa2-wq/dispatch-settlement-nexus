@@ -2,6 +2,11 @@ import { createHash, randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { hash } from "../apps/api/node_modules/bcryptjs/index.js";
 import { PrismaClient } from "../apps/api/src/generated/prisma/client.js";
+import {
+  Permission,
+  UserRole as SharedUserRole,
+  rolePermissions
+} from "../packages/shared/src/index.js";
 import { loadPublicDemoData } from "./lib/public-demo-data.mjs";
 
 type JsonRecord = Record<string, any>;
@@ -90,7 +95,12 @@ const users = [
   { key: "demo-project", username: "demo_project", displayName: "演示-项目负责人", role: "PROJECT_OPERATOR", branchId: null, projectIds: demoProjectIds },
   { key: "demo-hq", username: "demo_hq", displayName: "演示-集团领导", role: "HEADQUARTERS_MANAGER", branchId: null, projectIds: [] },
   { key: "demo-branch", username: "demo_branch", displayName: "演示-分公司负责人", role: "BRANCH_MANAGER", branchId: uuid(data.branches[0]!.id), projectIds: [] },
-  { key: "demo-operator", username: "demo_operator", displayName: "演示-现场运营", role: "PROJECT_OPERATOR", branchId: null, projectIds: data.projects.map((item) => uuid(item.id)) }
+  { key: "demo-operator", username: "demo_operator", displayName: "演示-现场运营", role: "PROJECT_OPERATOR", branchId: null, projectIds: data.projects.map((item) => uuid(item.id)) },
+  { key: "demo-hr", username: "demo_hr", displayName: "演示-内部人事", role: "INTERNAL_HR", branchId: uuid(data.branches[0]!.id), projectIds: [] },
+  { key: "demo-recruiter", username: "demo_recruiter", displayName: "演示-招聘专员", role: "RECRUITER", branchId: uuid(data.branches[1]!.id), projectIds: [] },
+  { key: "demo-finance", username: "demo_finance", displayName: "演示-财务审核", role: "FINANCE_REVIEWER", branchId: uuid(data.branches[0]!.id), projectIds: [] },
+  { key: "demo-cashier", username: "demo_cashier", displayName: "演示-出纳", role: "CASHIER", branchId: uuid(data.branches[1]!.id), projectIds: [] },
+  { key: "demo-reimbursement", username: "demo_reimbursement", displayName: "演示-部门制单人", role: "DEPARTMENT_REIMBURSEMENT_CLERK", branchId: uuid(data.branches[2]!.id), projectIds: [] }
 ] as const;
 
 try {
@@ -186,6 +196,323 @@ try {
       employeeType: "普通员工", isActive: true
     }
   });
+
+  const roleNames: Record<string, string> = {
+    [SharedUserRole.SUPER_ADMIN]: "超级管理员",
+    [SharedUserRole.SYSTEM_ADMIN]: "系统管理员",
+    [SharedUserRole.GROUP_LEADER]: "集团领导",
+    [SharedUserRole.HEADQUARTERS_MANAGER]: "总部管理者",
+    [SharedUserRole.BRANCH_MANAGER]: "分公司负责人",
+    [SharedUserRole.DEPARTMENT_MANAGER]: "部门负责人",
+    [SharedUserRole.INTERNAL_HR]: "内部人事",
+    [SharedUserRole.RECRUITER]: "招聘专员",
+    [SharedUserRole.PROJECT_OPERATOR]: "项目运营",
+    [SharedUserRole.RESOURCE_SPECIALIST]: "资源专员",
+    [SharedUserRole.FINANCE_REVIEWER]: "财务审核",
+    [SharedUserRole.CASHIER]: "出纳",
+    [SharedUserRole.DEPARTMENT_REIMBURSEMENT_CLERK]: "部门报销制单人",
+    [SharedUserRole.SUPPLIER_ADMIN]: "供应商管理员",
+    [SharedUserRole.SUPPLIER]: "供应商",
+    [SharedUserRole.OUTSOURCED_EMPLOYEE]: "外包员工",
+    [SharedUserRole.EMPLOYEE]: "内部员工",
+    [SharedUserRole.JOB_SEEKER]: "求职者"
+  };
+  const permissionIds = new Map<string, string>();
+  for (const code of Object.values(Permission)) {
+    const permission = await prisma.permissionDefinition.upsert({
+      where: { code },
+      create: {
+        id: uuid(`permission:${code}`),
+        code,
+        name: code,
+        module: code.split(":")[0] ?? "system"
+      },
+      update: {
+        module: code.split(":")[0] ?? "system"
+      }
+    });
+    permissionIds.set(code, permission.id);
+  }
+  const roleIds = new Map<string, string>();
+  for (const code of Object.values(SharedUserRole)) {
+    const role = await prisma.role.upsert({
+      where: { code },
+      create: {
+        id: uuid(`role:${code}`),
+        code,
+        name: roleNames[code] ?? code,
+        description: "公开演示预置系统角色",
+        isSystem: true
+      },
+      update: {
+        name: roleNames[code] ?? code,
+        isActive: true
+      }
+    });
+    roleIds.set(code, role.id);
+    await prisma.rolePermission.createMany({
+      data: rolePermissions[code].map((permissionCode) => ({
+        roleId: role.id,
+        permissionId: permissionIds.get(permissionCode)!
+      })),
+      skipDuplicates: true
+    });
+  }
+
+  const rootOrganizationId = uuid("organization:group");
+  await prisma.organizationUnit.upsert({
+    where: { code: "XN-DEMO-GROUP" },
+    create: {
+      id: rootOrganizationId,
+      code: "XN-DEMO-GROUP",
+      name: "祥能演示集团",
+      type: "GROUP",
+      path: `/${rootOrganizationId}`,
+      sortOrder: 1
+    },
+    update: { name: "祥能演示集团", isActive: true }
+  });
+  const departmentIds = new Map<string, string>();
+  for (const [branchIndex, branch] of data.branches.entries()) {
+    const branchId = uuid(branch.id);
+    const legalEntityId = uuid(`legal-entity:${branch.id}`);
+    const branchUnitId = uuid(`organization:branch:${branch.id}`);
+    await prisma.legalEntity.upsert({
+      where: { code: `LE-${branch.sourceCode}` },
+      create: {
+        id: legalEntityId,
+        code: `LE-${branch.sourceCode}`,
+        name: `${branch.name}有限公司`,
+        taxNumber: `SYNTHETIC-TAX-${String(branchIndex + 1).padStart(4, "0")}`
+      },
+      update: { name: `${branch.name}有限公司`, isActive: true }
+    });
+    await prisma.organizationUnit.upsert({
+      where: { code: `OU-${branch.sourceCode}` },
+      create: {
+        id: branchUnitId,
+        code: `OU-${branch.sourceCode}`,
+        name: branch.name,
+        type: "BRANCH",
+        parentId: rootOrganizationId,
+        legalEntityId,
+        branchId,
+        path: `/${rootOrganizationId}/${branchUnitId}`,
+        sortOrder: branchIndex + 1
+      },
+      update: {
+        name: branch.name,
+        legalEntityId,
+        branchId,
+        isActive: true
+      }
+    });
+    const departmentNames = [
+      ...new Set(
+        data.internalEmployees
+          .filter((employee) => employee.branchId === branch.id)
+          .map((employee) => employee.departmentName)
+      )
+    ];
+    for (const [departmentIndex, departmentName] of departmentNames.entries()) {
+      const departmentId = uuid(`organization:department:${branch.id}:${departmentName}`);
+      departmentIds.set(`${branch.id}:${departmentName}`, departmentId);
+      await prisma.organizationUnit.upsert({
+        where: { code: `OU-${branch.sourceCode}-D${departmentIndex + 1}` },
+        create: {
+          id: departmentId,
+          code: `OU-${branch.sourceCode}-D${departmentIndex + 1}`,
+          name: departmentName,
+          type: "DEPARTMENT",
+          parentId: branchUnitId,
+          legalEntityId,
+          branchId,
+          path: `/${rootOrganizationId}/${branchUnitId}/${departmentId}`,
+          sortOrder: departmentIndex + 1
+        },
+        update: {
+          name: departmentName,
+          parentId: branchUnitId,
+          legalEntityId,
+          branchId,
+          isActive: true
+        }
+      });
+    }
+  }
+
+  const jobGrade = await prisma.jobGrade.upsert({
+    where: { code: "G5" },
+    create: {
+      id: uuid("job-grade:G5"),
+      code: "G5",
+      name: "专业岗位",
+      level: 5,
+      description: "公开演示统一专业职级"
+    },
+    update: { name: "专业岗位", level: 5, isActive: true }
+  });
+  const positionIds = new Map<string, string>();
+  for (const positionName of new Set(data.internalEmployees.map((employee) => employee.position))) {
+    const code = `POS-${String(positionIds.size + 1).padStart(2, "0")}`;
+    const position = await prisma.position.upsert({
+      where: { code },
+      create: {
+        id: uuid(`position:${positionName}`),
+        code,
+        name: positionName,
+        description: `${positionName}岗位职责完整演示数据`
+      },
+      update: { name: positionName, isActive: true }
+    });
+    positionIds.set(positionName, position.id);
+  }
+
+  const internalUsernames = [
+    "demo_hr",
+    "demo_recruiter",
+    "demo_operator",
+    "demo_finance",
+    "demo_cashier",
+    "demo_reimbursement"
+  ];
+  for (const [index, employee] of data.internalEmployees.entries()) {
+    const branch = data.branches.find((item) => item.id === employee.branchId)!;
+    const user = await prisma.user.findUnique({
+      where: { username: internalUsernames[index]! },
+      select: { id: true }
+    });
+    const employeeId = uuid(employee.id);
+    const legalEntityId = uuid(`legal-entity:${branch.id}`);
+    const organizationUnitId = departmentIds.get(
+      `${branch.id}:${employee.departmentName}`
+    )!;
+    const positionId = positionIds.get(employee.position)!;
+    await prisma.internalEmployee.upsert({
+      where: { employeeNo: employee.employeeNo },
+      create: {
+        id: employeeId,
+        employeeNo: employee.employeeNo,
+        userId: user?.id,
+        name: employee.name,
+        phone: employee.phone,
+        idCard: employee.idCard,
+        legalEntityId,
+        branchId: uuid(branch.id),
+        organizationUnitId,
+        positionId,
+        jobGradeId: jobGrade.id,
+        status: employee.status,
+        onboardDate: dateTime(employee.onboardDate)
+      },
+      update: {
+        userId: user?.id,
+        name: employee.name,
+        phone: employee.phone,
+        idCard: employee.idCard,
+        legalEntityId,
+        branchId: uuid(branch.id),
+        organizationUnitId,
+        positionId,
+        jobGradeId: jobGrade.id,
+        status: employee.status
+      }
+    });
+    await prisma.internalEmployment.upsert({
+      where: { id: uuid(`employment:${employee.id}:initial`) },
+      create: {
+        id: uuid(`employment:${employee.id}:initial`),
+        employeeId,
+        legalEntityId,
+        branchId: uuid(branch.id),
+        organizationUnitId,
+        positionId,
+        jobGradeId: jobGrade.id,
+        startedAt: dateTime(employee.onboardDate),
+        reason: "演示初始化",
+        isPrimary: true
+      },
+      update: {
+        legalEntityId,
+        branchId: uuid(branch.id),
+        organizationUnitId,
+        positionId,
+        jobGradeId: jobGrade.id,
+        endedAt: null,
+        isPrimary: true
+      }
+    });
+    await prisma.internalEmployeeChange.upsert({
+      where: { id: uuid(`employee-change:${employee.id}:onboard`) },
+      create: {
+        id: uuid(`employee-change:${employee.id}:onboard`),
+        employeeId,
+        type: "ONBOARD",
+        effectiveAt: dateTime(employee.onboardDate),
+        reason: "演示初始化",
+        after: {
+          status: employee.status,
+          organizationUnitId,
+          positionId,
+          branchId: uuid(branch.id)
+        }
+      },
+      update: {}
+    });
+  }
+
+  const assignmentDefinitions = [
+    { username: "demo_admin", role: SharedUserRole.SUPER_ADMIN, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_hq", role: SharedUserRole.GROUP_LEADER, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_branch", role: SharedUserRole.BRANCH_MANAGER, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[0]!.id) }] },
+    { username: "demo_project", role: SharedUserRole.PROJECT_OPERATOR, scopes: demoProjectIds.map((projectId) => ({ type: "PROJECT" as const, projectId })) },
+    { username: "demo_operator", role: SharedUserRole.PROJECT_OPERATOR, scopes: data.projects.map((project) => ({ type: "PROJECT" as const, projectId: uuid(project.id) })) },
+    { username: "demo_hr", role: SharedUserRole.INTERNAL_HR, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[0]!.id) }] },
+    { username: "demo_recruiter", role: SharedUserRole.RECRUITER, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[1]!.id) }] },
+    { username: "demo_finance", role: SharedUserRole.FINANCE_REVIEWER, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_cashier", role: SharedUserRole.CASHIER, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_reimbursement", role: SharedUserRole.DEPARTMENT_REIMBURSEMENT_CLERK, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[2]!.id) }] },
+    { username: "demo_supplier", role: SharedUserRole.SUPPLIER_ADMIN, scopes: [{ type: "SUPPLIER" as const, supplierId: uuid(demoSupplierSourceId) }] },
+    { username: "demo_employee", role: SharedUserRole.EMPLOYEE, scopes: [{ type: "SELF" as const }] }
+  ];
+  for (const definition of assignmentDefinitions) {
+    const account = await prisma.user.findUnique({
+      where: { username: definition.username },
+      select: { id: true }
+    });
+    if (!account) continue;
+    const roleId = roleIds.get(definition.role)!;
+    const assignmentId = uuid(`role-assignment:${definition.username}:${definition.role}`);
+    await prisma.userRoleAssignment.upsert({
+      where: { id: assignmentId },
+      create: {
+        id: assignmentId,
+        userId: account.id,
+        roleId,
+        status: "ACTIVE"
+      },
+      update: {
+        roleId,
+        status: "ACTIVE",
+        validTo: null,
+        revokedAt: null
+      }
+    });
+    await prisma.dataScopeBinding.deleteMany({
+      where: { roleAssignmentId: assignmentId }
+    });
+    await prisma.dataScopeBinding.createMany({
+      data: definition.scopes.map((scope, scopeIndex) => ({
+        id: uuid(`scope:${assignmentId}:${scopeIndex}`),
+        userId: account.id,
+        roleAssignmentId: assignmentId,
+        type: scope.type,
+        branchId: "branchId" in scope ? scope.branchId : null,
+        projectId: "projectId" in scope ? scope.projectId : null,
+        supplierId: "supplierId" in scope ? scope.supplierId : null
+      }))
+    });
+  }
 
   const applications = data.applications.filter((application) => nestedJobs.has(canonicalJobSource(application.jobDemandId))).map((application) => ({
     id: uuid(application.id), personId: uuid(application.personId), jobDemandId: uuid(canonicalJobSource(application.jobDemandId)),

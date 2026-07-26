@@ -1,5 +1,5 @@
 import type { UserRole as UserRoleValue } from "./enums.js";
-import type { Permission } from "./permissions.js";
+import type { DataScopeType, Permission } from "./permissions.js";
 
 export type ApiSuccess<T> = { data: T; requestId: string };
 export type ApiFailure = {
@@ -21,12 +21,20 @@ export type SessionUser = {
   username: string;
   displayName: string;
   role: UserRoleValue;
+  roles: UserRoleValue[];
   branchId: string | null;
   supplierId: string | null;
   personId: string | null;
   employeeType: string | null;
   projectIds: string[];
   permissions: Permission[];
+  scopeBindings: Array<{
+    type: DataScopeType;
+    organizationUnitId: string | null;
+    branchId: string | null;
+    projectId: string | null;
+    supplierId: string | null;
+  }>;
 };
 
 export type ImportPreview<T> = {

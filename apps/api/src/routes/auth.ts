@@ -1,36 +1,12 @@
 import type { FastifyInstance } from "fastify";
 import { compare } from "bcryptjs";
-import { loginSchema, rolePermissions, type SessionUser } from "@xiangneng/shared";
+import { loginSchema } from "@xiangneng/shared";
 import { AppError } from "../errors.js";
 import { success } from "../http.js";
 import { getSession } from "../plugins/auth.js";
 import { writeAudit } from "../audit.js";
 import { z } from "zod";
-
-function sessionFromUser(user: {
-  id: string;
-  username: string;
-  displayName: string;
-  role: SessionUser["role"];
-  branchId: string | null;
-  supplierId: string | null;
-  personId: string | null;
-  employeeType: string | null;
-  projectLinks: Array<{ projectId: string }>;
-}): SessionUser {
-  return {
-    id: user.id,
-    username: user.username,
-    displayName: user.displayName,
-    role: user.role,
-    branchId: user.branchId,
-    supplierId: user.supplierId,
-    personId: user.personId,
-    employeeType: user.employeeType,
-    projectIds: user.projectLinks.map((item) => item.projectId),
-    permissions: [...rolePermissions[user.role]]
-  };
-}
+import { sessionUserInclude, toSessionUser } from "../session-user.js";
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post("/auth/demo-login", {
@@ -51,10 +27,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }[persona];
     const user = await app.prisma.user.findUnique({
       where: { username },
-      include: { projectLinks: { select: { projectId: true } } }
+      include: sessionUserInclude
     });
     if (!user || !user.isActive) throw new AppError(503, "DEMO_USER_NOT_READY", "演示账号尚未初始化");
-    const sessionUser = sessionFromUser(user);
+    const sessionUser = toSessionUser(user);
     const token = app.jwt.sign({ sub: user.id, tokenVersion: user.tokenVersion });
     request.sessionUser = sessionUser;
     await writeAudit(app.prisma, request, {
@@ -71,7 +47,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const input = loginSchema.parse(request.body);
     const user = await app.prisma.user.findUnique({
       where: { username: input.username },
-      include: { projectLinks: { select: { projectId: true } } }
+      include: sessionUserInclude
     });
     if (!user || !user.isActive || !(await compare(input.password, user.passwordHash))) {
       await writeAudit(app.prisma, request, {
@@ -81,7 +57,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       });
       throw new AppError(401, "INVALID_CREDENTIALS", "用户名或密码错误");
     }
-    const sessionUser = sessionFromUser(user);
+    const sessionUser = toSessionUser(user);
     const token = app.jwt.sign({ sub: user.id, tokenVersion: user.tokenVersion });
     request.sessionUser = sessionUser;
     await writeAudit(app.prisma, request, {
