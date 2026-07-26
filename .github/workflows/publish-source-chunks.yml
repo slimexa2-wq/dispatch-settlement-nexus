@@ -1,0 +1,44 @@
+name: Publish complete HRMS source from chunks
+
+on:
+  push:
+    branches:
+      - agent/internal-hr-reimbursement-foundation
+    paths:
+      - source-archive/**
+      - .github/workflows/publish-source-chunks.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check all source chunks are present
+        id: chunks
+        shell: bash
+        run: |
+          count="$(find source-archive -maxdepth 1 -name 'part-*.b64' -type f 2>/dev/null | wc -l)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Found $count/16 source chunks"
+      - name: Reconstruct and publish complete source
+        if: steps.chunks.outputs.count == '16'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat source-archive/part-*.b64 | base64 --decode > /tmp/xiangneng-hrms.tar.gz
+          echo '0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405  /tmp/xiangneng-hrms.tar.gz' | sha256sum -c -
+          TMP_DIR="$(mktemp -d)"
+          tar -xzf /tmp/xiangneng-hrms.tar.gz -C "$TMP_DIR"
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$TMP_DIR"/. .
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: publish complete HRMS source with internal HR and reimbursement'
+          git push origin HEAD:agent/internal-hr-reimbursement-foundation
