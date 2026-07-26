@@ -14,9 +14,15 @@ type DelegateOverrides = Record<string, Record<string, MockMethod>>;
 const defaultFileStore: FileStore = {
   async save(input): Promise<SavedFile> {
     input.stream.resume();
-    return { storageKey: randomUUID(), originalName: input.filename, mimeType: input.mimeType, sizeBytes: 0 };
+    return {
+      storageKey: randomUUID(),
+      originalName: input.filename,
+      mimeType: input.mimeType,
+      sizeBytes: 0,
+      sha256: "0".repeat(64)
+    };
   },
-  open(): Readable {
+  async open(): Promise<Readable> {
     throw new Error("test file not configured");
   },
   async remove(): Promise<void> {}
@@ -32,6 +38,7 @@ export const testConfig: AppConfig = {
   JWT_EXPIRES_IN: "1h",
   UPLOAD_DIR: "./test-uploads",
   MAX_UPLOAD_BYTES: 1024 * 1024,
+  FILE_STORAGE_DRIVER: "local",
   WECHAT_MINIAPP_PATH: "/pages/index/index",
   XIANGNENG_LLM_BASE_URL: "http://127.0.0.1:11434/v1",
   XIANGNENG_LLM_MODEL: "qwen3.5:4b",

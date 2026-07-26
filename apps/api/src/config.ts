@@ -16,6 +16,12 @@ const rawEnvSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default("8h"),
   UPLOAD_DIR: z.string().default(resolve(process.cwd(), "apps", "api", "uploads")),
+  FILE_STORAGE_DRIVER: z.enum(["local", "cos"]).default("local"),
+  COS_REGION: z.string().trim().optional(),
+  COS_BUCKET: z.string().trim().optional(),
+  COS_SECRET_ID: z.string().trim().optional(),
+  COS_SECRET_KEY: z.string().trim().optional(),
+  COS_ENDPOINT: z.string().url().optional(),
   WECHAT_MINIAPP_APP_ID: z.string().optional(),
   WECHAT_MINIAPP_APP_SECRET: z.string().optional(),
   WECHAT_OFFICIAL_APP_ID: z.string().optional(),
@@ -50,6 +56,12 @@ export type AppConfig = {
   JWT_EXPIRES_IN: string;
   UPLOAD_DIR: string;
   MAX_UPLOAD_BYTES: number;
+  FILE_STORAGE_DRIVER: "local" | "cos";
+  COS_REGION?: string;
+  COS_BUCKET?: string;
+  COS_SECRET_ID?: string;
+  COS_SECRET_KEY?: string;
+  COS_ENDPOINT?: string;
   WECHAT_MINIAPP_APP_ID?: string;
   WECHAT_MINIAPP_APP_SECRET?: string;
   WECHAT_OFFICIAL_APP_ID?: string;
@@ -84,6 +96,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     JWT_EXPIRES_IN: parsed.JWT_EXPIRES_IN,
     UPLOAD_DIR: resolve(parsed.UPLOAD_DIR),
     MAX_UPLOAD_BYTES: parsed.MAX_UPLOAD_BYTES ?? Math.round((parsed.MAX_UPLOAD_MB ?? 20) * 1024 * 1024),
+    FILE_STORAGE_DRIVER: parsed.FILE_STORAGE_DRIVER,
+    COS_REGION: parsed.COS_REGION,
+    COS_BUCKET: parsed.COS_BUCKET,
+    COS_SECRET_ID: parsed.COS_SECRET_ID,
+    COS_SECRET_KEY: parsed.COS_SECRET_KEY,
+    COS_ENDPOINT: parsed.COS_ENDPOINT,
     WECHAT_MINIAPP_APP_ID: parsed.WECHAT_MINIAPP_APP_ID,
     WECHAT_MINIAPP_APP_SECRET: parsed.WECHAT_MINIAPP_APP_SECRET,
     WECHAT_OFFICIAL_APP_ID: parsed.WECHAT_OFFICIAL_APP_ID,

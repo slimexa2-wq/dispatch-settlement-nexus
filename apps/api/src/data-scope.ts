@@ -209,6 +209,39 @@ export function internalEmployeeWhere(
   return conditions.length ? { OR: conditions } : { id: NO_ACCESS_ID };
 }
 
+export function reimbursementWhere(
+  user: SessionUser
+): Prisma.ReimbursementBatchWhereInput {
+  if (hasGlobalScope(user)) return {};
+  const branchIds = scopeIds(user, DataScopeType.BRANCH, "branchId");
+  const organizationUnitIds = [
+    ...scopeIds(user, DataScopeType.ORG_UNIT, "organizationUnitId"),
+    ...scopeIds(user, DataScopeType.CENTER, "organizationUnitId")
+  ];
+  const projectIds = scopeIds(user, DataScopeType.PROJECT, "projectId");
+  const supplierIds = scopeIds(user, DataScopeType.SUPPLIER, "supplierId");
+  const isSelf = bindingsOf(user).some(
+    (binding) => binding.type === DataScopeType.SELF
+  );
+  const conditions: Prisma.ReimbursementBatchWhereInput[] = [];
+  if (branchIds.length) conditions.push({ branchId: { in: branchIds } });
+  if (organizationUnitIds.length) {
+    conditions.push({
+      organizationUnit: {
+        OR: [
+          { id: { in: organizationUnitIds } },
+          ...organizationUnitIds.map((id) => ({ path: { contains: id } }))
+        ]
+      }
+    });
+  }
+  if (projectIds.length) conditions.push({ projectId: { in: projectIds } });
+  if (supplierIds.length) conditions.push({ supplierId: { in: supplierIds } });
+  if (isSelf) conditions.push({ applicantUserId: user.id });
+  if (conditions.length === 1) return conditions[0] ?? { id: NO_ACCESS_ID };
+  return conditions.length ? { OR: conditions } : { id: NO_ACCESS_ID };
+}
+
 export function andWhere<T>(...conditions: T[]): { AND: T[] } {
   return { AND: conditions };
 }

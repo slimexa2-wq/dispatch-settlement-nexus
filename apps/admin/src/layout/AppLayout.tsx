@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   ApartmentOutlined,
+  AccountBookOutlined,
   AuditOutlined,
   BankOutlined,
   DashboardOutlined,
@@ -82,7 +83,8 @@ const menuItems: ItemType[] = [
   { key: "/miniapp-demo", icon: <MobileOutlined />, label: "小程序演示" },
   { key: "/ai-assistant", icon: <RobotOutlined />, label: "AI 助手" },
   { key: "/product", icon: <GlobalOutlined />, label: "产品介绍" },
-  { key: "/internal-employees", icon: <IdcardOutlined />, label: "内部员工" }
+  { key: "/internal-employees", icon: <IdcardOutlined />, label: "内部员工" },
+  { key: "/reimbursements", icon: <AccountBookOutlined />, label: "报销管理" }
 ];
 
 type ModuleActionConfig = {
@@ -99,6 +101,7 @@ function selectedPath(pathname: string): string {
     "/dashboard",
     "/people",
     "/internal-employees",
+    "/reimbursements",
     "/projects",
     "/suppliers",
     "/policies/supplier",
@@ -162,6 +165,14 @@ export function AppLayout() {
     ...(can(Permission.DASHBOARD_READ) ? [menuItems[0]!] : []),
     ...(can(Permission.PEOPLE_READ) ? [menuItems[1]!] : []),
     ...(can(Permission.INTERNAL_EMPLOYEE_READ) ? [menuItems[13]!] : []),
+    ...([
+      Permission.REIMBURSEMENT_SELF,
+      Permission.REIMBURSEMENT_MANAGE,
+      Permission.REIMBURSEMENT_APPROVE,
+      Permission.REIMBURSEMENT_FINANCE_REVIEW,
+      Permission.REIMBURSEMENT_PAY,
+      Permission.REIMBURSEMENT_EXPORT
+    ].some(can) ? [menuItems[14]!] : []),
     ...(can(Permission.PROJECT_READ) ? [menuItems[2]!] : []),
     ...(can(Permission.SUPPLIER_READ) ? [menuItems[3]!] : []),
     ...(can(Permission.POLICY_READ) ? [menuItems[4]!] : []),

@@ -8,7 +8,7 @@ import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { PrismaClient } from "./generated/prisma/client.js";
 import type { AppConfig } from "./config.js";
-import { DiskFileStore, type FileStore } from "./files.js";
+import { CosFileStore, DiskFileStore, type FileStore } from "./files.js";
 import { registerErrorHandler } from "./errors.js";
 import { authPlugin } from "./plugins/auth.js";
 import { authRoutes } from "./routes/auth.js";
@@ -28,6 +28,7 @@ import { notificationRoutes } from "./routes/notifications.js";
 import { aiRoutes } from "./routes/ai.js";
 import { portalRoutes } from "./routes/portal.js";
 import { internalEmployeeRoutes } from "./routes/internal-employees.js";
+import { reimbursementRoutes } from "./routes/reimbursements.js";
 import "./types.js";
 
 export type BuildAppOptions = {
@@ -47,7 +48,35 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   const prisma = options.prisma ?? new PrismaClient({ datasourceUrl: options.config.DATABASE_URL });
   app.decorate("prisma", prisma);
   app.decorate("config", options.config);
-  app.decorate("fileStore", options.fileStore ?? new DiskFileStore(options.config.UPLOAD_DIR, options.config.MAX_UPLOAD_BYTES));
+  let fileStore = options.fileStore;
+  if (!fileStore) {
+    if (options.config.FILE_STORAGE_DRIVER === "cos") {
+      if (
+        !options.config.COS_REGION ||
+        !options.config.COS_BUCKET ||
+        !options.config.COS_SECRET_ID ||
+        !options.config.COS_SECRET_KEY
+      ) {
+        throw new Error(
+          "FILE_STORAGE_DRIVER=cos 时必须配置 COS_REGION、COS_BUCKET、COS_SECRET_ID、COS_SECRET_KEY"
+        );
+      }
+      fileStore = new CosFileStore({
+        region: options.config.COS_REGION,
+        bucket: options.config.COS_BUCKET,
+        secretId: options.config.COS_SECRET_ID,
+        secretKey: options.config.COS_SECRET_KEY,
+        endpoint: options.config.COS_ENDPOINT,
+        maxBytes: options.config.MAX_UPLOAD_BYTES
+      });
+    } else {
+      fileStore = new DiskFileStore(
+        options.config.UPLOAD_DIR,
+        options.config.MAX_UPLOAD_BYTES
+      );
+    }
+  }
+  app.decorate("fileStore", fileStore);
 
   await app.register(cors, {
     origin: options.config.ADMIN_ORIGIN.split(",").map((origin) => origin.trim()),
@@ -87,6 +116,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     await aiRoutes(api);
     await portalRoutes(api);
     await internalEmployeeRoutes(api);
+    await reimbursementRoutes(api);
   }, { prefix: "/api" });
 
   // 单服务部署：API 进程同时托管门户生产构建（Render Web Service 即如此）。

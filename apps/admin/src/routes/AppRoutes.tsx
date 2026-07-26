@@ -21,6 +21,7 @@ const MiniappDemoPage = lazy(() => import("../pages/MiniappDemoPage").then((modu
 const ProductIntroPage = lazy(() => import("../pages/ProductIntroPage").then((module) => ({ default: module.ProductIntroPage })));
 const AiAssistantPage = lazy(() => import("../pages/AiAssistantPage").then((module) => ({ default: module.AiAssistantPage })));
 const InternalEmployeesPage = lazy(() => import("../pages/InternalEmployeesPage").then((module) => ({ default: module.InternalEmployeesPage })));
+const ReimbursementsPage = lazy(() => import("../pages/ReimbursementsPage").then((module) => ({ default: module.ReimbursementsPage })));
 
 function ProtectedLayout() {
   const { user, initializing } = useAuth();
@@ -44,6 +45,7 @@ export function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/people" element={<PeoplePage />} />
         <Route path="/internal-employees" element={<InternalEmployeesPage />} />
+        <Route path="/reimbursements" element={<ReimbursementsPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/suppliers" element={<SuppliersPage />} />
         <Route path="/policies/supplier" element={<PoliciesPage type="SUPPLIER" />} />

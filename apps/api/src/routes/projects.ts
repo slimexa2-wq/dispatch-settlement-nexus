@@ -203,7 +203,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
       }
     });
     if (!image) notFound("项目图片");
-    return reply.type(image.mimeType).header("content-disposition", `inline; filename*=UTF-8''${encodeURIComponent(image.originalName)}`).send(app.fileStore.open(image.storageKey));
+    return reply.type(image.mimeType).header("content-disposition", `inline; filename*=UTF-8''${encodeURIComponent(image.originalName)}`).send(await app.fileStore.open(image.storageKey));
   });
 
   app.get("/public/project-images/:imageId/content", async (request, reply) => {
@@ -222,7 +222,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     return reply.type(image.mimeType)
       .header("cache-control", "public, max-age=300")
       .header("content-disposition", `inline; filename*=UTF-8''${encodeURIComponent(image.originalName)}`)
-      .send(app.fileStore.open(image.storageKey));
+      .send(await app.fileStore.open(image.storageKey));
   });
 
   app.delete("/projects/:id/images/:imageId", {

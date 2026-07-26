@@ -325,6 +325,6 @@ export async function peopleRoutes(app: FastifyInstance): Promise<void> {
     return reply
       .type(file.mimeType)
       .header("content-disposition", `attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`)
-      .send(app.fileStore.open(file.storageKey));
+      .send(await app.fileStore.open(file.storageKey));
   });
 }

@@ -68,7 +68,7 @@ export function summarizeReimbursement(
   };
 }
 
-type TransitionPermission =
+export type TransitionPermission =
   | "reimbursement:self"
   | "reimbursement:manage"
   | "reimbursement:approve"

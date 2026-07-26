@@ -612,3 +612,106 @@ export type SupplierSettlementSummary = {
   disputedAmount: number;
   items: SupplierSettlementItem[];
 };
+
+export type ReimbursementStatus =
+  | "PENDING_SUBMISSION"
+  | "DEPARTMENT_PREPARING"
+  | "OWNER_REVIEWING"
+  | "FINANCE_REVIEWING"
+  | "APPROVED"
+  | "PENDING_PAYMENT"
+  | "PAID";
+
+export type ReimbursementAttachment = {
+  id: string;
+  batchId: string;
+  lineId?: Nullable<string>;
+  type: "PAYMENT_VOUCHER" | "INVOICE" | "SUPPORTING";
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: string;
+};
+
+export type ReimbursementLine = {
+  id: string;
+  sequence: number;
+  expenseDate: string;
+  category: string;
+  description: string;
+  payeeName?: Nullable<string>;
+  payeeAccount?: Nullable<string>;
+  payeeBank?: Nullable<string>;
+  paymentCents: number;
+  invoiceCents: number;
+  attachments: ReimbursementAttachment[];
+};
+
+export type ReimbursementIssue = {
+  id: string;
+  lineId?: Nullable<string>;
+  type: string;
+  description: string;
+  status: "OPEN" | "RESOLVED";
+  resolution?: Nullable<string>;
+  raisedBy?: Nullable<{ id: string; displayName: string }>;
+  resolvedBy?: Nullable<{ id: string; displayName: string }>;
+  createdAt: string;
+  resolvedAt?: Nullable<string>;
+};
+
+export type ReimbursementArtifact = {
+  id: string;
+  type: "REIMBURSEMENT_FORM" | "PAYMENT_PACKAGE" | "INVOICE_PACKAGE";
+  status: "PENDING" | "GENERATED" | "FAILED";
+  originalName?: Nullable<string>;
+  error?: Nullable<string>;
+  generatedAt?: Nullable<string>;
+};
+
+export type Reimbursement = {
+  id: string;
+  code: string;
+  title: string;
+  applicantUserId: string;
+  applicant: { id: string; displayName: string };
+  branchId?: Nullable<string>;
+  branch?: Nullable<{ id: string; name: string }>;
+  organizationUnitId?: Nullable<string>;
+  organizationUnit?: Nullable<{ id: string; name: string }>;
+  projectId?: Nullable<string>;
+  project?: Nullable<{ id: string; name: string }>;
+  supplierId?: Nullable<string>;
+  supplier?: Nullable<{ id: string; name: string }>;
+  status: ReimbursementStatus;
+  totalPaymentCents: number;
+  totalInvoiceCents: number;
+  invoiceExcessCents: number;
+  version: number;
+  submittedAt?: Nullable<string>;
+  approvedAt?: Nullable<string>;
+  paidAt?: Nullable<string>;
+  createdAt: string;
+  updatedAt: string;
+  lines: ReimbursementLine[];
+  attachments: ReimbursementAttachment[];
+  issues: ReimbursementIssue[];
+  approvals: Array<{
+    id: string;
+    fromStatus: ReimbursementStatus;
+    toStatus: ReimbursementStatus;
+    decision: "APPROVED" | "REJECTED" | "RETURNED";
+    comment?: Nullable<string>;
+    actor?: Nullable<{ id: string; displayName: string }>;
+    createdAt: string;
+  }>;
+  payment?: Nullable<{
+    id: string;
+    amountCents: number;
+    reference: string;
+    paidAt: string;
+  }>;
+  artifacts: ReimbursementArtifact[];
+  _count?: { lines: number; issues: number; attachments: number };
+};
