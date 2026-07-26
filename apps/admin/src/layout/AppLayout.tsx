@@ -9,6 +9,7 @@ import {
   DownloadOutlined,
   FileProtectOutlined,
   GlobalOutlined,
+  IdcardOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -30,6 +31,16 @@ import { api, getErrorMessage, saveBlob, type Query } from "../lib/api";
 const { Header, Sider, Content } = Layout;
 
 const roleLabels: Record<string, string> = {
+  [UserRole.SUPER_ADMIN]: "超级管理员",
+  [UserRole.GROUP_LEADER]: "集团领导",
+  [UserRole.DEPARTMENT_MANAGER]: "部门负责人",
+  [UserRole.INTERNAL_HR]: "内部人事",
+  [UserRole.RECRUITER]: "招聘专员",
+  [UserRole.FINANCE_REVIEWER]: "财务审核",
+  [UserRole.CASHIER]: "出纳",
+  [UserRole.DEPARTMENT_REIMBURSEMENT_CLERK]: "部门报销制单人",
+  [UserRole.SUPPLIER_ADMIN]: "供应商管理员",
+  [UserRole.OUTSOURCED_EMPLOYEE]: "外包员工",
   [UserRole.HEADQUARTERS_MANAGER]: "总部管理员",
   [UserRole.BRANCH_MANAGER]: "分子公司负责人",
   [UserRole.PROJECT_OPERATOR]: "项目运营",
@@ -70,7 +81,8 @@ const menuItems: ItemType[] = [
   { key: "/settings", icon: <AuditOutlined />, label: "权限与审计" },
   { key: "/miniapp-demo", icon: <MobileOutlined />, label: "小程序演示" },
   { key: "/ai-assistant", icon: <RobotOutlined />, label: "AI 助手" },
-  { key: "/product", icon: <GlobalOutlined />, label: "产品介绍" }
+  { key: "/product", icon: <GlobalOutlined />, label: "产品介绍" },
+  { key: "/internal-employees", icon: <IdcardOutlined />, label: "内部员工" }
 ];
 
 type ModuleActionConfig = {
@@ -86,6 +98,7 @@ function selectedPath(pathname: string): string {
   const paths = [
     "/dashboard",
     "/people",
+    "/internal-employees",
     "/projects",
     "/suppliers",
     "/policies/supplier",
@@ -148,6 +161,7 @@ export function AppLayout() {
   const visibleMenuItems: ItemType[] = [
     ...(can(Permission.DASHBOARD_READ) ? [menuItems[0]!] : []),
     ...(can(Permission.PEOPLE_READ) ? [menuItems[1]!] : []),
+    ...(can(Permission.INTERNAL_EMPLOYEE_READ) ? [menuItems[13]!] : []),
     ...(can(Permission.PROJECT_READ) ? [menuItems[2]!] : []),
     ...(can(Permission.SUPPLIER_READ) ? [menuItems[3]!] : []),
     ...(can(Permission.POLICY_READ) ? [menuItems[4]!] : []),

@@ -32,17 +32,94 @@ export type SessionUser = {
   username: string;
   displayName: string;
   role: UserRole;
+  roles?: UserRole[];
   branchId: Nullable<string>;
   supplierId: Nullable<string>;
   personId: Nullable<string>;
   projectIds: string[];
   permissions: Permission[];
+  scopeBindings?: Array<{
+    type: string;
+    organizationUnitId?: Nullable<string>;
+    branchId?: Nullable<string>;
+    projectId?: Nullable<string>;
+    supplierId?: Nullable<string>;
+  }>;
 };
 
 export type Branch = {
   id: string;
   name: string;
   code?: Nullable<string>;
+};
+
+export type OrganizationUnit = {
+  id: string;
+  code: string;
+  name: string;
+  type: "GROUP" | "LEGAL_ENTITY" | "BRANCH" | "CENTER" | "DEPARTMENT";
+  parentId?: Nullable<string>;
+  legalEntityId?: Nullable<string>;
+  branchId?: Nullable<string>;
+  path: string;
+};
+
+export type OrganizationOptionSet = {
+  legalEntities: Array<{ id: string; code: string; name: string }>;
+  branches: Branch[];
+  organizationUnits: OrganizationUnit[];
+  positions: Array<{ id: string; code: string; name: string; organizationUnitId?: Nullable<string> }>;
+  jobGrades: Array<{ id: string; code: string; name: string; level: number }>;
+};
+
+export type InternalEmployment = {
+  id: string;
+  startedAt: string;
+  endedAt?: Nullable<string>;
+  isPrimary: boolean;
+  reason?: Nullable<string>;
+  legalEntity?: Nullable<{ id: string; name: string }>;
+  branch?: Nullable<Branch>;
+  organizationUnit: { id: string; name: string };
+  position: { id: string; name: string };
+  jobGrade?: Nullable<{ id: string; name: string }>;
+};
+
+export type InternalEmployeeChange = {
+  id: string;
+  type: "ONBOARD" | "TRANSFER" | "DISABLE" | "ENABLE" | "OFFBOARD" | "ARCHIVE";
+  effectiveAt: string;
+  reason?: Nullable<string>;
+  before?: unknown;
+  after?: unknown;
+  createdAt: string;
+};
+
+export type InternalEmployee = {
+  id: string;
+  employeeNo: string;
+  userId?: Nullable<string>;
+  name: string;
+  phone: string;
+  idCard: string;
+  email?: Nullable<string>;
+  legalEntityId?: Nullable<string>;
+  branchId?: Nullable<string>;
+  organizationUnitId?: Nullable<string>;
+  positionId?: Nullable<string>;
+  jobGradeId?: Nullable<string>;
+  status: "ACTIVE" | "DISABLED" | "LEFT" | "ARCHIVED";
+  onboardDate: string;
+  offboardDate?: Nullable<string>;
+  offboardReason?: Nullable<string>;
+  version: number;
+  legalEntity?: Nullable<{ id: string; code: string; name: string }>;
+  branch?: Nullable<Branch>;
+  organizationUnit?: Nullable<OrganizationUnit>;
+  position?: Nullable<{ id: string; code: string; name: string }>;
+  jobGrade?: Nullable<{ id: string; code: string; name: string; level: number }>;
+  employments?: InternalEmployment[];
+  changes?: InternalEmployeeChange[];
 };
 
 export type ProjectImage = {

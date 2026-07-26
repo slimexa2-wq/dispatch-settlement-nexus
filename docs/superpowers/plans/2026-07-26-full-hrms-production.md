@@ -181,21 +181,21 @@ git commit -m "feat: add internal HR and scoped multi-role authorization"
 - API: `POST /internal-employees/:id/offboard`
 - API: `DELETE /internal-employees/:id`
 
-- [ ] **Step 1: 编写 API 权限和生命周期失败测试**
+- [x] **Step 1: 编写 API 权限和生命周期失败测试**
 
 覆盖：分公司 HR 不能查看其他分公司、调动撤销旧范围、离职撤销登录、有关联记录时删除返回 `409`。
 
-- [ ] **Step 2: 运行并确认 RED**
+- [x] **Step 2: 运行并确认 RED**
 
 Run: `pnpm --filter @xiangneng/api test -- internal-employees.test.ts`
 
 Expected: FAIL，路由不存在。
 
-- [ ] **Step 3: 实现路由和审计**
+- [x] **Step 3: 实现路由和审计**
 
 路由只调用领域服务；所有写操作记录 actor、角色、范围、before、after、requestId 和结果。
 
-- [ ] **Step 4: 编写页面失败测试**
+- [x] **Step 4: 编写页面失败测试**
 
 ```tsx
 it("opens transfer form and refreshes the employee detail after success", async () => {
@@ -206,17 +206,17 @@ it("opens transfer form and refreshes the employee detail after success", async 
 });
 ```
 
-- [ ] **Step 5: 运行并确认 RED**
+- [x] **Step 5: 运行并确认 RED**
 
 Run: `pnpm --filter @xiangneng/admin test -- InternalEmployeesPage.test.tsx`
 
 Expected: FAIL，页面不存在。
 
-- [ ] **Step 6: 实现桌面页面**
+- [x] **Step 6: 实现桌面页面**
 
 使用现有 `AppLayout`、筛选条、Ant Design 表格和详情抽屉；提供新建、编辑、调动、停用、离职、删除和历史查看；按钮按后端权限显示并处理加载、空、失败和成功状态。
 
-- [ ] **Step 7: 验证并提交**
+- [x] **Step 7: 验证并提交**
 
 Run:
 
