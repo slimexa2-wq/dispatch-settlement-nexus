@@ -21,17 +21,29 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      - name: Download and diagnose source archive
+      - name: Download source archive
         shell: bash
         run: |
           set -u
           URL='https://slack-files.com/T0BFT4B96G6-F0BKVTYPD26-5b2597be52'
-          curl -L --retry 2 --retry-delay 1 -D /tmp/headers.txt -w '\nHTTP_CODE=%{http_code}\nFINAL_URL=%{url_effective}\nSIZE=%{size_download}\n' "$URL" -o /tmp/xiangneng-hrms.tar.gz
-          cat /tmp/headers.txt
-          ls -l /tmp/xiangneng-hrms.tar.gz
-          file /tmp/xiangneng-hrms.tar.gz
-          head -c 64 /tmp/xiangneng-hrms.tar.gz | base64
-          sha256sum /tmp/xiangneng-hrms.tar.gz
+          curl -L --retry 2 --retry-delay 1 -D /tmp/headers.txt -w 'HTTP_CODE=%{http_code}\nFINAL_URL=%{url_effective}\nSIZE=%{size_download}\n' "$URL" -o /tmp/xiangneng-hrms.tar.gz > /tmp/curl-info.txt 2>&1 || true
+          {
+            cat /tmp/curl-info.txt
+            echo '--- HEADERS ---'
+            cat /tmp/headers.txt
+            echo '--- FILE ---'
+            ls -l /tmp/xiangneng-hrms.tar.gz
+            file /tmp/xiangneng-hrms.tar.gz
+            echo '--- FIRST64_BASE64 ---'
+            head -c 64 /tmp/xiangneng-hrms.tar.gz | base64
+            echo '--- SHA256 ---'
+            sha256sum /tmp/xiangneng-hrms.tar.gz
+          } > .github/source-download-diagnostic.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/source-download-diagnostic.txt
+          git commit -m 'ci: record source download diagnostic' || true
+          git push origin "HEAD:${GITHUB_HEAD_REF:-agent/internal-hr-reimbursement-foundation}"
           echo '0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405  /tmp/xiangneng-hrms.tar.gz' | sha256sum -c -
       - name: Replace transport branch with complete source tree
         shell: bash
