@@ -1,33 +1,34 @@
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    38  100    38    0     0    213      0 --:--:-- --:--:-- --:--:--   214
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    38  100    38    0     0    266      0 --:--:-- --:--:-- --:--:--   267
 HTTP_CODE=404
 FINAL_URL=https://slack-files.com/T0BFT4B96G6-F0BKVTYPD26-5b2597be52
 SIZE=38
 --- HEADERS ---
 HTTP/2 404 
-date: Sun, 26 Jul 2026 13:39:20 GMT
+date: Sun, 26 Jul 2026 13:42:11 GMT
 server: Apache
 vary: Accept-Encoding
 content-type: text/html; charset=utf-8
 strict-transport-security: max-age=31536000; includeSubDomains; preload
 referrer-policy: no-referrer
 content-security-policy: script-src 'none';
-x-slack-unique-id: amYOCDWyMLhmBv0SSde-qgAAAAg
+x-slack-unique-id: amYOsk5alvpApwXaQNqa4QAAEA0
 x-frame-options: SAMEORIGIN
 content-length: 38
-via: 1.1 slack-prod.tinyspeck.com, ingress-www-iad-external-prod-0a201029dd3cbe684,envoy-edge-cmh-ckwdslra
-x-envoy-upstream-service-time: 28
+via: 1.1 slack-prod.tinyspeck.com, ingress-www-iad-external-prod-0dce8d585fa73dbf2,envoy-edge-iad-qnkxxbls
+x-envoy-upstream-service-time: 15
 x-backend: main_normal
-x-server: slack-www-hhvm-main-iad-phkt0j98ed12
+x-server: slack-www-hhvm-main-iad-esjegj22vpa2
 x-slack-shared-secret-outcome: no-match
 x-edge-backend: envoy-www
 timing-allow-origin: *
 alt-svc: h3=":443"; ma=2592000, h3-29=":443"; ma=2592000, quic=":443"; ma=2592000
+x-geoname-id: notfound
 x-slack-edge-shared-secret-outcome: no-match
 
 --- FILE ---
--rw-r--r-- 1 runner runner 38 Jul 26 13:39 /tmp/xiangneng-hrms.tar.gz
+-rw-r--r-- 1 runner runner 38 Jul 26 13:42 /tmp/xiangneng-hrms.tar.gz
 /tmp/xiangneng-hrms.tar.gz: ASCII text, with no line terminators
 --- FIRST64_BASE64 ---
 VGhlIHJlcXVlc3RlZCBmaWxlIGNvdWxkIG5vdCBiZSBmb3VuZC4=
