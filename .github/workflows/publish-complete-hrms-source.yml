@@ -1,0 +1,46 @@
+name: Publish complete HRMS source
+
+on:
+  push:
+    branches:
+      - feat/data-migration-workflow-access-accounts
+    paths:
+      - .github/source-upload.trigger
+      - .github/workflows/publish-complete-hrms-source.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/data-migration-workflow-access-accounts
+
+      - name: Download verified source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 'https://at.adobe.com/RioBEnMQASsFn9M6' -o /tmp/hrms-code-complete.zip
+          test -s /tmp/hrms-code-complete.zip
+          unzip -t /tmp/hrms-code-complete.zip
+
+      - name: Replace transport commit with normal source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_DIR="$(mktemp -d)"
+          unzip -q /tmp/hrms-code-complete.zip -d "$TMP_DIR"
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$TMP_DIR"/. .
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: publish complete HRMS source with migration workflow access and account centers'
+          git push origin HEAD:feat/data-migration-workflow-access-accounts
