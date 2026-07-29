@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "action_id",
+    "action_type",
+    "employee",
+    "before",
+    "after",
+    "impacts",
+    "expires_at",
+    "confirmation_required",
+    "action_token"
+  ],
+  "properties": {
+    "action_id": {
+      "type": "string"
+    },
+    "action_type": {
+      "enum": [
+        "employee_entry",
+        "employee_resignation"
+      ]
+    },
+    "employee": {
+      "type": "object"
+    },
+    "before": {
+      "type": "object"
+    },
+    "after": {
+      "type": "object"
+    },
+    "impacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "confirmation_required": {
+      "const": true
+    },
+    "action_token": {
+      "type": "string"
+    }
+  }
+}

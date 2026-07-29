@@ -1,0 +1,60 @@
+{
+  "tools": [
+    {
+      "name": "get_recruitment_progress",
+      "description": "查询权限范围内招聘需求、完成、缺口和完成率",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "branch_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "gap_greater_than": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "sort_by": {
+            "enum": [
+              "gap_desc",
+              "completion_rate_desc",
+              "project_name"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

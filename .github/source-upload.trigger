@@ -1,3 +1,0 @@
-source_archive=hrms-code-complete.zip
-source_sha256=354425d881922da42a1f1aec12ef1b66365cf3f5205f0d39be29f5fac53d9138
-source_scope=complete-code-tree-excluding-binary-reference-assets

@@ -1,0 +1,2023 @@
+{
+  "generatedAt": "deterministic",
+  "sourceFingerprint": "fcc8dddb324cc313",
+  "summary": {
+    "fileCount": 550,
+    "sourceFileCount": 333,
+    "totalSourceLines": 53153,
+    "moduleCount": 14,
+    "apiRouteCount": 176,
+    "adminRouteCount": 26,
+    "miniappPageCount": 24,
+    "prismaModelCount": 64
+  },
+  "modules": [
+    {
+      "id": "platform",
+      "name": "平台与工程基础",
+      "description": "工作区配置、部署、构建、演示环境和跨应用公共工程能力。",
+      "include": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "tsconfig.base.json",
+        "docker-compose.yml",
+        "render.yaml",
+        ".env.example",
+        "apps/*/package.json",
+        "packages/*/package.json",
+        "scripts/*.mjs",
+        "scripts/*.mts",
+        "scripts/*.ps1",
+        "scripts/project-tools/**"
+      ],
+      "dependsOn": [],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm build"
+      ],
+      "prismaModels": [],
+      "fileCount": 57,
+      "sourceLines": 4964,
+      "files": [
+        ".env.example",
+        "apps/admin/package.json",
+        "apps/api/package.json",
+        "apps/miniapp/package.json",
+        "apps/portal/package.json",
+        "apps/sites-demo/package.json",
+        "apps/website/package.json",
+        "docker-compose.yml",
+        "package.json",
+        "packages/data-import/package.json",
+        "packages/shared/package.json",
+        "pnpm-workspace.yaml",
+        "render.yaml",
+        "scripts/bootstrap-real-employee-accounts.mts",
+        "scripts/build-ai-context.mjs",
+        "scripts/check-architecture.mjs",
+        "scripts/compact-demo-data.mjs",
+        "scripts/enrich-demo-data.mts",
+        "scripts/generate-project-index.mjs",
+        "scripts/generate-synthetic-demo-data.mts",
+        "scripts/import-demo-data.mts",
+        "scripts/import-real-business-data.mts",
+        "scripts/package-demo.mjs",
+        "scripts/portable-demo-server.mjs",
+        "scripts/project-tools/access-account-route-contract.test.mjs",
+        "scripts/project-tools/admin-operation-centers-contract.test.mjs",
+        "scripts/project-tools/architecture-check.mjs",
+        "scripts/project-tools/architecture-check.test.mjs",
+        "scripts/project-tools/business-data-source.test.mjs",
+        "scripts/project-tools/context-builder.mjs",
+        "scripts/project-tools/context-builder.test.mjs",
+        "scripts/project-tools/core.mjs",
+        "scripts/project-tools/core.test.mjs",
+        "scripts/project-tools/index-generator.mjs",
+        "scripts/project-tools/index-generator.test.mjs",
+        "scripts/project-tools/internal-startup-contract.test.mjs",
+        "scripts/project-tools/migration-workflow-access-schema.test.mjs",
+        "scripts/project-tools/real-business-import-plan.test.mjs",
+        "scripts/project-tools/upsert-collection.test.mjs",
+        "scripts/reset-demo-database.ps1",
+        "scripts/run-e2e.mjs",
+        "scripts/seed-internal-admin.mts",
+        "scripts/seed-internal-system.mts",
+        "scripts/smoke-3399.mjs",
+        "scripts/start-api-demo-background.ps1",
+        "scripts/start-internal-system.ps1",
+        "scripts/start-local-demo.ps1",
+        "scripts/stop-internal-system.ps1",
+        "scripts/stop-local-demo.ps1",
+        "scripts/verify-ai-integration.mts",
+        "scripts/verify-internal-org-model.mjs",
+        "scripts/verify-ollama.mts",
+        "scripts/verify-package-manifest.mjs",
+        "scripts/verify-packaged-demo.mjs",
+        "scripts/verify-public-data-safety.mts",
+        "scripts/watchdog-demo.ps1",
+        "tsconfig.base.json"
+      ]
+    },
+    {
+      "id": "auth",
+      "name": "账号、会话与权限",
+      "description": "登录会话、多角色授权、权限定义、数据范围和账号管理。",
+      "include": [
+        "packages/shared/src/permissions.ts",
+        "apps/api/src/authorization.ts",
+        "apps/api/src/session-user.ts",
+        "apps/api/src/routes/auth.ts",
+        "apps/api/src/routes/users.ts",
+        "apps/api/test/authorization.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "apps/admin/src/auth/**",
+        "apps/admin/src/components/PermissionGuard.tsx",
+        "apps/admin/src/pages/LoginPage.tsx",
+        "apps/admin/src/pages/SettingsPage.tsx",
+        "apps/miniapp/src/auth/**",
+        "apps/miniapp/src/pages/login/**",
+        "apps/miniapp/src/domain/roles.ts",
+        "apps/miniapp/src/domain/roles.test.ts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "organization"
+      ],
+      "businessRules": [
+        "docs/business-rules/authorization.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:authorization"
+      ],
+      "prismaModels": [
+        "Role",
+        "PermissionDefinition",
+        "RolePermission",
+        "UserRoleAssignment",
+        "DataScopeBinding",
+        "User",
+        "UserProject"
+      ],
+      "fileCount": 17,
+      "sourceLines": 3907,
+      "files": [
+        "apps/admin/src/auth/AuthContext.test.tsx",
+        "apps/admin/src/auth/AuthContext.tsx",
+        "apps/admin/src/components/PermissionGuard.tsx",
+        "apps/admin/src/pages/LoginPage.tsx",
+        "apps/admin/src/pages/SettingsPage.tsx",
+        "apps/api/src/authorization.ts",
+        "apps/api/src/routes/auth.ts",
+        "apps/api/src/routes/users.ts",
+        "apps/api/src/session-user.ts",
+        "apps/api/test/authorization.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "apps/miniapp/src/auth/session.ts",
+        "apps/miniapp/src/domain/roles.test.ts",
+        "apps/miniapp/src/domain/roles.ts",
+        "apps/miniapp/src/pages/login/index.tsx",
+        "packages/shared/src/permissions.ts",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "organization",
+      "name": "组织与内部员工",
+      "description": "集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。",
+      "include": [
+        "apps/api/src/routes/internal-employees.ts",
+        "apps/api/src/services/internal-employees.ts",
+        "apps/api/src/services/position-authorizations.ts",
+        "apps/api/test/internal-employee-domain.test.ts",
+        "apps/api/test/internal-employee-routes.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "apps/admin/src/pages/InternalEmployeesPage.tsx",
+        "apps/admin/src/pages/InternalEmployeesPage.test.tsx",
+        "prisma/schema.prisma",
+        "prisma/migrations/**"
+      ],
+      "dependsOn": [],
+      "businessRules": [
+        "docs/business-rules/organization.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:organization"
+      ],
+      "prismaModels": [
+        "LegalEntity",
+        "OrganizationUnit",
+        "Position",
+        "JobGrade",
+        "JobGradeApprovalPolicy",
+        "InternalEmployee",
+        "InternalEmployment",
+        "InternalEmployeeChange"
+      ],
+      "fileCount": 24,
+      "sourceLines": 4910,
+      "files": [
+        "apps/admin/src/pages/InternalEmployeesPage.test.tsx",
+        "apps/admin/src/pages/InternalEmployeesPage.tsx",
+        "apps/api/src/routes/internal-employees.ts",
+        "apps/api/src/services/internal-employees.ts",
+        "apps/api/src/services/position-authorizations.ts",
+        "apps/api/test/internal-employee-domain.test.ts",
+        "apps/api/test/internal-employee-routes.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "prisma/migrations/20260718150000_init/migration.sql",
+        "prisma/migrations/20260722075359_ai_business_assistant/migration.sql",
+        "prisma/migrations/20260722083629_portal_unification/migration.sql",
+        "prisma/migrations/20260722083919_portal_notification_reads/migration.sql",
+        "prisma/migrations/20260726230500_internal_hr_rbac/migration.sql",
+        "prisma/migrations/20260726234000_reimbursement_domain/migration.sql",
+        "prisma/migrations/20260727090000_position_role_bindings/migration.sql",
+        "prisma/migrations/20260727091000_reimbursement_invoice_cover/migration.sql",
+        "prisma/migrations/20260727100000_job_grade_reimbursement_policies/migration.sql",
+        "prisma/migrations/20260727101000_internal_employee_account_binding/migration.sql",
+        "prisma/migrations/20260727130000_internal_departments_not_branches/migration.sql",
+        "prisma/migrations/20260727150000_dynamic_real_organization_types/migration.sql",
+        "prisma/migrations/20260727150100_recast_real_organization_nodes/migration.sql",
+        "prisma/migrations/20260729010000_migration_workflow_access_accounts/migration.sql",
+        "prisma/migrations/migration_lock.toml",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "workforce",
+      "name": "求职者与派遣外包人员",
+      "description": "求职者、派遣外包员工、人员档案、生命周期状态和附件。",
+      "include": [
+        "apps/api/src/routes/people.ts",
+        "apps/api/src/services/person-lifecycle.ts",
+        "apps/api/src/services/registration.ts",
+        "apps/api/src/services/people-workbook.ts",
+        "apps/api/test/registration.test.ts",
+        "apps/admin/src/pages/PeoplePage.tsx",
+        "apps/admin/src/lib/people.ts",
+        "apps/miniapp/src/pages/operator/**",
+        "apps/miniapp/src/pages/supplier/people/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "supplier"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/portal-mappers.test.ts"
+      ],
+      "prismaModels": [
+        "Person",
+        "PersonFile",
+        "PersonStatusLog"
+      ],
+      "fileCount": 15,
+      "sourceLines": 4088,
+      "files": [
+        "apps/admin/src/lib/people.ts",
+        "apps/admin/src/pages/PeoplePage.tsx",
+        "apps/api/src/routes/people.ts",
+        "apps/api/src/services/people-workbook.ts",
+        "apps/api/src/services/person-lifecycle.ts",
+        "apps/api/src/services/registration.ts",
+        "apps/api/test/registration.test.ts",
+        "apps/miniapp/src/pages/operator/interviews/index.tsx",
+        "apps/miniapp/src/pages/operator/offboarding/index.tsx",
+        "apps/miniapp/src/pages/operator/onboarding/index.tsx",
+        "apps/miniapp/src/pages/operator/people/index.tsx",
+        "apps/miniapp/src/pages/operator/person-detail/index.tsx",
+        "apps/miniapp/src/pages/operator/register/index.tsx",
+        "apps/miniapp/src/pages/supplier/people/index.tsx",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "recruitment",
+      "name": "招聘需求与进度",
+      "description": "岗位需求、报名、面试、入职进度、员工推荐和奖励。",
+      "include": [
+        "apps/api/src/routes/jobs.ts",
+        "apps/api/src/routes/applications.ts",
+        "apps/api/src/routes/referrals.ts",
+        "apps/api/src/services/recruitment-progress.ts",
+        "apps/api/src/services/referral-share.ts",
+        "apps/admin/src/pages/JobDemandsPage.tsx",
+        "apps/admin/src/pages/RecruitmentProgressPage.tsx",
+        "apps/admin/src/pages/ReferralRewardsPage.tsx",
+        "apps/miniapp/src/pages/jobs/**",
+        "apps/miniapp/src/pages/application/**",
+        "apps/miniapp/src/pages/referrals/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "supplier",
+        "workforce",
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/job-notification.test.ts"
+      ],
+      "prismaModels": [
+        "JobDemand",
+        "Application",
+        "ReferralRecord",
+        "ReferralReward",
+        "ReferralShare"
+      ],
+      "fileCount": 17,
+      "sourceLines": 3533,
+      "files": [
+        "apps/admin/src/pages/JobDemandsPage.tsx",
+        "apps/admin/src/pages/RecruitmentProgressPage.tsx",
+        "apps/admin/src/pages/ReferralRewardsPage.tsx",
+        "apps/api/src/routes/applications.ts",
+        "apps/api/src/routes/jobs.ts",
+        "apps/api/src/routes/referrals.ts",
+        "apps/api/src/services/recruitment-progress.ts",
+        "apps/api/src/services/referral-share.ts",
+        "apps/miniapp/src/pages/application/form/index.tsx",
+        "apps/miniapp/src/pages/application/mine/index.tsx",
+        "apps/miniapp/src/pages/jobs/detail/index.config.ts",
+        "apps/miniapp/src/pages/jobs/detail/index.tsx",
+        "apps/miniapp/src/pages/jobs/index/index.tsx",
+        "apps/miniapp/src/pages/referrals/index/index.tsx",
+        "apps/miniapp/src/pages/referrals/mine/index.tsx",
+        "apps/miniapp/src/pages/referrals/rewards/index.tsx",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "project",
+      "name": "项目与经营区域",
+      "description": "项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。",
+      "include": [
+        "apps/api/src/routes/projects.ts",
+        "apps/admin/src/pages/ProjectsPage.tsx",
+        "apps/admin/public/project-assets/**",
+        "apps/portal/public/project-assets/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/auth-and-scope.test.ts test/public-resources.test.ts"
+      ],
+      "prismaModels": [
+        "Branch",
+        "Project",
+        "ProjectImage",
+        "UserProject"
+      ],
+      "fileCount": 9,
+      "sourceLines": 2335,
+      "files": [
+        "apps/admin/public/project-assets/electronics-workshop.png",
+        "apps/admin/public/project-assets/logistics-warehouse.png",
+        "apps/admin/public/project-assets/new-energy-campus.png",
+        "apps/admin/src/pages/ProjectsPage.tsx",
+        "apps/api/src/routes/projects.ts",
+        "apps/portal/public/project-assets/electronics-workshop.png",
+        "apps/portal/public/project-assets/logistics-warehouse.png",
+        "apps/portal/public/project-assets/new-energy-campus.png",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "supplier",
+      "name": "供应商与政策",
+      "description": "供应商、项目合作关系、供应商政策和员工推荐政策。",
+      "include": [
+        "apps/api/src/routes/suppliers.ts",
+        "apps/api/src/routes/policies.ts",
+        "apps/admin/src/pages/SuppliersPage.tsx",
+        "apps/admin/src/pages/PoliciesPage.tsx",
+        "apps/portal/src/features/supplier/**",
+        "apps/miniapp/src/pages/supplier/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts"
+      ],
+      "prismaModels": [
+        "Supplier",
+        "SupplierProject",
+        "Policy"
+      ],
+      "fileCount": 9,
+      "sourceLines": 2630,
+      "files": [
+        "apps/admin/src/pages/PoliciesPage.tsx",
+        "apps/admin/src/pages/SuppliersPage.tsx",
+        "apps/api/src/routes/policies.ts",
+        "apps/api/src/routes/suppliers.ts",
+        "apps/miniapp/src/pages/supplier/metrics/index.tsx",
+        "apps/miniapp/src/pages/supplier/people/index.tsx",
+        "apps/miniapp/src/pages/supplier/policies/index.tsx",
+        "apps/portal/src/features/supplier/SupplierPages.tsx",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "reimbursement",
+      "name": "员工报销",
+      "description": "员工报销申请、部门制单、审批、财务审核、付款和打印材料。",
+      "include": [
+        "apps/api/src/routes/reimbursements.ts",
+        "apps/api/src/services/reimbursements.ts",
+        "apps/api/src/services/reimbursement-artifacts.ts",
+        "apps/api/test/reimbursement*.test.ts",
+        "apps/api/test/reimbursements.test.ts",
+        "apps/admin/src/pages/ReimbursementsPage.tsx",
+        "apps/admin/src/pages/ReimbursementsPage.test.tsx",
+        "apps/admin/src/lib/demo-reimbursement.test.ts",
+        "apps/miniapp/src/api/services.ts",
+        "apps/miniapp/src/domain/reimbursements.ts",
+        "apps/miniapp/src/domain/reimbursements.test.ts",
+        "apps/miniapp/src/pages/reimbursements/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth",
+        "organization",
+        "notification"
+      ],
+      "businessRules": [
+        "docs/business-rules/reimbursement.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:reimbursement"
+      ],
+      "prismaModels": [
+        "ReimbursementBatch",
+        "ReimbursementLine",
+        "ReimbursementAttachment",
+        "ReimbursementIssue",
+        "ReimbursementApproval",
+        "ReimbursementPayment",
+        "ReimbursementArtifact"
+      ],
+      "fileCount": 21,
+      "sourceLines": 7486,
+      "files": [
+        "apps/admin/src/lib/demo-reimbursement.test.ts",
+        "apps/admin/src/pages/ReimbursementsPage.test.tsx",
+        "apps/admin/src/pages/ReimbursementsPage.tsx",
+        "apps/api/src/routes/reimbursements.ts",
+        "apps/api/src/services/reimbursement-artifacts.ts",
+        "apps/api/src/services/reimbursements.ts",
+        "apps/api/test/reimbursement-artifacts.test.ts",
+        "apps/api/test/reimbursement-automation.node.test.ts",
+        "apps/api/test/reimbursement-domain.test.ts",
+        "apps/api/test/reimbursement-routes.test.ts",
+        "apps/api/test/reimbursements.test.ts",
+        "apps/miniapp/src/api/services.ts",
+        "apps/miniapp/src/domain/reimbursements.test.ts",
+        "apps/miniapp/src/domain/reimbursements.ts",
+        "apps/miniapp/src/pages/reimbursements/detail/index.config.ts",
+        "apps/miniapp/src/pages/reimbursements/detail/index.tsx",
+        "apps/miniapp/src/pages/reimbursements/form/index.config.ts",
+        "apps/miniapp/src/pages/reimbursements/form/index.tsx",
+        "apps/miniapp/src/pages/reimbursements/index/index.config.ts",
+        "apps/miniapp/src/pages/reimbursements/index/index.tsx",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "payroll",
+      "name": "工资与工资条",
+      "description": "工资批次、工资条、导入核验和员工工资查询。",
+      "include": [
+        "apps/api/src/routes/salary.ts",
+        "apps/api/src/services/salary-workbook.ts",
+        "apps/admin/src/pages/SalarySlipsPage.tsx",
+        "apps/miniapp/src/pages/salary/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "workforce",
+        "project",
+        "auth",
+        "import-export"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/workflow-and-salary.test.ts"
+      ],
+      "prismaModels": [
+        "SalaryImportBatch",
+        "SalarySlip"
+      ],
+      "fileCount": 5,
+      "sourceLines": 2508,
+      "files": [
+        "apps/admin/src/pages/SalarySlipsPage.tsx",
+        "apps/api/src/routes/salary.ts",
+        "apps/api/src/services/salary-workbook.ts",
+        "apps/miniapp/src/pages/salary/index/index.tsx",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "reporting",
+      "name": "统计与经营看板",
+      "description": "管理看板、招聘统计、领导驾驶舱和跨模块只读汇总。",
+      "include": [
+        "apps/api/src/routes/statistics.ts",
+        "apps/api/src/routes/leadership.ts",
+        "apps/admin/src/pages/DashboardPage.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.test.tsx",
+        "apps/admin/src/pages/StatisticsPage.tsx",
+        "apps/admin/src/lib/statistics.ts"
+      ],
+      "dependsOn": [
+        "workforce",
+        "recruitment",
+        "project",
+        "supplier",
+        "payroll",
+        "reimbursement"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/leadership-dashboard.test.ts",
+        "pnpm --filter @xiangneng/admin exec vitest run src/pages/LeadershipDashboardPage.test.tsx"
+      ],
+      "prismaModels": [],
+      "fileCount": 7,
+      "sourceLines": 1289,
+      "files": [
+        "apps/admin/src/lib/statistics.ts",
+        "apps/admin/src/pages/DashboardPage.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.test.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.tsx",
+        "apps/admin/src/pages/StatisticsPage.tsx",
+        "apps/api/src/routes/leadership.ts",
+        "apps/api/src/routes/statistics.ts"
+      ]
+    },
+    {
+      "id": "notification",
+      "name": "通知与待办",
+      "description": "站内通知、读取状态和业务待办提醒。",
+      "include": [
+        "apps/api/src/routes/notifications.ts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/job-notification.test.ts"
+      ],
+      "prismaModels": [
+        "Notification",
+        "PortalNotificationRead"
+      ],
+      "fileCount": 2,
+      "sourceLines": 1917,
+      "files": [
+        "apps/api/src/routes/notifications.ts",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "import-export",
+      "name": "导入导出与数据安全",
+      "description": "Excel 导入、导出、模板解析、数据预览和表格安全校验。",
+      "include": [
+        "apps/api/src/routes/imports.ts",
+        "apps/api/src/services/*workbook.ts",
+        "apps/api/src/services/spreadsheet-safety.ts",
+        "apps/admin/src/pages/ImportsPage.tsx",
+        "packages/data-import/**",
+        "scripts/import-demo-data.mts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/spreadsheet-safety.test.ts test/workbook-row-numbers.test.ts",
+        "pnpm --filter @xiangneng/data-import test"
+      ],
+      "prismaModels": [
+        "ImportJob"
+      ],
+      "fileCount": 15,
+      "sourceLines": 4448,
+      "files": [
+        "apps/admin/src/pages/ImportsPage.tsx",
+        "apps/api/src/routes/imports.ts",
+        "apps/api/src/services/people-workbook.ts",
+        "apps/api/src/services/salary-workbook.ts",
+        "apps/api/src/services/spreadsheet-safety.ts",
+        "packages/data-import/package.json",
+        "packages/data-import/src/cli.ts",
+        "packages/data-import/src/index.ts",
+        "packages/data-import/src/project-master.test.ts",
+        "packages/data-import/src/project-master.ts",
+        "packages/data-import/src/synthetic-demo.test.ts",
+        "packages/data-import/src/synthetic-demo.ts",
+        "packages/data-import/tsconfig.json",
+        "prisma/schema.prisma",
+        "scripts/import-demo-data.mts"
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI 业务助手",
+      "description": "意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。",
+      "include": [
+        "apps/api/src/ai/**",
+        "apps/api/src/routes/ai.ts",
+        "apps/admin/src/components/*Ai*.tsx",
+        "apps/admin/src/pages/AiAssistantPage.tsx",
+        "apps/admin/src/lib/ai-assistant.ts",
+        "apps/admin/src/lib/demo-ai.ts",
+        "apps/admin/src/lib/demo-ai.test.ts",
+        "apps/portal/src/features/ai/**",
+        "scripts/verify-ai-integration.mts",
+        "scripts/verify-ollama.mts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth",
+        "organization",
+        "workforce",
+        "recruitment",
+        "project",
+        "supplier",
+        "reimbursement",
+        "payroll",
+        "reporting"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm verify:ai",
+        "pnpm verify:ollama"
+      ],
+      "prismaModels": [
+        "AiAction",
+        "AiAuditLog",
+        "AiDemoSnapshot"
+      ],
+      "fileCount": 23,
+      "sourceLines": 5541,
+      "files": [
+        "apps/admin/src/components/AdminAiDrawer.tsx",
+        "apps/admin/src/components/AiAssistantPanel.tsx",
+        "apps/admin/src/components/AiChat.tsx",
+        "apps/admin/src/lib/ai-assistant.ts",
+        "apps/admin/src/lib/demo-ai.test.ts",
+        "apps/admin/src/lib/demo-ai.ts",
+        "apps/admin/src/pages/AiAssistantPage.tsx",
+        "apps/api/src/ai/action-service.ts",
+        "apps/api/src/ai/business-knowledge.ts",
+        "apps/api/src/ai/chat-fastpath.ts",
+        "apps/api/src/ai/data-tools.ts",
+        "apps/api/src/ai/date-time.ts",
+        "apps/api/src/ai/intent-router.ts",
+        "apps/api/src/ai/ollama-client.ts",
+        "apps/api/src/ai/permissions.ts",
+        "apps/api/src/ai/schema-registry.ts",
+        "apps/api/src/ai/system-prompt.ts",
+        "apps/api/src/ai/types.ts",
+        "apps/api/src/routes/ai.ts",
+        "apps/portal/src/features/ai/AiAssistant.tsx",
+        "prisma/schema.prisma",
+        "scripts/verify-ai-integration.mts",
+        "scripts/verify-ollama.mts"
+      ]
+    },
+    {
+      "id": "portal",
+      "name": "员工、供应商与公开端体验",
+      "description": "Portal 手机网页演示、个人服务、供应商服务和公开产品展示。",
+      "include": [
+        "apps/portal/**",
+        "apps/website/**",
+        "apps/sites-demo/**",
+        "apps/admin/src/pages/ProductIntroPage.tsx",
+        "apps/admin/src/pages/MiniappDemoPage.tsx",
+        "apps/admin/public/product-assets/**"
+      ],
+      "dependsOn": [
+        "auth",
+        "workforce",
+        "recruitment",
+        "supplier",
+        "payroll",
+        "reimbursement",
+        "notification"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts test/public-resources.test.ts",
+        "pnpm --filter @xiangneng/portal test"
+      ],
+      "prismaModels": [
+        "PortalFavorite",
+        "PortalAdvance",
+        "PortalAppeal",
+        "PortalSettlement",
+        "PortalSettlementItem",
+        "PortalQrCode"
+      ],
+      "fileCount": 61,
+      "sourceLines": 5091,
+      "files": [
+        "apps/admin/public/product-assets/admin-dashboard.png",
+        "apps/admin/public/product-assets/miniapp-employee.png",
+        "apps/admin/public/product-assets/miniapp-operations.png",
+        "apps/admin/public/product-assets/miniapp-supplier.png",
+        "apps/admin/src/pages/MiniappDemoPage.tsx",
+        "apps/admin/src/pages/ProductIntroPage.tsx",
+        "apps/portal/index.html",
+        "apps/portal/package.json",
+        "apps/portal/public/brand-mark.svg",
+        "apps/portal/public/project-assets/electronics-workshop.png",
+        "apps/portal/public/project-assets/logistics-warehouse.png",
+        "apps/portal/public/project-assets/new-energy-campus.png",
+        "apps/portal/src/app/api.ts",
+        "apps/portal/src/app/App.tsx",
+        "apps/portal/src/app/demo.test.ts",
+        "apps/portal/src/app/demo.ts",
+        "apps/portal/src/app/format.ts",
+        "apps/portal/src/app/session.tsx",
+        "apps/portal/src/app/types.ts",
+        "apps/portal/src/components/AppShell.tsx",
+        "apps/portal/src/components/Avatar.tsx",
+        "apps/portal/src/components/BrandMark.tsx",
+        "apps/portal/src/components/DataCards.tsx",
+        "apps/portal/src/components/StatusTag.test.tsx",
+        "apps/portal/src/components/StatusTag.tsx",
+        "apps/portal/src/components/Ui.tsx",
+        "apps/portal/src/features/ai/AiAssistant.tsx",
+        "apps/portal/src/features/entry/IdentityEntry.test.tsx",
+        "apps/portal/src/features/entry/IdentityEntry.tsx",
+        "apps/portal/src/features/internal/InternalPages.tsx",
+        "apps/portal/src/features/personal/PersonalPages.tsx",
+        "apps/portal/src/features/supplier/SupplierPages.tsx",
+        "apps/portal/src/main.tsx",
+        "apps/portal/src/styles/ai-assistant.css",
+        "apps/portal/src/styles/app.css",
+        "apps/portal/src/styles/global.css",
+        "apps/portal/src/styles/internal.css",
+        "apps/portal/src/styles/personal.css",
+        "apps/portal/src/styles/supplier.css",
+        "apps/portal/src/styles/tokens.css",
+        "apps/portal/src/test/setup.ts",
+        "apps/portal/tsconfig.json",
+        "apps/portal/vite.config.ts",
+        "apps/sites-demo/.gitignore",
+        "apps/sites-demo/.openai/hosting.json",
+        "apps/sites-demo/build.mjs",
+        "apps/sites-demo/package.json",
+        "apps/sites-demo/public-data-policy.mjs",
+        "apps/sites-demo/public-data-policy.test.mjs",
+        "apps/website/#U4ea4#U4ed8#U8d28#U68c0#U62a5#U544a.md",
+        "apps/website/index.html",
+        "apps/website/package.json",
+        "apps/website/public/screenshots/dashboard-desktop.png",
+        "apps/website/public/screenshots/projects-mobile.png",
+        "apps/website/public/screenshots/resource-scope.png",
+        "apps/website/screenshots-desktop.png",
+        "apps/website/screenshots-mobile.png",
+        "apps/website/src/main.tsx",
+        "apps/website/src/styles.css",
+        "apps/website/tsconfig.json",
+        "apps/website/vite.config.ts"
+      ]
+    }
+  ],
+  "apiRoutes": [
+    {
+      "file": "apps/api/src/routes/access-requests.ts",
+      "method": "GET",
+      "path": "/access-requests"
+    },
+    {
+      "file": "apps/api/src/routes/access-requests.ts",
+      "method": "POST",
+      "path": "/access-requests"
+    },
+    {
+      "file": "apps/api/src/routes/access-requests.ts",
+      "method": "POST",
+      "path": "/access-requests/:id/decision"
+    },
+    {
+      "file": "apps/api/src/routes/access-requests.ts",
+      "method": "POST",
+      "path": "/access-requests/:id/revoke"
+    },
+    {
+      "file": "apps/api/src/routes/access-requests.ts",
+      "method": "GET",
+      "path": "/access-requests/options"
+    },
+    {
+      "file": "apps/api/src/routes/account-center.ts",
+      "method": "GET",
+      "path": "/account-center"
+    },
+    {
+      "file": "apps/api/src/routes/account-center.ts",
+      "method": "POST",
+      "path": "/account-center/:id/action"
+    },
+    {
+      "file": "apps/api/src/routes/account-center.ts",
+      "method": "PATCH",
+      "path": "/account-center/:id/portals"
+    },
+    {
+      "file": "apps/api/src/routes/account-center.ts",
+      "method": "POST",
+      "path": "/account-center/batch-create"
+    },
+    {
+      "file": "apps/api/src/routes/ai.ts",
+      "method": "GET",
+      "path": "/ai/actions/:actionId"
+    },
+    {
+      "file": "apps/api/src/routes/ai.ts",
+      "method": "POST",
+      "path": "/ai/actions/confirm"
+    },
+    {
+      "file": "apps/api/src/routes/ai.ts",
+      "method": "POST",
+      "path": "/ai/chat"
+    },
+    {
+      "file": "apps/api/src/routes/ai.ts",
+      "method": "POST",
+      "path": "/ai/demo/reset"
+    },
+    {
+      "file": "apps/api/src/routes/ai.ts",
+      "method": "GET",
+      "path": "/ai/health"
+    },
+    {
+      "file": "apps/api/src/routes/applications.ts",
+      "method": "GET",
+      "path": "/applications"
+    },
+    {
+      "file": "apps/api/src/routes/applications.ts",
+      "method": "POST",
+      "path": "/applications"
+    },
+    {
+      "file": "apps/api/src/routes/applications.ts",
+      "method": "PATCH",
+      "path": "/applications/:id/interview"
+    },
+    {
+      "file": "apps/api/src/routes/applications.ts",
+      "method": "GET",
+      "path": "/applications/me"
+    },
+    {
+      "file": "apps/api/src/routes/audit.ts",
+      "method": "GET",
+      "path": "/audit-logs"
+    },
+    {
+      "file": "apps/api/src/routes/auth.ts",
+      "method": "POST",
+      "path": "/auth/demo-login"
+    },
+    {
+      "file": "apps/api/src/routes/auth.ts",
+      "method": "POST",
+      "path": "/auth/login"
+    },
+    {
+      "file": "apps/api/src/routes/auth.ts",
+      "method": "GET",
+      "path": "/auth/me"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/branches"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "GET",
+      "path": "/imports"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "POST",
+      "path": "/imports/organization/commit"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "POST",
+      "path": "/imports/organization/preview"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "POST",
+      "path": "/imports/people/commit"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "POST",
+      "path": "/imports/people/preview"
+    },
+    {
+      "file": "apps/api/src/routes/imports.ts",
+      "method": "GET",
+      "path": "/imports/people/template"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "GET",
+      "path": "/internal-employees"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "POST",
+      "path": "/internal-employees"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "DELETE",
+      "path": "/internal-employees/:id"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "GET",
+      "path": "/internal-employees/:id"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "PATCH",
+      "path": "/internal-employees/:id"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "PUT",
+      "path": "/internal-employees/:id/account"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "POST",
+      "path": "/internal-employees/:id/offboard"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "POST",
+      "path": "/internal-employees/:id/transfer"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "GET",
+      "path": "/job-demands"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "POST",
+      "path": "/job-demands"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "GET",
+      "path": "/job-demands/:id"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "PATCH",
+      "path": "/job-demands/:id"
+    },
+    {
+      "file": "apps/api/src/routes/leadership.ts",
+      "method": "GET",
+      "path": "/leadership/dashboard"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/analyze-file"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "GET",
+      "path": "/migration-center/batches"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "GET",
+      "path": "/migration-center/batches/:id"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/batches/:id/commit"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "GET",
+      "path": "/migration-center/batches/:id/errors.csv"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/batches/:id/preview-file"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/batches/:id/rollback"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/preview"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "GET",
+      "path": "/migration-center/templates"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "POST",
+      "path": "/migration-center/templates"
+    },
+    {
+      "file": "apps/api/src/routes/migration-center.ts",
+      "method": "PATCH",
+      "path": "/migration-center/templates/:id"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "GET",
+      "path": "/notifications"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "POST",
+      "path": "/notifications/:id/retry"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "GET",
+      "path": "/notifications/config-status"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "PUT",
+      "path": "/organization/job-grades/:id/reimbursement-policy"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "GET",
+      "path": "/organization/options"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "PUT",
+      "path": "/organization/positions/:id/role-bindings"
+    },
+    {
+      "file": "apps/api/src/routes/internal-employees.ts",
+      "method": "GET",
+      "path": "/organization/tree"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "GET",
+      "path": "/people"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "POST",
+      "path": "/people"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "GET",
+      "path": "/people/:id"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "POST",
+      "path": "/people/:id/files"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "GET",
+      "path": "/people/:id/files/:fileId"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "PATCH",
+      "path": "/people/:id/interview"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "PATCH",
+      "path": "/people/:id/notes"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "PATCH",
+      "path": "/people/:id/offboard"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "PATCH",
+      "path": "/people/:id/onboard"
+    },
+    {
+      "file": "apps/api/src/routes/people.ts",
+      "method": "GET",
+      "path": "/people/export"
+    },
+    {
+      "file": "apps/api/src/routes/policies.ts",
+      "method": "GET",
+      "path": "/policies"
+    },
+    {
+      "file": "apps/api/src/routes/policies.ts",
+      "method": "POST",
+      "path": "/policies"
+    },
+    {
+      "file": "apps/api/src/routes/policies.ts",
+      "method": "PATCH",
+      "path": "/policies/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/advances"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/advances"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/advances/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/appeals"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/appeals"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/appeals/:id/resolve"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/attachments"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/audit-logs"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/catalog"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/dashboard"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/favorites"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PUT",
+      "path": "/portal/favorites/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/jobs"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/jobs"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/jobs/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/jobs/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/jobs/:id/apply"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/messages"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/messages/:id/read"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/messages/read-all"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/payroll"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/people"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/people/:id"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "PATCH",
+      "path": "/portal/people/:id/status"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/people/on-site"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/personas"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/qrcodes"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/qrcodes/:token"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/qrcodes/:token/register"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/referrals"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/referrals"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/session"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/session/select-persona"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/settlements"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "POST",
+      "path": "/portal/settlements/:id/confirm"
+    },
+    {
+      "file": "apps/api/src/routes/portal.ts",
+      "method": "GET",
+      "path": "/portal/supplier/profile"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/project-images/:imageId/content"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/projects"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "POST",
+      "path": "/projects"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/projects/:id"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "PATCH",
+      "path": "/projects/:id"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/projects/:id/images"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "POST",
+      "path": "/projects/:id/images"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "DELETE",
+      "path": "/projects/:id/images/:imageId"
+    },
+    {
+      "file": "apps/api/src/routes/applications.ts",
+      "method": "POST",
+      "path": "/public/applications"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "GET",
+      "path": "/public/job-demands"
+    },
+    {
+      "file": "apps/api/src/routes/jobs.ts",
+      "method": "GET",
+      "path": "/public/job-demands/:id"
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "method": "GET",
+      "path": "/public/project-images/:imageId/content"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "GET",
+      "path": "/public/referral-shares/:token"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "GET",
+      "path": "/referral-rewards"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "PATCH",
+      "path": "/referral-rewards/:id"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "GET",
+      "path": "/referral-rewards/me"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "POST",
+      "path": "/referrals"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "GET",
+      "path": "/referrals/me"
+    },
+    {
+      "file": "apps/api/src/routes/referrals.ts",
+      "method": "POST",
+      "path": "/referrals/share-token"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements/:id"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "PATCH",
+      "path": "/reimbursements/:id"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements/:id/artifacts/:artifactId"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/artifacts/generate"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/attachments"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements/:id/attachments/:attachmentId"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/issues"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/issues/:issueId/resolve"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/payments"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/:id/transition"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements/department-summaries"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "POST",
+      "path": "/reimbursements/department-summaries/transition"
+    },
+    {
+      "file": "apps/api/src/routes/reimbursements.ts",
+      "method": "GET",
+      "path": "/reimbursements/payment-roster"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "GET",
+      "path": "/salary-slips"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/:batchId/publish"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/:batchId/withdraw"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "GET",
+      "path": "/salary-slips/export"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/import-commit"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/import-preview"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "GET",
+      "path": "/salary-slips/me"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/publish"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "GET",
+      "path": "/salary-slips/template"
+    },
+    {
+      "file": "apps/api/src/routes/salary.ts",
+      "method": "POST",
+      "path": "/salary-slips/withdraw"
+    },
+    {
+      "file": "apps/api/src/routes/statistics.ts",
+      "method": "GET",
+      "path": "/statistics/drilldown"
+    },
+    {
+      "file": "apps/api/src/routes/statistics.ts",
+      "method": "GET",
+      "path": "/statistics/export"
+    },
+    {
+      "file": "apps/api/src/routes/statistics.ts",
+      "method": "GET",
+      "path": "/statistics/overview"
+    },
+    {
+      "file": "apps/api/src/routes/suppliers.ts",
+      "method": "GET",
+      "path": "/suppliers"
+    },
+    {
+      "file": "apps/api/src/routes/suppliers.ts",
+      "method": "POST",
+      "path": "/suppliers"
+    },
+    {
+      "file": "apps/api/src/routes/suppliers.ts",
+      "method": "GET",
+      "path": "/suppliers/:id"
+    },
+    {
+      "file": "apps/api/src/routes/suppliers.ts",
+      "method": "PATCH",
+      "path": "/suppliers/:id"
+    },
+    {
+      "file": "apps/api/src/routes/users.ts",
+      "method": "GET",
+      "path": "/users"
+    },
+    {
+      "file": "apps/api/src/routes/users.ts",
+      "method": "POST",
+      "path": "/users"
+    },
+    {
+      "file": "apps/api/src/routes/users.ts",
+      "method": "PATCH",
+      "path": "/users/:id"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "POST",
+      "path": "/wechat/auth"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "POST",
+      "path": "/wechat/auth/login"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "POST",
+      "path": "/wechat/bind"
+    },
+    {
+      "file": "apps/api/src/routes/notifications.ts",
+      "method": "POST",
+      "path": "/wechat/referral-qrcode"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-instances"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-tasks/:id/action"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "GET",
+      "path": "/workflow-tasks/my"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "GET",
+      "path": "/workflow-templates"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-templates"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-templates/:id/publish"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-templates/:id/versions"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "GET",
+      "path": "/workflow-templates/options"
+    },
+    {
+      "file": "apps/api/src/routes/workflows.ts",
+      "method": "POST",
+      "path": "/workflow-templates/simulate"
+    }
+  ],
+  "adminRoutes": [
+    {
+      "path": "*",
+      "component": "HomeRedirect"
+    },
+    {
+      "path": "/access-center",
+      "component": "AccessCenterPage"
+    },
+    {
+      "path": "/account-center",
+      "component": "AccountCenterPage"
+    },
+    {
+      "path": "/ai-assistant",
+      "component": "AiAssistantPage"
+    },
+    {
+      "path": "/dashboard",
+      "component": "DashboardPage"
+    },
+    {
+      "path": "/data-migration",
+      "component": "DataMigrationPage"
+    },
+    {
+      "path": "/electronic-contracts",
+      "component": "ElectronicContractsPage"
+    },
+    {
+      "path": "/imports",
+      "component": "ImportsPage"
+    },
+    {
+      "path": "/internal-employees",
+      "component": "InternalEmployeesPage"
+    },
+    {
+      "path": "/leadership",
+      "component": "LeadershipDashboardPage"
+    },
+    {
+      "path": "/login",
+      "component": "LoginPage"
+    },
+    {
+      "path": "/miniapp-demo",
+      "component": "MiniappDemoPage"
+    },
+    {
+      "path": "/people",
+      "component": "PeoplePage"
+    },
+    {
+      "path": "/policies/referral",
+      "component": "PoliciesPage"
+    },
+    {
+      "path": "/policies/supplier",
+      "component": "PoliciesPage"
+    },
+    {
+      "path": "/product",
+      "component": "ProductIntroPage"
+    },
+    {
+      "path": "/projects",
+      "component": "ProjectsPage"
+    },
+    {
+      "path": "/recruitment/demands",
+      "component": "JobDemandsPage"
+    },
+    {
+      "path": "/recruitment/progress",
+      "component": "RecruitmentProgressPage"
+    },
+    {
+      "path": "/recruitment/rewards",
+      "component": "ReferralRewardsPage"
+    },
+    {
+      "path": "/reimbursements",
+      "component": "ReimbursementsPage"
+    },
+    {
+      "path": "/salary-slips",
+      "component": "SalarySlipsPage"
+    },
+    {
+      "path": "/settings",
+      "component": "SettingsPage"
+    },
+    {
+      "path": "/statistics",
+      "component": "Navigate"
+    },
+    {
+      "path": "/suppliers",
+      "component": "SuppliersPage"
+    },
+    {
+      "path": "/workflow-designer",
+      "component": "WorkflowDesignerPage"
+    }
+  ],
+  "miniappPages": [
+    "pages/demo/index",
+    "pages/index/index",
+    "pages/login/index",
+    "pages/operator/register/index",
+    "pages/operator/interviews/index",
+    "pages/operator/onboarding/index",
+    "pages/operator/offboarding/index",
+    "pages/operator/people/index",
+    "pages/operator/person-detail/index",
+    "pages/jobs/index/index",
+    "pages/jobs/detail/index",
+    "pages/application/form/index",
+    "pages/application/mine/index",
+    "pages/supplier/people/index",
+    "pages/supplier/metrics/index",
+    "pages/supplier/policies/index",
+    "pages/referrals/index/index",
+    "pages/referrals/mine/index",
+    "pages/referrals/rewards/index",
+    "pages/salary/index/index",
+    "pages/reimbursements/index/index",
+    "pages/reimbursements/form/index",
+    "pages/reimbursements/detail/index",
+    "pages/profile/index/index"
+  ],
+  "prisma": {
+    "enums": [
+      "AccessRequestStatus",
+      "AccessRiskLevel",
+      "AccountLifecycleAction",
+      "AiActionStatus",
+      "ApplicationSource",
+      "DataScopeType",
+      "EmploymentStatus",
+      "ImportStatus",
+      "InternalEmployeeChangeType",
+      "InternalEmployeeStatus",
+      "InterviewStatus",
+      "JobStatus",
+      "MigrationBatchStatus",
+      "MigrationRowStatus",
+      "NotificationStatus",
+      "OrganizationUnitType",
+      "PermissionProvisionTaskStatus",
+      "PolicyType",
+      "PortalType",
+      "ProjectStatus",
+      "ReimbursementApprovalDecision",
+      "ReimbursementArtifactStatus",
+      "ReimbursementArtifactType",
+      "ReimbursementAttachmentType",
+      "ReimbursementIssueStatus",
+      "ReimbursementStatus",
+      "ResponsibilityType",
+      "RewardStatus",
+      "RoleAssignmentSource",
+      "RoleAssignmentStatus",
+      "SalarySlipStatus",
+      "UserRole",
+      "WorkflowInstanceStatus",
+      "WorkflowTaskStatus",
+      "WorkflowTemplateStatus"
+    ],
+    "models": [
+      "AccessRequest",
+      "AccountLifecycleLog",
+      "AiAction",
+      "AiAuditLog",
+      "AiDemoSnapshot",
+      "Application",
+      "AuditLog",
+      "Branch",
+      "DataScopeBinding",
+      "ImportJob",
+      "InternalEmployee",
+      "InternalEmployeeChange",
+      "InternalEmployment",
+      "JobDemand",
+      "JobGrade",
+      "JobGradeApprovalPolicy",
+      "LegalEntity",
+      "MigrationBatch",
+      "MigrationRowResult",
+      "MigrationTemplate",
+      "Notification",
+      "OrganizationUnit",
+      "PermissionDefinition",
+      "PermissionProvisionTask",
+      "Person",
+      "PersonFile",
+      "PersonStatusLog",
+      "Policy",
+      "PortalAdvance",
+      "PortalAppeal",
+      "PortalFavorite",
+      "PortalNotificationRead",
+      "PortalQrCode",
+      "PortalSettlement",
+      "PortalSettlementItem",
+      "Position",
+      "PositionRoleBinding",
+      "Project",
+      "ProjectImage",
+      "ProjectWeeklySnapshot",
+      "ReferralRecord",
+      "ReferralReward",
+      "ReferralShare",
+      "ReimbursementApproval",
+      "ReimbursementArtifact",
+      "ReimbursementAttachment",
+      "ReimbursementBatch",
+      "ReimbursementIssue",
+      "ReimbursementLine",
+      "ReimbursementPayment",
+      "Role",
+      "RolePermission",
+      "SalaryImportBatch",
+      "SalarySlip",
+      "Supplier",
+      "SupplierProject",
+      "User",
+      "UserPortalAccess",
+      "UserProject",
+      "UserRoleAssignment",
+      "WorkflowInstance",
+      "WorkflowTask",
+      "WorkflowTemplate",
+      "WorkflowVersion"
+    ]
+  },
+  "largeFiles": [
+    {
+      "path": "apps/admin/src/lib/demo.ts",
+      "lines": 3268,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "lines": 1728,
+      "threshold": 1400,
+      "category": "Prisma"
+    },
+    {
+      "path": "apps/admin/src/pages/ReimbursementsPage.tsx",
+      "lines": 1295,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/api/src/routes/reimbursements.ts",
+      "lines": 1288,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/portal/src/app/demo.ts",
+      "lines": 1091,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/admin/src/pages/ProductIntroPage.tsx",
+      "lines": 947,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/admin/src/pages/InternalEmployeesPage.tsx",
+      "lines": 875,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/admin/src/types/domain.ts",
+      "lines": 832,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/admin/src/pages/PeoplePage.tsx",
+      "lines": 828,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/api/src/routes/portal.ts",
+      "lines": 812,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/routes/internal-employees.ts",
+      "lines": 725,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "scripts/import-demo-data.mts",
+      "lines": 697,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/services/migration-targets.ts",
+      "lines": 677,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/admin/src/pages/ImportsPage.tsx",
+      "lines": 548,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/miniapp/src/pages/demo/index.tsx",
+      "lines": 544,
+      "threshold": 500,
+      "category": "React/TSX"
+    },
+    {
+      "path": "apps/api/src/routes/migration-center.ts",
+      "lines": 537,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/miniapp/src/api/types.ts",
+      "lines": 513,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/routes/imports.ts",
+      "lines": 510,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "scripts/import-real-business-data.mts",
+      "lines": 506,
+      "threshold": 500,
+      "category": "TypeScript"
+    }
+  ]
+}
