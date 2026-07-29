@@ -1,0 +1,25 @@
+# Render 主方案使用原生 node runtime（见 render.yaml），无需 Docker。
+# 此文件仅作为备用（若日后改用 Docker 部署时排除无关文件）。
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+.git
+.gitignore
+.env
+.env.*
+*.log
+.output
+output
+playwright-report
+test-results
+apps/api/uploads
+data/raw
+docs
+.tailtest
+.playwright-cli
+*.pid
+.DS_Store
+Thumbs.db

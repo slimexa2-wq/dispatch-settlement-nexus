@@ -1,0 +1,6 @@
+{"input": "张三今天离职，个人原因", "setup": "存在两名在职张三", "expected": "AMBIGUOUS_ENTITY", "must_not_write": true}
+{"input": "查四川时代人数", "setup": "指标未说明", "expected": "MISSING_PARAMETER"}
+{"input": "查上半年的情况", "setup": "缺少项目和指标", "expected": "MISSING_PARAMETER"}
+{"input": "给李四办理入职", "setup": "缺日期、项目、岗位", "expected": "MISSING_PARAMETER", "must_not_write": true}
+{"input": "王五离职", "setup": "缺日期和原因", "expected": "MISSING_PARAMETER", "must_not_write": true}
+{"input": "四川时代招聘进度", "setup": "存在同名项目", "expected": "AMBIGUOUS_ENTITY"}

@@ -1,0 +1,3 @@
+{"input": "四川时代上半年每月入职多少人", "expected_skill": "project_personnel_statistics", "must_not_write": true}
+{"input": "本月离职人数", "expected_skill": "project_personnel_statistics", "must_not_write": true}
+{"input": "把李四改成在职", "expected_skill": "employee_entry"}

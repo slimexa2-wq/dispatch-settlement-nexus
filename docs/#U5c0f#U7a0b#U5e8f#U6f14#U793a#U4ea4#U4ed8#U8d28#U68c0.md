@@ -1,0 +1,35 @@
+# 小程序演示交付质检
+
+更新时间：2026-07-19
+
+## 本次完成
+
+- 后台 `/miniapp-demo` 改为可交互小程序模拟器，不再是多张静态预览图。
+- 后台小程序演示页读取同一套演示接口：统计、人员、岗位、政策、工资条、黑名单、申诉、借支。
+- 演示接口新增：
+  - `/blacklist-records`
+  - `/appeals`
+  - `/advance-requests`
+- 报名演示接入黑名单校验，命中后禁止提交并返回拉黑原因。
+- 小程序 `pages/demo/index` 增加角色切换、底部 Tab、岗位列表、人员详情、黑名单、申诉、借支、工资条入口。
+- 小程序 API 类型和服务增加黑名单、申诉、借支方法。
+
+## 验证结果
+
+- `pnpm --filter @xiangneng/admin typecheck`：通过
+- `pnpm --filter @xiangneng/admin lint`：通过
+- `pnpm --filter @xiangneng/admin test`：通过，5 个测试文件 / 16 个测试
+- `pnpm --filter @xiangneng/admin build`：通过
+- `pnpm --filter @xiangneng/miniapp typecheck`：通过
+- `pnpm --filter @xiangneng/miniapp lint`：通过
+- `pnpm --filter @xiangneng/miniapp test`：通过，4 个测试文件 / 11 个测试
+- `pnpm --filter @xiangneng/miniapp build`：通过，微信小程序产物已生成到 `apps/miniapp/dist`
+
+## 已知风险
+
+- Playwright 在当前会话执行截图时发生截图超时，因此本次未产出新截图；页面服务 HTTP 检查和构建检查均通过。
+- 新增黑名单、申诉、借支目前先接入演示接口；正式数据库落表仍需下一阶段补 Prisma 模型、迁移和后台管理列表。
+
+## 交付判断
+
+有条件交付：可用于当前演示和继续评审；如要作为正式生产功能，需要继续补数据库表、真实后端路由和后台管理页。

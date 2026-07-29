@@ -1,0 +1,26 @@
+rule_fallbacks:
+  project_personnel_statistics:
+    required_slots: [metric]
+    optional_slots: [project, branch, time_range, group_by]
+    fallback_ui: statistics_query_form
+  employee_information_query:
+    required_slots: [employee_identifier]
+    fallback_ui: employee_search_form
+  recruitment_progress_query:
+    required_slots: []
+    optional_slots: [branch, project, position, time_range]
+    fallback_ui: recruitment_progress_form
+  employee_entry:
+    required_slots: [employee_identifier, entry_date, project, position]
+    fallback_ui: employee_entry_form
+    model_failure_action: block_and_show_form
+  employee_resignation:
+    required_slots: [employee_identifier, resignation_date, resignation_reason]
+    fallback_ui: employee_resignation_form
+    model_failure_action: block_and_show_form
+global:
+  unknown_intent_action: show_supported_skills
+  low_confidence_threshold: 0.72
+  ambiguous_entity_action: require_user_selection
+  invalid_parameter_action: require_correction
+  permission_denied_action: deny_without_model_override

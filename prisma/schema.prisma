@@ -1,0 +1,1727 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../apps/api/src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  SYSTEM_ADMIN
+  GROUP_LEADER
+  HEADQUARTERS_MANAGER
+  BRANCH_MANAGER
+  DEPARTMENT_MANAGER
+  INTERNAL_HR
+  RECRUITER
+  PROJECT_OPERATOR
+  RESOURCE_SPECIALIST
+  FINANCE_REVIEWER
+  CASHIER
+  DEPARTMENT_REIMBURSEMENT_CLERK
+  SUPPLIER_ADMIN
+  SUPPLIER
+  OUTSOURCED_EMPLOYEE
+  EMPLOYEE
+  JOB_SEEKER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  HISTORICAL
+  PENDING_CONFIRMATION
+}
+
+enum ResponsibilityType {
+  CLIENT
+  OURS
+  JOINT
+  PENDING_CONFIRMATION
+}
+
+enum InterviewStatus {
+  PENDING_ARRIVAL
+  ARRIVED
+  PASSED
+  FAILED
+  ABANDONED
+}
+
+enum EmploymentStatus {
+  APPLICANT
+  INTERVIEWING
+  PENDING_ONBOARD
+  ACTIVE
+  LEFT
+}
+
+enum PolicyType {
+  SUPPLIER
+  EMPLOYEE_REFERRAL
+}
+
+enum JobStatus {
+  RECRUITING
+  PAUSED
+  FILLED
+  ENDED
+}
+
+enum ApplicationSource {
+  OPERATOR
+  SUPPLIER
+  SELF
+  REFERRAL
+}
+
+enum RewardStatus {
+  PENDING
+  ACHIEVED
+  PAID
+  CANCELLED
+}
+
+enum SalarySlipStatus {
+  DRAFT
+  PUBLISHED
+  WITHDRAWN
+}
+
+enum ImportStatus {
+  PREVIEW
+  COMMITTED
+  PARTIAL
+  FAILED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED_NOT_CONFIGURED
+}
+
+enum AiActionStatus {
+  PREVIEWED
+  EXECUTED
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+/// Organization nodes are dynamic and keep their real business type.
+/// All types may participate in the active internal organization tree.
+enum OrganizationUnitType {
+  GROUP
+  LEADERSHIP
+  LEGAL_ENTITY
+  CENTER
+  DEPARTMENT
+  BUSINESS_DEPARTMENT
+  BRANCH
+  SUBSIDIARY
+  OTHER
+}
+
+enum InternalEmployeeStatus {
+  ACTIVE
+  DISABLED
+  LEFT
+  ARCHIVED
+}
+
+enum InternalEmployeeChangeType {
+  ONBOARD
+  TRANSFER
+  DISABLE
+  ENABLE
+  OFFBOARD
+  ARCHIVE
+  ACCOUNT_BIND
+  ACCOUNT_UNBIND
+}
+
+enum RoleAssignmentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum RoleAssignmentSource {
+  MANUAL
+  POSITION
+  TEMPORARY
+  LEGACY
+}
+
+enum DataScopeType {
+  SELF
+  ORG_UNIT
+  CENTER
+  BRANCH
+  PROJECT
+  SUPPLIER
+  GROUP
+}
+
+
+enum MigrationBatchStatus {
+  DRAFT
+  PREVIEWING
+  READY
+  COMMITTING
+  COMMITTED
+  PARTIAL
+  FAILED
+  ROLLED_BACK
+}
+
+enum MigrationRowStatus {
+  CREATE
+  UPDATE
+  SKIP
+  ERROR
+  COMMITTED
+  ROLLED_BACK
+}
+
+enum WorkflowTemplateStatus {
+  DRAFT
+  PUBLISHED
+  DISABLED
+}
+
+enum WorkflowInstanceStatus {
+  RUNNING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum WorkflowTaskStatus {
+  WAITING
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+  CANCELLED
+}
+
+enum AccessRequestStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  PROVISIONING
+  COMPLETED
+  REVOKED
+  FAILED
+}
+
+enum AccessRiskLevel {
+  NORMAL
+  HIGH
+}
+
+enum PermissionProvisionTaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum PortalType {
+  ADMIN
+  INTERNAL_MINIAPP
+  SUPPLIER_MINIAPP
+  EMPLOYEE_MINIAPP
+}
+
+enum AccountLifecycleAction {
+  CREATED
+  ACTIVATED
+  DISABLED
+  PASSWORD_RESET
+  FORCE_LOGOUT
+  WECHAT_BOUND
+  WECHAT_UNBOUND
+  PORTAL_GRANTED
+  PORTAL_REVOKED
+  MERGED
+}
+
+enum ReimbursementStatus {
+  PENDING_SUBMISSION
+  DEPARTMENT_PREPARING
+  OWNER_REVIEWING
+  FINANCE_REVIEWING
+  APPROVED
+  PENDING_PAYMENT
+  PAID
+}
+
+enum ReimbursementAttachmentType {
+  PAYMENT_VOUCHER
+  INVOICE
+  SUPPORTING
+}
+
+enum ReimbursementIssueStatus {
+  OPEN
+  RESOLVED
+}
+
+enum ReimbursementApprovalDecision {
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+enum ReimbursementArtifactType {
+  REIMBURSEMENT_FORM
+  PAYMENT_PACKAGE
+  INVOICE_PACKAGE
+}
+
+enum ReimbursementArtifactStatus {
+  PENDING
+  GENERATED
+  FAILED
+}
+
+model Branch {
+  id         String    @id @default(uuid()) @db.Uuid
+  sourceCode String?   @unique @map("source_code") @db.VarChar(64)
+  name       String    @unique @db.VarChar(200)
+  remark     String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  projects   Project[]
+  users      User[]
+  dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
+
+  @@map("branches")
+}
+
+model LegalEntity {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @unique @db.VarChar(200)
+  taxNumber   String?  @unique @map("tax_number") @db.VarChar(64)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  internalEmployees InternalEmployee[]
+  employments InternalEmployment[]
+
+  @@index([isActive, name])
+  @@map("legal_entities")
+}
+
+model OrganizationUnit {
+  id            String               @id @default(uuid()) @db.Uuid
+  code          String               @unique @db.VarChar(64)
+  name          String               @db.VarChar(200)
+  type          OrganizationUnitType
+  parentId      String?              @map("parent_id") @db.Uuid
+  path          String               @db.VarChar(1000)
+  sortOrder     Int                  @default(0) @map("sort_order")
+  isActive      Boolean              @default(true) @map("is_active")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  parent        OrganizationUnit?    @relation("OrganizationUnitTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children      OrganizationUnit[]   @relation("OrganizationUnitTree")
+  positions     Position[]
+  internalEmployees InternalEmployee[]
+  employments   InternalEmployment[]
+  dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
+
+  @@unique([parentId, name])
+  @@index([parentId, sortOrder])
+  @@index([path])
+  @@map("organization_units")
+}
+
+model Position {
+  id                 String   @id @default(uuid()) @db.Uuid
+  code               String   @unique @db.VarChar(64)
+  name               String   @db.VarChar(120)
+  organizationUnitId String?  @map("organization_unit_id") @db.Uuid
+  description        String?  @db.Text
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  organizationUnit   OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  internalEmployees  InternalEmployee[]
+  employments        InternalEmployment[]
+  roleBindings       PositionRoleBinding[]
+
+  @@index([organizationUnitId, isActive])
+  @@index([name])
+  @@map("positions")
+}
+
+model JobGrade {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @unique @db.VarChar(120)
+  level       Int
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  internalEmployees InternalEmployee[]
+  employments InternalEmployment[]
+  reimbursementApprovalPolicy JobGradeApprovalPolicy?
+
+  @@index([level, isActive])
+  @@map("job_grades")
+}
+
+model JobGradeApprovalPolicy {
+  id                            String   @id @default(uuid()) @db.Uuid
+  jobGradeId                    String   @unique @map("job_grade_id") @db.Uuid
+  maxReimbursementApprovalCents Int?     @map("max_reimbursement_approval_cents")
+  isActive                      Boolean  @default(true) @map("is_active")
+  createdAt                     DateTime @default(now()) @map("created_at")
+  updatedAt                     DateTime @updatedAt @map("updated_at")
+  jobGrade                      JobGrade @relation(fields: [jobGradeId], references: [id], onDelete: Cascade)
+
+  @@index([isActive, jobGradeId])
+  @@map("job_grade_approval_policies")
+}
+
+model InternalEmployee {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  employeeNo         String                 @unique @map("employee_no") @db.VarChar(64)
+  sourceEmployeeNo   String?                @map("source_employee_no") @db.VarChar(64)
+  userId             String?                @unique @map("user_id") @db.Uuid
+  name               String                 @db.VarChar(64)
+  phone              String                 @unique @db.VarChar(32)
+  idCard             String                 @unique @map("id_card") @db.VarChar(32)
+  email              String?                @db.VarChar(200)
+  bankAccount        String?                @map("bank_account") @db.VarChar(120)
+  legalEntityId      String?                @map("legal_entity_id") @db.Uuid
+  organizationUnitId String?                @map("organization_unit_id") @db.Uuid
+  positionId         String?                @map("position_id") @db.Uuid
+  jobGradeId         String?                @map("job_grade_id") @db.Uuid
+  status             InternalEmployeeStatus @default(ACTIVE)
+  onboardDate        DateTime               @map("onboard_date") @db.Date
+  offboardDate       DateTime?              @map("offboard_date") @db.Date
+  offboardReason     String?                @map("offboard_reason") @db.VarChar(500)
+  version            Int                    @default(1)
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+  user               User?                  @relation("InternalEmployeeUser", fields: [userId], references: [id], onDelete: Restrict)
+  legalEntity        LegalEntity?           @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit?      @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position           Position?              @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  jobGrade           JobGrade?              @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
+  employments        InternalEmployment[]
+  changes            InternalEmployeeChange[]
+
+  @@unique([id, version])
+  @@index([status, organizationUnitId])
+  @@index([legalEntityId, status])
+  @@index([positionId, status])
+  @@index([name])
+  @@map("internal_employees")
+}
+
+model InternalEmployment {
+  id                 String   @id @default(uuid()) @db.Uuid
+  employeeId         String   @map("employee_id") @db.Uuid
+  legalEntityId      String?  @map("legal_entity_id") @db.Uuid
+  organizationUnitId String   @map("organization_unit_id") @db.Uuid
+  positionId         String   @map("position_id") @db.Uuid
+  jobGradeId         String?  @map("job_grade_id") @db.Uuid
+  startedAt          DateTime @map("started_at") @db.Date
+  endedAt            DateTime? @map("ended_at") @db.Date
+  isPrimary          Boolean  @default(true) @map("is_primary")
+  reason             String?  @db.VarChar(500)
+  createdAt          DateTime @default(now()) @map("created_at")
+  employee           InternalEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  legalEntity        LegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position           Position @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  jobGrade           JobGrade? @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, endedAt])
+  @@index([organizationUnitId, endedAt])
+  @@index([positionId, endedAt])
+  @@map("internal_employments")
+}
+
+model InternalEmployeeChange {
+  id          String                     @id @default(uuid()) @db.Uuid
+  employeeId  String                     @map("employee_id") @db.Uuid
+  actorId     String?                    @map("actor_id") @db.Uuid
+  type        InternalEmployeeChangeType
+  effectiveAt DateTime                   @map("effective_at") @db.Date
+  reason      String?                    @db.VarChar(500)
+  before      Json?
+  after       Json?
+  createdAt   DateTime                   @default(now()) @map("created_at")
+  employee    InternalEmployee           @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, effectiveAt])
+  @@index([actorId, createdAt])
+  @@map("internal_employee_changes")
+}
+
+model Project {
+  id               String              @id @default(uuid()) @db.Uuid
+  sourceProjectId  String?             @unique @map("source_project_id") @db.VarChar(64)
+  branchId         String              @map("branch_id") @db.Uuid
+  name             String              @db.VarChar(200)
+  isExternal       Boolean             @default(false) @map("is_external")
+  businessType     String?             @map("business_type") @db.VarChar(64)
+  status           ProjectStatus?
+  managerName      String?             @map("manager_name") @db.VarChar(64)
+  managerPhone     String?             @map("manager_phone") @db.VarChar(32)
+  cooperationStart DateTime?           @map("cooperation_start") @db.Date
+  cooperationEnd   DateTime?           @map("cooperation_end") @db.Date
+  responsibility   ResponsibilityType?
+  description      String?             @db.Text
+  remark           String?             @db.Text
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  branch           Branch              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  images           ProjectImage[]
+  people           Person[]
+  jobDemands       JobDemand[]
+  policies         Policy[]
+  supplierLinks    SupplierProject[]
+  userLinks        UserProject[]
+  portalQrCodes    PortalQrCode[]
+  dataScopeBindings DataScopeBinding[]
+  reimbursementBatches ReimbursementBatch[]
+  weeklySnapshots ProjectWeeklySnapshot[]
+
+  @@unique([branchId, name])
+  @@index([branchId, status])
+  @@map("projects")
+}
+
+model ProjectWeeklySnapshot {
+  id                String   @id @default(uuid()) @db.Uuid
+  projectId         String   @map("project_id") @db.Uuid
+  snapshotDate      DateTime @map("snapshot_date") @db.Date
+  selfRecruited     Int      @default(0) @map("self_recruited")
+  supplierRecruited Int      @default(0) @map("supplier_recruited")
+  activeCount       Int      @default(0) @map("active_count")
+  onboardedCount    Int      @default(0) @map("onboarded_count")
+  offboardedCount   Int      @default(0) @map("offboarded_count")
+  changeCount       Int      @default(0) @map("change_count")
+  reason            String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, snapshotDate])
+  @@index([snapshotDate, activeCount])
+  @@map("project_weekly_snapshots")
+}
+
+model ProjectImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  projectId    String   @map("project_id") @db.Uuid
+  storageKey   String   @unique @map("storage_key") @db.VarChar(128)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int      @map("size_bytes")
+  sortOrder    Int      @default(0) @map("sort_order")
+  note         String?  @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, sortOrder])
+  @@map("project_images")
+}
+
+model Supplier {
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String             @unique @db.VarChar(200)
+  contactName       String?            @map("contact_name") @db.VarChar(64)
+  contactPhone      String?            @map("contact_phone") @db.VarChar(32)
+  level             String?            @db.VarChar(32)
+  isActive          Boolean            @default(true) @map("is_active")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  projectLinks      SupplierProject[]
+  people            Person[]
+  policies          Policy[]
+  applications      Application[]
+  users             User[]
+  dataScopeBindings DataScopeBinding[]
+  portalSettlements PortalSettlement[]
+  reimbursementBatches ReimbursementBatch[]
+
+  @@map("suppliers")
+}
+
+model SupplierProject {
+  supplierId String   @map("supplier_id") @db.Uuid
+  projectId  String   @map("project_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([supplierId, projectId])
+  @@index([projectId])
+  @@map("supplier_project_relations")
+}
+
+model Policy {
+  id                    String           @id @default(uuid()) @db.Uuid
+  name                  String           @db.VarChar(200)
+  type                  PolicyType
+  projectId             String           @map("project_id") @db.Uuid
+  jobTitle              String?          @map("job_title") @db.VarChar(120)
+  supplierId            String?          @map("supplier_id") @db.Uuid
+  supplierLevel         String?          @map("supplier_level") @db.VarChar(32)
+  employeeType          String?          @map("employee_type") @db.VarChar(64)
+  amount                Decimal          @db.Decimal(12, 2)
+  achievementConditions String           @map("achievement_conditions") @db.Text
+  exclusionConditions   String?          @map("exclusion_conditions") @db.Text
+  effectiveAt           DateTime         @map("effective_at") @db.Date
+  expiresAt             DateTime?        @map("expires_at") @db.Date
+  notes                 String?          @db.Text
+  version               Int              @default(1)
+  isActive              Boolean          @default(true) @map("is_active")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  project               Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier              Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierJobDemands    JobDemand[]      @relation("SupplierPolicyJobDemands")
+  referralJobDemands    JobDemand[]      @relation("ReferralPolicyJobDemands")
+  matchedPeople         Person[]         @relation("MatchedSupplierPolicy")
+  referralRecords       ReferralRecord[]
+  rewardRecords         ReferralReward[]
+
+  @@index([projectId, type, isActive])
+  @@index([supplierId, type])
+  @@map("policies")
+}
+
+model JobDemand {
+  id               String           @id @default(uuid()) @db.Uuid
+  projectId        String           @map("project_id") @db.Uuid
+  title            String           @db.VarChar(120)
+  requiredCount    Int              @map("required_count")
+  requirements     String           @db.Text
+  salary           String           @db.VarChar(500)
+  workTime         String           @map("work_time") @db.VarChar(500)
+  workLocation     String           @map("work_location") @db.VarChar(500)
+  deadline         DateTime
+  status           JobStatus        @default(RECRUITING)
+  supplierPolicyId String?          @map("supplier_policy_id") @db.Uuid
+  referralPolicyId String?          @map("referral_policy_id") @db.Uuid
+  notes            String?          @db.Text
+  createdById      String?          @map("created_by_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplierPolicy   Policy?          @relation("SupplierPolicyJobDemands", fields: [supplierPolicyId], references: [id], onDelete: Restrict)
+  referralPolicy   Policy?          @relation("ReferralPolicyJobDemands", fields: [referralPolicyId], references: [id], onDelete: Restrict)
+  createdBy        User?            @relation("CreatedJobDemands", fields: [createdById], references: [id], onDelete: SetNull)
+  applications     Application[]
+  referrals        ReferralRecord[]
+  referralShares   ReferralShare[]
+  portalFavorites  PortalFavorite[]
+  portalQrCodes    PortalQrCode[]
+
+  @@index([projectId, status, deadline])
+  @@map("job_demands")
+}
+
+model Person {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  name                     String                 @db.VarChar(64)
+  idCard                   String                 @unique @map("id_card") @db.VarChar(18)
+  phone                    String                 @db.VarChar(32)
+  gender                   String?                @db.VarChar(16)
+  age                      Int?
+  ethnicity                String?                @db.VarChar(32)
+  origin                   String?                @db.VarChar(120)
+  projectId                String                 @map("project_id") @db.Uuid
+  jobTitle                 String                 @map("job_title") @db.VarChar(120)
+  status                   EmploymentStatus       @default(APPLICANT)
+  interviewStatus          InterviewStatus        @default(PENDING_ARRIVAL) @map("interview_status")
+  interviewDate            DateTime?              @map("interview_date") @db.Date
+  supplierId               String?                @map("supplier_id") @db.Uuid
+  recommenderUserId        String?                @map("recommender_user_id") @db.Uuid
+  recommenderName          String?                @map("recommender_name") @db.VarChar(64)
+  emergencyContactName     String?                @map("emergency_contact_name") @db.VarChar(64)
+  emergencyContactPhone    String?                @map("emergency_contact_phone") @db.VarChar(32)
+  emergencyContactRelation String?                @map("emergency_contact_relation") @db.VarChar(32)
+  onboardDate              DateTime?              @map("onboard_date") @db.Date
+  offboardDate             DateTime?              @map("offboard_date") @db.Date
+  offboardReason           String?                @map("offboard_reason") @db.VarChar(500)
+  employeeNo               String?                @unique @map("employee_no") @db.VarChar(64)
+  insuranceTypes           Json                   @default("[]") @map("insurance_types")
+  supplierPolicyId         String?                @map("supplier_policy_id") @db.Uuid
+  supplierPolicySnapshot   Json?                  @map("supplier_policy_snapshot")
+  notes                    String?                @db.Text
+  createdAt                DateTime               @default(now()) @map("created_at")
+  updatedAt                DateTime               @updatedAt @map("updated_at")
+  project                  Project                @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier                 Supplier?              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  recommender              User?                  @relation("RecommendedPeople", fields: [recommenderUserId], references: [id], onDelete: SetNull)
+  supplierPolicy           Policy?                @relation("MatchedSupplierPolicy", fields: [supplierPolicyId], references: [id], onDelete: Restrict)
+  files                    PersonFile[]
+  statusLogs               PersonStatusLog[]
+  applications             Application[]
+  referrals                ReferralRecord[]
+  salarySlips              SalarySlip[]
+  user                     User?                  @relation("PersonUser")
+  aiDemoSnapshot           AiDemoSnapshot?
+  portalAdvances           PortalAdvance[]
+  portalSettlementItems    PortalSettlementItem[]
+
+  @@index([projectId, status])
+  @@index([supplierId, status])
+  @@index([recommenderUserId])
+  @@index([phone])
+  @@map("people")
+}
+
+model PersonFile {
+  id           String   @id @default(uuid()) @db.Uuid
+  personId     String   @map("person_id") @db.Uuid
+  storageKey   String   @unique @map("storage_key") @db.VarChar(128)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  person       Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  uploadedBy   User?    @relation("UploadedPersonFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([personId])
+  @@map("person_files")
+}
+
+model PersonStatusLog {
+  id              String            @id @default(uuid()) @db.Uuid
+  personId        String            @map("person_id") @db.Uuid
+  fromStatus      EmploymentStatus? @map("from_status")
+  toStatus        EmploymentStatus  @map("to_status")
+  interviewStatus InterviewStatus?  @map("interview_status")
+  action          String            @db.VarChar(64)
+  notes           String?           @db.Text
+  actorId         String?           @map("actor_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at")
+  person          Person            @relation(fields: [personId], references: [id], onDelete: Cascade)
+  actor           User?             @relation("PersonStatusActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([personId, createdAt])
+  @@map("person_status_logs")
+}
+
+model Application {
+  id                String            @id @default(uuid()) @db.Uuid
+  personId          String            @map("person_id") @db.Uuid
+  jobDemandId       String            @map("job_demand_id") @db.Uuid
+  source            ApplicationSource
+  supplierId        String?           @map("supplier_id") @db.Uuid
+  recommenderUserId String?           @map("recommender_user_id") @db.Uuid
+  recommenderName   String?           @map("recommender_name") @db.VarChar(64)
+  interviewStatus   InterviewStatus   @default(PENDING_ARRIVAL) @map("interview_status")
+  interviewDate     DateTime?         @map("interview_date") @db.Date
+  employmentStatus  EmploymentStatus  @default(APPLICANT) @map("employment_status")
+  onboardDate       DateTime?         @map("onboard_date") @db.Date
+  offboardDate      DateTime?         @map("offboard_date") @db.Date
+  offboardReason    String?           @map("offboard_reason") @db.VarChar(500)
+  appliedAt         DateTime          @default(now()) @map("applied_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  person            Person            @relation(fields: [personId], references: [id], onDelete: Cascade)
+  jobDemand         JobDemand         @relation(fields: [jobDemandId], references: [id], onDelete: Restrict)
+  supplier          Supplier?         @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  recommender       User?             @relation("ApplicationRecommenders", fields: [recommenderUserId], references: [id], onDelete: SetNull)
+  referral          ReferralRecord?
+
+  @@index([personId, jobDemandId, appliedAt])
+  @@index([jobDemandId, source])
+  @@index([supplierId])
+  @@map("applications")
+}
+
+model ReferralRecord {
+  id                String          @id @default(uuid()) @db.Uuid
+  applicationId     String          @unique @map("application_id") @db.Uuid
+  personId          String          @map("person_id") @db.Uuid
+  jobDemandId       String          @map("job_demand_id") @db.Uuid
+  recommenderUserId String          @map("recommender_user_id") @db.Uuid
+  policyId          String?         @map("policy_id") @db.Uuid
+  policySnapshot    Json?           @map("policy_snapshot")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  application       Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  person            Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+  jobDemand         JobDemand       @relation(fields: [jobDemandId], references: [id], onDelete: Restrict)
+  recommender       User            @relation("ReferralRecommenders", fields: [recommenderUserId], references: [id], onDelete: Restrict)
+  policy            Policy?         @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  reward            ReferralReward?
+
+  @@index([recommenderUserId, createdAt])
+  @@map("referral_records")
+}
+
+model ReferralReward {
+  id         String         @id @default(uuid()) @db.Uuid
+  referralId String         @unique @map("referral_id") @db.Uuid
+  policyId   String?        @map("policy_id") @db.Uuid
+  amount     Decimal        @db.Decimal(12, 2)
+  status     RewardStatus   @default(PENDING)
+  achievedAt DateTime?      @map("achieved_at")
+  paidAt     DateTime?      @map("paid_at")
+  notes      String?        @db.Text
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  referral   ReferralRecord @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  policy     Policy?        @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@map("referral_reward_records")
+}
+
+model SalaryImportBatch {
+  id           String       @id @default(uuid()) @db.Uuid
+  sourceFile   String       @map("source_file") @db.VarChar(255)
+  sourceHash   String       @map("source_hash") @db.VarChar(64)
+  salaryMonth  String       @map("salary_month") @db.VarChar(7)
+  status       ImportStatus @default(PREVIEW)
+  totalRows    Int          @map("total_rows")
+  acceptedRows Int          @map("accepted_rows")
+  skippedRows  Int          @map("skipped_rows")
+  previewRows  Json         @default("[]") @map("preview_rows")
+  errors       Json         @default("[]")
+  createdById  String?      @map("created_by_id") @db.Uuid
+  publishedAt  DateTime?    @map("published_at")
+  withdrawnAt  DateTime?    @map("withdrawn_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    User?        @relation("SalaryImportCreators", fields: [createdById], references: [id], onDelete: SetNull)
+  slips        SalarySlip[]
+
+  @@unique([sourceHash, salaryMonth])
+  @@map("salary_import_batches")
+}
+
+model SalarySlip {
+  id                      String            @id @default(uuid()) @db.Uuid
+  personId                String            @map("person_id") @db.Uuid
+  batchId                 String            @map("batch_id") @db.Uuid
+  salaryMonth             String            @map("salary_month") @db.VarChar(7)
+  grossPay                Decimal           @map("gross_pay") @db.Decimal(12, 2)
+  netPay                  Decimal           @map("net_pay") @db.Decimal(12, 2)
+  hourlyPay               Decimal           @default(0) @map("hourly_pay") @db.Decimal(12, 2)
+  overtimePay             Decimal           @default(0) @map("overtime_pay") @db.Decimal(12, 2)
+  allowance               Decimal           @default(0) @db.Decimal(12, 2)
+  referralReward          Decimal           @default(0) @map("referral_reward") @db.Decimal(12, 2)
+  socialSecurityDeduction Decimal           @default(0) @map("social_security_deduction") @db.Decimal(12, 2)
+  otherDeduction          Decimal           @default(0) @map("other_deduction") @db.Decimal(12, 2)
+  notes                   String?           @db.Text
+  status                  SalarySlipStatus  @default(DRAFT)
+  publishedAt             DateTime?         @map("published_at")
+  withdrawnAt             DateTime?         @map("withdrawn_at")
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
+  person                  Person            @relation(fields: [personId], references: [id], onDelete: Restrict)
+  batch                   SalaryImportBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@unique([personId, salaryMonth])
+  @@index([batchId, status])
+  @@map("salary_slips")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @db.VarChar(120)
+  description String?  @db.Text
+  isSystem    Boolean  @default(false) @map("is_system")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+  positionBindings PositionRoleBinding[]
+
+  @@index([isActive, name])
+  @@map("roles")
+}
+
+
+model PositionRoleBinding {
+  id         String        @id @default(uuid()) @db.Uuid
+  positionId String        @map("position_id") @db.Uuid
+  roleId     String        @map("role_id") @db.Uuid
+  scopeType  DataScopeType @map("scope_type")
+  isActive   Boolean       @default(true) @map("is_active")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  position   Position      @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  role       Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  assignments UserRoleAssignment[]
+
+  @@unique([positionId, roleId, scopeType])
+  @@index([positionId, isActive])
+  @@index([roleId, isActive])
+  @@map("position_role_bindings")
+}
+
+model PermissionDefinition {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(120)
+  name        String   @db.VarChar(120)
+  module      String   @db.VarChar(64)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  roleLinks   RolePermission[]
+
+  @@index([module, code])
+  @@map("permission_definitions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   PermissionDefinition @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  id          String               @id @default(uuid()) @db.Uuid
+  userId      String               @map("user_id") @db.Uuid
+  roleId      String               @map("role_id") @db.Uuid
+  status      RoleAssignmentStatus @default(ACTIVE)
+  source      RoleAssignmentSource @default(MANUAL)
+  positionRoleBindingId String?    @map("position_role_binding_id") @db.Uuid
+  accessRequestId String?          @map("access_request_id") @db.Uuid
+  validFrom   DateTime             @default(now()) @map("valid_from")
+  validTo     DateTime?            @map("valid_to")
+  createdById String?              @map("created_by_id") @db.Uuid
+  revokedById String?              @map("revoked_by_id") @db.Uuid
+  revokedAt   DateTime?            @map("revoked_at")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  user        User                 @relation("UserAssignedRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role        Role                 @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  positionRoleBinding PositionRoleBinding? @relation(fields: [positionRoleBindingId], references: [id], onDelete: SetNull)
+  accessRequest AccessRequest? @relation("AccessRequestRoleAssignments", fields: [accessRequestId], references: [id], onDelete: SetNull)
+  scopes      DataScopeBinding[]
+
+  @@unique([userId, roleId, validFrom])
+  @@index([userId, status, validTo])
+  @@index([roleId, status])
+  @@index([userId, source, status])
+  @@index([positionRoleBindingId, status])
+  @@index([accessRequestId, status])
+  @@index([createdById, createdAt])
+  @@index([revokedById, revokedAt])
+  @@map("user_role_assignments")
+}
+
+model DataScopeBinding {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  roleAssignmentId   String?       @map("role_assignment_id") @db.Uuid
+  accessRequestId     String?       @map("access_request_id") @db.Uuid
+  type               DataScopeType
+  organizationUnitId String?       @map("organization_unit_id") @db.Uuid
+  branchId           String?       @map("branch_id") @db.Uuid
+  projectId          String?       @map("project_id") @db.Uuid
+  supplierId         String?       @map("supplier_id") @db.Uuid
+  isActive           Boolean       @default(true) @map("is_active")
+  validFrom          DateTime      @default(now()) @map("valid_from")
+  validTo            DateTime?     @map("valid_to")
+  createdById        String?       @map("created_by_id") @db.Uuid
+  revokedById        String?       @map("revoked_by_id") @db.Uuid
+  revokedAt          DateTime?     @map("revoked_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  user               User          @relation("UserDataScopes", fields: [userId], references: [id], onDelete: Cascade)
+  roleAssignment     UserRoleAssignment? @relation(fields: [roleAssignmentId], references: [id], onDelete: Cascade)
+  organizationUnit   OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: Cascade)
+  branch             Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  project            Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier           Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  accessRequest      AccessRequest? @relation("AccessRequestScopeBindings", fields: [accessRequestId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isActive, validTo])
+  @@index([roleAssignmentId, isActive])
+  @@index([accessRequestId, isActive])
+  @@index([organizationUnitId, isActive])
+  @@index([branchId, isActive])
+  @@index([projectId, isActive])
+  @@index([supplierId, isActive])
+  @@index([createdById, createdAt])
+  @@index([revokedById, revokedAt])
+  @@map("data_scope_bindings")
+}
+
+model User {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  username                String                   @unique @db.VarChar(64)
+  passwordHash            String                   @map("password_hash") @db.VarChar(255)
+  displayName             String                   @map("display_name") @db.VarChar(64)
+  role                    UserRole
+  branchId                String?                  @map("branch_id") @db.Uuid
+  supplierId              String?                  @map("supplier_id") @db.Uuid
+  personId                String?                  @unique @map("person_id") @db.Uuid
+  employeeType            String?                  @map("employee_type") @db.VarChar(64)
+  isActive                Boolean                  @default(true) @map("is_active")
+  tokenVersion            Int                      @default(0) @map("token_version")
+  wechatMiniappOpenId     String?                  @unique @map("wechat_miniapp_open_id") @db.VarChar(128)
+  wechatOfficialOpenId    String?                  @unique @map("wechat_official_open_id") @db.VarChar(128)
+  wechatUnionId           String?                  @map("wechat_union_id") @db.VarChar(128)
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  supplier                Supplier?                @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  person                  Person?                  @relation("PersonUser", fields: [personId], references: [id], onDelete: Restrict)
+  internalEmployee        InternalEmployee?        @relation("InternalEmployeeUser")
+  roleAssignments         UserRoleAssignment[]     @relation("UserAssignedRoles")
+  dataScopeBindings       DataScopeBinding[]       @relation("UserDataScopes")
+  projectLinks            UserProject[]
+  createdJobDemands       JobDemand[]              @relation("CreatedJobDemands")
+  recommendedPeople       Person[]                 @relation("RecommendedPeople")
+  applicationReferrals    Application[]            @relation("ApplicationRecommenders")
+  referralRecords         ReferralRecord[]         @relation("ReferralRecommenders")
+  referralShares          ReferralShare[]          @relation("ReferralShareCreators")
+  uploadedPersonFiles     PersonFile[]             @relation("UploadedPersonFiles")
+  statusChanges           PersonStatusLog[]        @relation("PersonStatusActors")
+  salaryImportBatches     SalaryImportBatch[]      @relation("SalaryImportCreators")
+  importJobs              ImportJob[]              @relation("ImportJobCreators")
+  notifications           Notification[]           @relation("NotificationRecipients")
+  auditLogs               AuditLog[]               @relation("AuditActors")
+  aiActions               AiAction[]
+  aiAuditLogs             AiAuditLog[]             @relation("AiAuditActors")
+  portalFavorites         PortalFavorite[]
+  portalAdvances          PortalAdvance[]          @relation("PortalAdvanceCreators")
+  portalAppeals           PortalAppeal[]           @relation("PortalAppealCreators")
+  handledPortalAppeals    PortalAppeal[]           @relation("PortalAppealHandlers")
+  portalQrCodes           PortalQrCode[]
+  portalNotificationReads PortalNotificationRead[]
+  reimbursementApplications ReimbursementBatch[]      @relation("ReimbursementApplicants")
+  reimbursementUploads      ReimbursementAttachment[] @relation("ReimbursementUploaders")
+  reimbursementIssuesRaised ReimbursementIssue[]      @relation("ReimbursementIssueRaisers")
+  reimbursementIssuesResolved ReimbursementIssue[]    @relation("ReimbursementIssueResolvers")
+  reimbursementApprovals    ReimbursementApproval[]   @relation("ReimbursementApprovalActors")
+  reimbursementPayments     ReimbursementPayment[]    @relation("ReimbursementPayers")
+  reimbursementArtifacts    ReimbursementArtifact[]   @relation("ReimbursementArtifactGenerators")
+  migrationBatchesCreated     MigrationBatch[]            @relation("MigrationBatchCreators")
+  workflowVersionsCreated    WorkflowVersion[]           @relation("WorkflowVersionCreators")
+  workflowInstancesInitiated WorkflowInstance[]          @relation("WorkflowInstanceInitiators")
+  workflowTasksAssigned      WorkflowTask[]              @relation("WorkflowTaskAssignees")
+  workflowTasksActed         WorkflowTask[]              @relation("WorkflowTaskActors")
+  accessRequestsSubject      AccessRequest[]             @relation("AccessRequestSubjects")
+  accessRequestsCreated      AccessRequest[]             @relation("AccessRequestCreators")
+  accessRequestsReviewed     AccessRequest[]             @relation("AccessRequestReviewers")
+  portalAccesses             UserPortalAccess[]          @relation("UserPortalAccessUsers")
+  portalAccessGrants         UserPortalAccess[]          @relation("UserPortalAccessGranters")
+  accountLifecycleLogs       AccountLifecycleLog[]       @relation("AccountLifecycleUsers")
+  accountLifecycleActions    AccountLifecycleLog[]       @relation("AccountLifecycleActors")
+
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model UserProject {
+  userId    String   @map("user_id") @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
+  @@map("user_project_relations")
+}
+
+model ImportJob {
+  id          String       @id @default(uuid()) @db.Uuid
+  type        String       @db.VarChar(64)
+  sourceFile  String       @map("source_file") @db.VarChar(255)
+  sourceHash  String       @map("source_hash") @db.VarChar(64)
+  status      ImportStatus @default(PREVIEW)
+  totalRows   Int          @default(0) @map("total_rows")
+  successRows Int          @default(0) @map("success_rows")
+  skippedRows Int          @default(0) @map("skipped_rows")
+  failedRows  Int          @default(0) @map("failed_rows")
+  summary     Json         @default("{}")
+  previewRows Json         @default("[]") @map("preview_rows")
+  errors      Json         @default("[]")
+  createdById String?      @map("created_by_id") @db.Uuid
+  committedAt DateTime?    @map("committed_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  createdBy   User?        @relation("ImportJobCreators", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([type, sourceHash])
+  @@index([status, createdAt])
+  @@map("import_jobs")
+}
+
+model Notification {
+  id              String                   @id @default(uuid()) @db.Uuid
+  recipientUserId String?                  @map("recipient_user_id") @db.Uuid
+  type            String                   @db.VarChar(64)
+  title           String                   @db.VarChar(200)
+  content         String                   @db.Text
+  targetPath      String?                  @map("target_path") @db.VarChar(500)
+  dedupeKey       String?                  @unique @map("dedupe_key") @db.VarChar(200)
+  status          NotificationStatus       @default(PENDING)
+  attempts        Int                      @default(0)
+  lastError       String?                  @map("last_error") @db.Text
+  sentAt          DateTime?                @map("sent_at")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  recipient       User?                    @relation("NotificationRecipients", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  portalReads     PortalNotificationRead[]
+
+  @@index([recipientUserId, status])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(100)
+  resourceId   String?  @map("resource_id") @db.VarChar(128)
+  before       Json?
+  after        Json?
+  ipAddress    String?  @map("ip_address") @db.VarChar(64)
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+  actor        User?    @relation("AuditActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([resourceType, resourceId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+model AiAction {
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
+  skill          String         @db.VarChar(80)
+  rawInstruction String         @map("raw_instruction") @db.Text
+  parameters     Json
+  before         Json
+  after          Json
+  impact         Json?
+  tokenHash      String         @map("token_hash") @db.VarChar(64)
+  expiresAt      DateTime       @map("expires_at")
+  status         AiActionStatus @default(PREVIEWED)
+  idempotencyKey String?        @unique @map("idempotency_key") @db.VarChar(128)
+  result         Json?
+  error          String?        @db.Text
+  confirmedAt    DateTime?      @map("confirmed_at")
+  executedAt     DateTime?      @map("executed_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status, expiresAt])
+  @@map("ai_actions")
+}
+
+model AiAuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  role           UserRole
+  rawInstruction String   @map("raw_instruction") @db.Text
+  skill          String   @db.VarChar(80)
+  parameters     Json
+  tool           String   @db.VarChar(120)
+  before         Json?
+  after          Json?
+  confirmed      Boolean  @default(false)
+  actionId       String?  @map("action_id") @db.Uuid
+  idempotencyKey String?  @map("idempotency_key") @db.VarChar(128)
+  result         Json?
+  error          String?  @db.Text
+  scope          Json
+  model          String?  @db.VarChar(120)
+  routeType      String   @map("route_type") @db.VarChar(32)
+  createdAt      DateTime @default(now()) @map("created_at")
+  actor          User?    @relation("AiAuditActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([actionId])
+  @@map("ai_audit_logs")
+}
+
+model AiDemoSnapshot {
+  id               String   @id @default(uuid()) @db.Uuid
+  personId         String   @unique @map("person_id") @db.Uuid
+  personState      Json     @map("person_state")
+  applicationState Json?    @map("application_state")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  person           Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@map("ai_demo_snapshots")
+}
+
+model ReferralShare {
+  id                String    @id @default(uuid()) @db.Uuid
+  token             String    @unique @db.VarChar(32)
+  jobDemandId       String    @map("job_demand_id") @db.Uuid
+  recommenderUserId String    @map("recommender_user_id") @db.Uuid
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  jobDemand         JobDemand @relation(fields: [jobDemandId], references: [id], onDelete: Cascade)
+  recommender       User      @relation("ReferralShareCreators", fields: [recommenderUserId], references: [id], onDelete: Cascade)
+
+  @@index([recommenderUserId, createdAt])
+  @@map("referral_shares")
+}
+
+model PortalFavorite {
+  userId      String    @map("user_id") @db.Uuid
+  jobDemandId String    @map("job_demand_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobDemand   JobDemand @relation(fields: [jobDemandId], references: [id], onDelete: Cascade)
+
+  @@id([userId, jobDemandId])
+  @@index([jobDemandId])
+  @@map("portal_favorites")
+}
+
+model PortalAdvance {
+  id            String   @id @default(uuid()) @db.Uuid
+  personId      String   @map("person_id") @db.Uuid
+  creatorUserId String   @map("creator_user_id") @db.Uuid
+  amount        Decimal  @db.Decimal(12, 2)
+  reason        String   @db.Text
+  status        String   @default("submitted") @db.VarChar(32)
+  reply         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  person        Person   @relation(fields: [personId], references: [id], onDelete: Restrict)
+  creator       User     @relation("PortalAdvanceCreators", fields: [creatorUserId], references: [id], onDelete: Restrict)
+
+  @@index([creatorUserId, status])
+  @@index([personId])
+  @@map("portal_advances")
+}
+
+model PortalAppeal {
+  id              String   @id @default(uuid()) @db.Uuid
+  creatorUserId   String   @map("creator_user_id") @db.Uuid
+  type            String   @db.VarChar(64)
+  subjectId       String?  @map("subject_id") @db.VarChar(128)
+  description     String   @db.Text
+  requestedAmount Decimal? @map("requested_amount") @db.Decimal(12, 2)
+  expectedStatus  String?  @map("expected_status") @db.VarChar(64)
+  attachmentIds   Json     @default("[]") @map("attachment_ids")
+  status          String   @default("submitted") @db.VarChar(32)
+  reply           String?  @db.Text
+  handlerUserId   String?  @map("handler_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  creator         User     @relation("PortalAppealCreators", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  handler         User?    @relation("PortalAppealHandlers", fields: [handlerUserId], references: [id], onDelete: SetNull)
+
+  @@index([creatorUserId, status])
+  @@index([handlerUserId])
+  @@map("portal_appeals")
+}
+
+model PortalSettlement {
+  id              String                 @id @default(uuid()) @db.Uuid
+  supplierId      String                 @map("supplier_id") @db.Uuid
+  month           String                 @db.VarChar(7)
+  dueAmount       Decimal                @map("due_amount") @db.Decimal(14, 2)
+  confirmedAmount Decimal                @default(0) @map("confirmed_amount") @db.Decimal(14, 2)
+  pendingAmount   Decimal                @default(0) @map("pending_amount") @db.Decimal(14, 2)
+  disputedAmount  Decimal                @default(0) @map("disputed_amount") @db.Decimal(14, 2)
+  status          String                 @default("pending_confirmation") @db.VarChar(32)
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  supplier        Supplier               @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items           PortalSettlementItem[]
+
+  @@unique([supplierId, month])
+  @@index([month, status])
+  @@map("portal_settlements")
+}
+
+model PortalSettlementItem {
+  id             String           @id @default(uuid()) @db.Uuid
+  settlementId   String           @map("settlement_id") @db.Uuid
+  personId       String           @map("person_id") @db.Uuid
+  policy         String           @db.Text
+  employmentDays Int              @map("employment_days")
+  dueAmount      Decimal          @map("due_amount") @db.Decimal(12, 2)
+  actualAmount   Decimal          @default(0) @map("actual_amount") @db.Decimal(12, 2)
+  status         String           @default("pending") @db.VarChar(32)
+  settlement     PortalSettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  person         Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+
+  @@unique([settlementId, personId])
+  @@index([personId])
+  @@map("portal_settlement_items")
+}
+
+model PortalQrCode {
+  id              String     @id @default(uuid()) @db.Uuid
+  token           String     @unique @db.VarChar(64)
+  projectId       String     @map("project_id") @db.Uuid
+  jobDemandId     String?    @map("job_demand_id") @db.Uuid
+  createdByUserId String     @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime   @default(now()) @map("created_at")
+  expiresAt       DateTime   @map("expires_at")
+  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  jobDemand       JobDemand? @relation(fields: [jobDemandId], references: [id], onDelete: SetNull)
+  createdBy       User       @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, expiresAt])
+  @@map("portal_qr_codes")
+}
+
+model PortalNotificationRead {
+  userId         String       @map("user_id") @db.Uuid
+  notificationId String       @map("notification_id") @db.Uuid
+  readAt         DateTime     @default(now()) @map("read_at")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, notificationId])
+  @@index([notificationId])
+  @@map("portal_notification_reads")
+}
+
+model ReimbursementBatch {
+  id                 String              @id @default(uuid()) @db.Uuid
+  code               String              @unique @db.VarChar(64)
+  title              String              @db.VarChar(200)
+  applicantUserId    String              @map("applicant_user_id") @db.Uuid
+  branchId           String?             @map("branch_id") @db.Uuid
+  organizationUnitId String?             @map("organization_unit_id") @db.Uuid
+  projectId          String?             @map("project_id") @db.Uuid
+  supplierId         String?             @map("supplier_id") @db.Uuid
+  status             ReimbursementStatus @default(PENDING_SUBMISSION)
+  currency           String              @default("CNY") @db.VarChar(3)
+  totalPaymentCents  Int                 @default(0) @map("total_payment_cents")
+  approvedAmountCents Int?                @map("approved_amount_cents")
+  totalInvoiceCents  Int                 @default(0) @map("total_invoice_cents")
+  invoiceExcessCents Int                 @default(0) @map("invoice_excess_cents")
+  version            Int                 @default(1)
+  submittedAt        DateTime?           @map("submitted_at")
+  approvedAt         DateTime?           @map("approved_at")
+  paidAt             DateTime?           @map("paid_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  applicant          User                @relation("ReimbursementApplicants", fields: [applicantUserId], references: [id], onDelete: Restrict)
+  branch             Branch?             @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit?   @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  project            Project?            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines              ReimbursementLine[]
+  attachments        ReimbursementAttachment[]
+  issues             ReimbursementIssue[]
+  approvals          ReimbursementApproval[]
+  payment            ReimbursementPayment?
+  artifacts          ReimbursementArtifact[]
+
+  @@unique([id, version])
+  @@index([applicantUserId, status, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([organizationUnitId, status, createdAt])
+  @@index([projectId, status, createdAt])
+  @@index([supplierId, status, createdAt])
+  @@map("reimbursement_batches")
+}
+
+model ReimbursementLine {
+  id             String   @id @default(uuid()) @db.Uuid
+  batchId        String   @map("batch_id") @db.Uuid
+  sequence       Int
+  expenseDate    DateTime @map("expense_date") @db.Date
+  category       String   @db.VarChar(80)
+  description    String   @db.VarChar(500)
+  payeeName      String?  @map("payee_name") @db.VarChar(120)
+  payeeAccount   String?  @map("payee_account") @db.VarChar(120)
+  payeeBank      String?  @map("payee_bank") @db.VarChar(200)
+  paymentCents   Int      @map("payment_cents")
+  invoiceCents   Int      @map("invoice_cents")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  batch          ReimbursementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  attachments    ReimbursementAttachment[]
+  issues         ReimbursementIssue[]
+
+  @@unique([batchId, sequence])
+  @@index([batchId, expenseDate])
+  @@map("reimbursement_lines")
+}
+
+model ReimbursementAttachment {
+  id           String                      @id @default(uuid()) @db.Uuid
+  batchId      String                      @map("batch_id") @db.Uuid
+  lineId       String?                     @map("line_id") @db.Uuid
+  type         ReimbursementAttachmentType
+  storageKey   String                      @unique @map("storage_key") @db.VarChar(500)
+  originalName String                      @map("original_name") @db.VarChar(255)
+  mimeType     String                      @map("mime_type") @db.VarChar(128)
+  sizeBytes    Int                         @map("size_bytes")
+  sha256       String                      @db.VarChar(64)
+  uploadedById String?                     @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  batch        ReimbursementBatch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  line         ReimbursementLine?          @relation(fields: [lineId], references: [id], onDelete: SetNull)
+  uploadedBy   User?                       @relation("ReimbursementUploaders", fields: [uploadedById], references: [id], onDelete: SetNull)
+  paymentProof ReimbursementPayment?       @relation("ReimbursementPaymentProof")
+
+  @@index([batchId, type, createdAt])
+  @@index([lineId, type, createdAt])
+  @@index([uploadedById, createdAt])
+  @@map("reimbursement_attachments")
+}
+
+model ReimbursementIssue {
+  id           String                   @id @default(uuid()) @db.Uuid
+  batchId      String                   @map("batch_id") @db.Uuid
+  lineId       String?                  @map("line_id") @db.Uuid
+  raisedById   String                   @map("raised_by_id") @db.Uuid
+  resolvedById String?                  @map("resolved_by_id") @db.Uuid
+  type         String                   @db.VarChar(80)
+  description  String                   @db.VarChar(500)
+  status       ReimbursementIssueStatus @default(OPEN)
+  resolution   String?                  @db.VarChar(500)
+  resolvedAt   DateTime?                @map("resolved_at")
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  batch        ReimbursementBatch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  line         ReimbursementLine?       @relation(fields: [lineId], references: [id], onDelete: SetNull)
+  raisedBy     User                     @relation("ReimbursementIssueRaisers", fields: [raisedById], references: [id], onDelete: Restrict)
+  resolvedBy   User?                    @relation("ReimbursementIssueResolvers", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([batchId, status, createdAt])
+  @@index([lineId, status])
+  @@index([raisedById, createdAt])
+  @@map("reimbursement_issues")
+}
+
+model ReimbursementApproval {
+  id         String                        @id @default(uuid()) @db.Uuid
+  batchId    String                        @map("batch_id") @db.Uuid
+  actorId    String                        @map("actor_id") @db.Uuid
+  fromStatus ReimbursementStatus           @map("from_status")
+  toStatus   ReimbursementStatus           @map("to_status")
+  decision   ReimbursementApprovalDecision
+  comment    String?                       @db.VarChar(500)
+  createdAt  DateTime                      @default(now()) @map("created_at")
+  batch      ReimbursementBatch            @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  actor      User                          @relation("ReimbursementApprovalActors", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([batchId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("reimbursement_approvals")
+}
+
+model ReimbursementPayment {
+  id                String   @id @default(uuid()) @db.Uuid
+  batchId           String   @unique @map("batch_id") @db.Uuid
+  amountCents       Int      @map("amount_cents")
+  reference         String   @unique @db.VarChar(120)
+  paidById          String   @map("paid_by_id") @db.Uuid
+  paidAt            DateTime @map("paid_at")
+  proofAttachmentId String?  @unique @map("proof_attachment_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at")
+  batch             ReimbursementBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  paidBy            User               @relation("ReimbursementPayers", fields: [paidById], references: [id], onDelete: Restrict)
+  proofAttachment   ReimbursementAttachment? @relation("ReimbursementPaymentProof", fields: [proofAttachmentId], references: [id], onDelete: Restrict)
+
+  @@index([paidById, paidAt])
+  @@index([paidAt])
+  @@map("reimbursement_payments")
+}
+
+model ReimbursementArtifact {
+  id            String                      @id @default(uuid()) @db.Uuid
+  batchId       String                      @map("batch_id") @db.Uuid
+  type          ReimbursementArtifactType
+  status        ReimbursementArtifactStatus @default(PENDING)
+  storageKey    String?                     @unique @map("storage_key") @db.VarChar(500)
+  originalName  String?                     @map("original_name") @db.VarChar(255)
+  error         String?                     @db.Text
+  generatedById String?                     @map("generated_by_id") @db.Uuid
+  generatedAt   DateTime?                   @map("generated_at")
+  createdAt     DateTime                    @default(now()) @map("created_at")
+  updatedAt     DateTime                    @updatedAt @map("updated_at")
+  batch         ReimbursementBatch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  generatedBy   User?                       @relation("ReimbursementArtifactGenerators", fields: [generatedById], references: [id], onDelete: SetNull)
+
+  @@unique([batchId, type])
+  @@index([batchId, status])
+  @@index([generatedById, createdAt])
+  @@map("reimbursement_artifacts")
+}
+
+
+model MigrationTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @db.VarChar(120)
+  targetEntity String  @map("target_entity") @db.VarChar(64)
+  description String?  @db.Text
+  fields      Json
+  uniqueKeys  String[] @default([]) @map("unique_keys")
+  aliasMap    Json     @default("{}") @map("alias_map")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  batches     MigrationBatch[]
+
+  @@index([targetEntity, isActive])
+  @@map("migration_templates")
+}
+
+model MigrationBatch {
+  id               String               @id @default(uuid()) @db.Uuid
+  templateId       String               @map("template_id") @db.Uuid
+  sourceFile       String               @map("source_file") @db.VarChar(255)
+  sourceHash       String               @map("source_hash") @db.VarChar(64)
+  sourceStorageKey String?              @map("source_storage_key") @db.VarChar(128)
+  sourceMimeType   String?              @map("source_mime_type") @db.VarChar(160)
+  sourceSizeBytes  Int?                 @map("source_size_bytes")
+  status           MigrationBatchStatus @default(DRAFT)
+  mapping          Json                 @default("{}")
+  conflictPolicy   String               @default("UPDATE") @map("conflict_policy") @db.VarChar(32)
+  totalRows        Int                  @default(0) @map("total_rows")
+  createRows       Int                  @default(0) @map("create_rows")
+  updateRows       Int                  @default(0) @map("update_rows")
+  skipRows         Int                  @default(0) @map("skip_rows")
+  errorRows        Int                  @default(0) @map("error_rows")
+  processedRows    Int                  @default(0) @map("processed_rows")
+  summary          Json                 @default("{}")
+  errors           Json                 @default("[]")
+  rollbackSnapshot Json?                @map("rollback_snapshot")
+  createdById      String?              @map("created_by_id") @db.Uuid
+  committedAt      DateTime?            @map("committed_at")
+  rolledBackAt     DateTime?            @map("rolled_back_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  template         MigrationTemplate    @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  createdBy        User?                @relation("MigrationBatchCreators", fields: [createdById], references: [id], onDelete: SetNull)
+  rows             MigrationRowResult[]
+
+  @@unique([templateId, sourceHash])
+  @@index([status, createdAt])
+  @@index([createdById, createdAt])
+  @@map("migration_batches")
+}
+
+model MigrationRowResult {
+  id             String             @id @default(uuid()) @db.Uuid
+  batchId        String             @map("batch_id") @db.Uuid
+  sourceRow      Int                @map("source_row")
+  status         MigrationRowStatus
+  action         String             @db.VarChar(32)
+  uniqueKey      String?            @map("unique_key") @db.VarChar(500)
+  sourceData     Json               @map("source_data")
+  normalizedData Json               @map("normalized_data")
+  errors         Json               @default("[]")
+  entityId       String?            @map("entity_id") @db.VarChar(128)
+  before         Json?
+  after          Json?
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  batch          MigrationBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, sourceRow])
+  @@index([batchId, status])
+  @@index([uniqueKey])
+  @@map("migration_row_results")
+}
+
+model WorkflowTemplate {
+  id           String                 @id @default(uuid()) @db.Uuid
+  code         String                 @unique @db.VarChar(64)
+  name         String                 @db.VarChar(120)
+  businessType String                 @map("business_type") @db.VarChar(64)
+  description  String?                @db.Text
+  status       WorkflowTemplateStatus @default(DRAFT)
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  versions     WorkflowVersion[]
+  instances    WorkflowInstance[]
+
+  @@index([businessType, status])
+  @@map("workflow_templates")
+}
+
+model WorkflowVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @map("template_id") @db.Uuid
+  version     Int
+  definition  Json
+  isPublished Boolean  @default(false) @map("is_published")
+  publishedAt DateTime? @map("published_at")
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  template    WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation("WorkflowVersionCreators", fields: [createdById], references: [id], onDelete: SetNull)
+  instances   WorkflowInstance[]
+
+  @@unique([templateId, version])
+  @@index([templateId, isPublished, version])
+  @@map("workflow_versions")
+}
+
+model WorkflowInstance {
+  id             String                 @id @default(uuid()) @db.Uuid
+  templateId     String                 @map("template_id") @db.Uuid
+  versionId      String                 @map("version_id") @db.Uuid
+  businessType   String                 @map("business_type") @db.VarChar(64)
+  businessId     String                 @map("business_id") @db.VarChar(128)
+  status         WorkflowInstanceStatus @default(RUNNING)
+  context        Json                   @default("{}")
+  currentNodeKey String?                @map("current_node_key") @db.VarChar(64)
+  initiatedById  String?                @map("initiated_by_id") @db.Uuid
+  completedAt    DateTime?              @map("completed_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  template       WorkflowTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  version        WorkflowVersion        @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  initiatedBy    User?                  @relation("WorkflowInstanceInitiators", fields: [initiatedById], references: [id], onDelete: SetNull)
+  tasks          WorkflowTask[]
+  accessRequests AccessRequest[]
+
+  @@unique([businessType, businessId])
+  @@index([status, createdAt])
+  @@index([templateId, versionId])
+  @@map("workflow_instances")
+}
+
+model WorkflowTask {
+  id             String             @id @default(uuid()) @db.Uuid
+  instanceId     String             @map("instance_id") @db.Uuid
+  nodeKey        String             @map("node_key") @db.VarChar(64)
+  nodeName       String             @map("node_name") @db.VarChar(120)
+  nodeOrder      Int                @map("node_order")
+  assigneeType   String             @map("assignee_type") @db.VarChar(64)
+  assigneeRefId  String?            @map("assignee_ref_id") @db.VarChar(128)
+  assignedUserId String?            @map("assigned_user_id") @db.Uuid
+  status         WorkflowTaskStatus @default(PENDING)
+  actionById     String?            @map("action_by_id") @db.Uuid
+  comment        String?            @db.Text
+  dueAt          DateTime?          @map("due_at")
+  completedAt    DateTime?          @map("completed_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  instance       WorkflowInstance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  assignedUser   User?              @relation("WorkflowTaskAssignees", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  actionBy       User?              @relation("WorkflowTaskActors", fields: [actionById], references: [id], onDelete: SetNull)
+
+  @@unique([instanceId, nodeKey, assignedUserId])
+  @@index([assignedUserId, status, createdAt])
+  @@index([instanceId, status, nodeOrder])
+  @@map("workflow_tasks")
+}
+
+model AccessRequest {
+  id                 String              @id @default(uuid()) @db.Uuid
+  subjectUserId      String              @map("subject_user_id") @db.Uuid
+  requestedById      String              @map("requested_by_id") @db.Uuid
+  reviewedById       String?             @map("reviewed_by_id") @db.Uuid
+  workflowInstanceId String?             @unique @map("workflow_instance_id") @db.Uuid
+  status             AccessRequestStatus @default(PENDING)
+  riskLevel          AccessRiskLevel     @default(NORMAL) @map("risk_level")
+  portals            Json
+  roles              Json
+  scopes             Json
+  validFrom          DateTime            @map("valid_from")
+  validTo            DateTime?           @map("valid_to")
+  reason             String              @db.Text
+  reviewComment      String?             @map("review_comment") @db.Text
+  reviewedAt         DateTime?           @map("reviewed_at")
+  provisionedAt      DateTime?           @map("provisioned_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  subjectUser        User                @relation("AccessRequestSubjects", fields: [subjectUserId], references: [id], onDelete: Cascade)
+  requestedBy        User                @relation("AccessRequestCreators", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy         User?               @relation("AccessRequestReviewers", fields: [reviewedById], references: [id], onDelete: SetNull)
+  workflowInstance   WorkflowInstance?   @relation(fields: [workflowInstanceId], references: [id], onDelete: SetNull)
+  provisionTasks     PermissionProvisionTask[]
+  portalAccesses     UserPortalAccess[]
+  roleAssignments    UserRoleAssignment[] @relation("AccessRequestRoleAssignments")
+  scopeBindings      DataScopeBinding[] @relation("AccessRequestScopeBindings")
+
+  @@index([subjectUserId, status, createdAt])
+  @@index([requestedById, createdAt])
+  @@index([status, riskLevel, createdAt])
+  @@map("access_requests")
+}
+
+model PermissionProvisionTask {
+  id              String                        @id @default(uuid()) @db.Uuid
+  accessRequestId String                        @map("access_request_id") @db.Uuid
+  action          String                        @db.VarChar(64)
+  status          PermissionProvisionTaskStatus @default(PENDING)
+  payload         Json
+  error           String?                       @db.Text
+  attemptedAt     DateTime?                     @map("attempted_at")
+  completedAt     DateTime?                     @map("completed_at")
+  createdAt       DateTime                      @default(now()) @map("created_at")
+  updatedAt       DateTime                      @updatedAt @map("updated_at")
+  accessRequest   AccessRequest                 @relation(fields: [accessRequestId], references: [id], onDelete: Cascade)
+
+  @@index([accessRequestId, status])
+  @@map("permission_provision_tasks")
+}
+
+model UserPortalAccess {
+  id              String       @id @default(uuid()) @db.Uuid
+  userId          String       @map("user_id") @db.Uuid
+  portal          PortalType
+  enabled         Boolean      @default(true)
+  source          String       @default("MANUAL") @db.VarChar(32)
+  validFrom       DateTime     @default(now()) @map("valid_from")
+  validTo         DateTime?    @map("valid_to")
+  grantedById     String?      @map("granted_by_id") @db.Uuid
+  accessRequestId String?      @map("access_request_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  user            User         @relation("UserPortalAccessUsers", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy       User?        @relation("UserPortalAccessGranters", fields: [grantedById], references: [id], onDelete: SetNull)
+  accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
+
+  @@index([userId, portal, enabled])
+  @@index([portal, enabled, validTo])
+  @@index([accessRequestId])
+  @@map("user_portal_accesses")
+}
+
+model AccountLifecycleLog {
+  id        String                 @id @default(uuid()) @db.Uuid
+  userId    String                 @map("user_id") @db.Uuid
+  actorId   String?                @map("actor_id") @db.Uuid
+  action    AccountLifecycleAction
+  portal    PortalType?
+  before    Json?
+  after     Json?
+  reason    String?                @db.Text
+  createdAt DateTime               @default(now()) @map("created_at")
+  user      User                   @relation("AccountLifecycleUsers", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User?                  @relation("AccountLifecycleActors", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("account_lifecycle_logs")
+}

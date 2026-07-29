@@ -1,0 +1,63 @@
+{
+  "tools": [
+    {
+      "name": "get_project_personnel_statistics",
+      "description": "查询权限范围内项目或分公司人员统计",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "metrics"
+        ],
+        "properties": {
+          "branch_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "hire_count",
+                "resignation_count",
+                "current_headcount",
+                "net_change"
+              ]
+            },
+            "minItems": 1
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "group_by": {
+            "enum": [
+              "none",
+              "day",
+              "week",
+              "month"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

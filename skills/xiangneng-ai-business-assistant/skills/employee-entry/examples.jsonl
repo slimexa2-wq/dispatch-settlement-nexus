@@ -1,0 +1,3 @@
+{"input": "张三今天入职四川时代操作工", "intent": "complete"}
+{"input": "给李四办理入职", "intent": "clarify"}
+{"input": "四川时代1月入职多少人", "intent": "negative"}

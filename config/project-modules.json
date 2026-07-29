@@ -1,0 +1,439 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "id": "platform",
+      "name": "平台与工程基础",
+      "description": "工作区配置、部署、构建、演示环境和跨应用公共工程能力。",
+      "include": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "tsconfig.base.json",
+        "docker-compose.yml",
+        "render.yaml",
+        ".env.example",
+        "apps/*/package.json",
+        "packages/*/package.json",
+        "scripts/*.mjs",
+        "scripts/*.mts",
+        "scripts/*.ps1",
+        "scripts/project-tools/**"
+      ],
+      "dependsOn": [],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm build"
+      ],
+      "prismaModels": []
+    },
+    {
+      "id": "auth",
+      "name": "账号、会话与权限",
+      "description": "登录会话、多角色授权、权限定义、数据范围和账号管理。",
+      "include": [
+        "packages/shared/src/permissions.ts",
+        "apps/api/src/authorization.ts",
+        "apps/api/src/session-user.ts",
+        "apps/api/src/routes/auth.ts",
+        "apps/api/src/routes/users.ts",
+        "apps/api/test/authorization.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "apps/admin/src/auth/**",
+        "apps/admin/src/components/PermissionGuard.tsx",
+        "apps/admin/src/pages/LoginPage.tsx",
+        "apps/admin/src/pages/SettingsPage.tsx",
+        "apps/miniapp/src/auth/**",
+        "apps/miniapp/src/pages/login/**",
+        "apps/miniapp/src/domain/roles.ts",
+        "apps/miniapp/src/domain/roles.test.ts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "organization"
+      ],
+      "businessRules": [
+        "docs/business-rules/authorization.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:authorization"
+      ],
+      "prismaModels": [
+        "Role",
+        "PermissionDefinition",
+        "RolePermission",
+        "UserRoleAssignment",
+        "DataScopeBinding",
+        "User",
+        "UserProject"
+      ]
+    },
+    {
+      "id": "organization",
+      "name": "组织与内部员工",
+      "description": "集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。",
+      "include": [
+        "apps/api/src/routes/internal-employees.ts",
+        "apps/api/src/services/internal-employees.ts",
+        "apps/api/src/services/position-authorizations.ts",
+        "apps/api/test/internal-employee-domain.test.ts",
+        "apps/api/test/internal-employee-routes.test.ts",
+        "apps/api/test/position-authorizations.test.ts",
+        "apps/admin/src/pages/InternalEmployeesPage.tsx",
+        "apps/admin/src/pages/InternalEmployeesPage.test.tsx",
+        "prisma/schema.prisma",
+        "prisma/migrations/**"
+      ],
+      "dependsOn": [],
+      "businessRules": [
+        "docs/business-rules/organization.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:organization"
+      ],
+      "prismaModels": [
+        "LegalEntity",
+        "OrganizationUnit",
+        "Position",
+        "JobGrade",
+        "JobGradeApprovalPolicy",
+        "InternalEmployee",
+        "InternalEmployment",
+        "InternalEmployeeChange"
+      ]
+    },
+    {
+      "id": "workforce",
+      "name": "求职者与派遣外包人员",
+      "description": "求职者、派遣外包员工、人员档案、生命周期状态和附件。",
+      "include": [
+        "apps/api/src/routes/people.ts",
+        "apps/api/src/services/person-lifecycle.ts",
+        "apps/api/src/services/registration.ts",
+        "apps/api/src/services/people-workbook.ts",
+        "apps/api/test/registration.test.ts",
+        "apps/admin/src/pages/PeoplePage.tsx",
+        "apps/admin/src/lib/people.ts",
+        "apps/miniapp/src/pages/operator/**",
+        "apps/miniapp/src/pages/supplier/people/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "supplier"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/portal-mappers.test.ts"
+      ],
+      "prismaModels": [
+        "Person",
+        "PersonFile",
+        "PersonStatusLog"
+      ]
+    },
+    {
+      "id": "recruitment",
+      "name": "招聘需求与进度",
+      "description": "岗位需求、报名、面试、入职进度、员工推荐和奖励。",
+      "include": [
+        "apps/api/src/routes/jobs.ts",
+        "apps/api/src/routes/applications.ts",
+        "apps/api/src/routes/referrals.ts",
+        "apps/api/src/services/recruitment-progress.ts",
+        "apps/api/src/services/referral-share.ts",
+        "apps/admin/src/pages/JobDemandsPage.tsx",
+        "apps/admin/src/pages/RecruitmentProgressPage.tsx",
+        "apps/admin/src/pages/ReferralRewardsPage.tsx",
+        "apps/miniapp/src/pages/jobs/**",
+        "apps/miniapp/src/pages/application/**",
+        "apps/miniapp/src/pages/referrals/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "supplier",
+        "workforce",
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/job-notification.test.ts"
+      ],
+      "prismaModels": [
+        "JobDemand",
+        "Application",
+        "ReferralRecord",
+        "ReferralReward",
+        "ReferralShare"
+      ]
+    },
+    {
+      "id": "project",
+      "name": "项目与经营区域",
+      "description": "项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。",
+      "include": [
+        "apps/api/src/routes/projects.ts",
+        "apps/admin/src/pages/ProjectsPage.tsx",
+        "apps/admin/public/project-assets/**",
+        "apps/portal/public/project-assets/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/auth-and-scope.test.ts test/public-resources.test.ts"
+      ],
+      "prismaModels": [
+        "Branch",
+        "Project",
+        "ProjectImage",
+        "UserProject"
+      ]
+    },
+    {
+      "id": "supplier",
+      "name": "供应商与政策",
+      "description": "供应商、项目合作关系、供应商政策和员工推荐政策。",
+      "include": [
+        "apps/api/src/routes/suppliers.ts",
+        "apps/api/src/routes/policies.ts",
+        "apps/admin/src/pages/SuppliersPage.tsx",
+        "apps/admin/src/pages/PoliciesPage.tsx",
+        "apps/portal/src/features/supplier/**",
+        "apps/miniapp/src/pages/supplier/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "project",
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts"
+      ],
+      "prismaModels": [
+        "Supplier",
+        "SupplierProject",
+        "Policy"
+      ]
+    },
+    {
+      "id": "reimbursement",
+      "name": "员工报销",
+      "description": "员工报销申请、部门制单、审批、财务审核、付款和打印材料。",
+      "include": [
+        "apps/api/src/routes/reimbursements.ts",
+        "apps/api/src/services/reimbursements.ts",
+        "apps/api/src/services/reimbursement-artifacts.ts",
+        "apps/api/test/reimbursement*.test.ts",
+        "apps/api/test/reimbursements.test.ts",
+        "apps/admin/src/pages/ReimbursementsPage.tsx",
+        "apps/admin/src/pages/ReimbursementsPage.test.tsx",
+        "apps/admin/src/lib/demo-reimbursement.test.ts",
+        "apps/miniapp/src/api/services.ts",
+        "apps/miniapp/src/domain/reimbursements.ts",
+        "apps/miniapp/src/domain/reimbursements.test.ts",
+        "apps/miniapp/src/pages/reimbursements/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth",
+        "organization",
+        "notification"
+      ],
+      "businessRules": [
+        "docs/business-rules/reimbursement.md"
+      ],
+      "testCommands": [
+        "pnpm test:module:reimbursement"
+      ],
+      "prismaModels": [
+        "ReimbursementBatch",
+        "ReimbursementLine",
+        "ReimbursementAttachment",
+        "ReimbursementIssue",
+        "ReimbursementApproval",
+        "ReimbursementPayment",
+        "ReimbursementArtifact"
+      ]
+    },
+    {
+      "id": "payroll",
+      "name": "工资与工资条",
+      "description": "工资批次、工资条、导入核验和员工工资查询。",
+      "include": [
+        "apps/api/src/routes/salary.ts",
+        "apps/api/src/services/salary-workbook.ts",
+        "apps/admin/src/pages/SalarySlipsPage.tsx",
+        "apps/miniapp/src/pages/salary/**",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "workforce",
+        "project",
+        "auth",
+        "import-export"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/workflow-and-salary.test.ts"
+      ],
+      "prismaModels": [
+        "SalaryImportBatch",
+        "SalarySlip"
+      ]
+    },
+    {
+      "id": "reporting",
+      "name": "统计与经营看板",
+      "description": "管理看板、招聘统计、领导驾驶舱和跨模块只读汇总。",
+      "include": [
+        "apps/api/src/routes/statistics.ts",
+        "apps/api/src/routes/leadership.ts",
+        "apps/admin/src/pages/DashboardPage.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.tsx",
+        "apps/admin/src/pages/LeadershipDashboardPage.test.tsx",
+        "apps/admin/src/pages/StatisticsPage.tsx",
+        "apps/admin/src/lib/statistics.ts"
+      ],
+      "dependsOn": [
+        "workforce",
+        "recruitment",
+        "project",
+        "supplier",
+        "payroll",
+        "reimbursement"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/leadership-dashboard.test.ts",
+        "pnpm --filter @xiangneng/admin exec vitest run src/pages/LeadershipDashboardPage.test.tsx"
+      ],
+      "prismaModels": []
+    },
+    {
+      "id": "notification",
+      "name": "通知与待办",
+      "description": "站内通知、读取状态和业务待办提醒。",
+      "include": [
+        "apps/api/src/routes/notifications.ts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/job-notification.test.ts"
+      ],
+      "prismaModels": [
+        "Notification",
+        "PortalNotificationRead"
+      ]
+    },
+    {
+      "id": "import-export",
+      "name": "导入导出与数据安全",
+      "description": "Excel 导入、导出、模板解析、数据预览和表格安全校验。",
+      "include": [
+        "apps/api/src/routes/imports.ts",
+        "apps/api/src/services/*workbook.ts",
+        "apps/api/src/services/spreadsheet-safety.ts",
+        "apps/admin/src/pages/ImportsPage.tsx",
+        "packages/data-import/**",
+        "scripts/import-demo-data.mts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/spreadsheet-safety.test.ts test/workbook-row-numbers.test.ts",
+        "pnpm --filter @xiangneng/data-import test"
+      ],
+      "prismaModels": [
+        "ImportJob"
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI 业务助手",
+      "description": "意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。",
+      "include": [
+        "apps/api/src/ai/**",
+        "apps/api/src/routes/ai.ts",
+        "apps/admin/src/components/*Ai*.tsx",
+        "apps/admin/src/pages/AiAssistantPage.tsx",
+        "apps/admin/src/lib/ai-assistant.ts",
+        "apps/admin/src/lib/demo-ai.ts",
+        "apps/admin/src/lib/demo-ai.test.ts",
+        "apps/portal/src/features/ai/**",
+        "scripts/verify-ai-integration.mts",
+        "scripts/verify-ollama.mts",
+        "prisma/schema.prisma"
+      ],
+      "dependsOn": [
+        "auth",
+        "organization",
+        "workforce",
+        "recruitment",
+        "project",
+        "supplier",
+        "reimbursement",
+        "payroll",
+        "reporting"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm verify:ai",
+        "pnpm verify:ollama"
+      ],
+      "prismaModels": [
+        "AiAction",
+        "AiAuditLog",
+        "AiDemoSnapshot"
+      ]
+    },
+    {
+      "id": "portal",
+      "name": "员工、供应商与公开端体验",
+      "description": "Portal 手机网页演示、个人服务、供应商服务和公开产品展示。",
+      "include": [
+        "apps/portal/**",
+        "apps/website/**",
+        "apps/sites-demo/**",
+        "apps/admin/src/pages/ProductIntroPage.tsx",
+        "apps/admin/src/pages/MiniappDemoPage.tsx",
+        "apps/admin/public/product-assets/**"
+      ],
+      "dependsOn": [
+        "auth",
+        "workforce",
+        "recruitment",
+        "supplier",
+        "payroll",
+        "reimbursement",
+        "notification"
+      ],
+      "businessRules": [],
+      "testCommands": [
+        "pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts test/public-resources.test.ts",
+        "pnpm --filter @xiangneng/portal test"
+      ],
+      "prismaModels": [
+        "PortalFavorite",
+        "PortalAdvance",
+        "PortalAppeal",
+        "PortalSettlement",
+        "PortalSettlementItem",
+        "PortalQrCode"
+      ]
+    }
+  ]
+}

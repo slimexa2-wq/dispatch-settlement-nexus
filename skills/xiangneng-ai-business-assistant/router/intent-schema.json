@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "XiangnengIntentDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "skill",
+    "confidence",
+    "mode",
+    "parameters",
+    "needs_clarification",
+    "clarification_question"
+  ],
+  "properties": {
+    "skill": {
+      "enum": [
+        "project_personnel_statistics",
+        "employee_information_query",
+        "recruitment_progress_query",
+        "employee_entry",
+        "employee_resignation",
+        "unsupported"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "mode": {
+      "enum": [
+        "read",
+        "write",
+        "unsupported"
+      ]
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "needs_clarification": {
+      "type": "boolean"
+    },
+    "clarification_question": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}

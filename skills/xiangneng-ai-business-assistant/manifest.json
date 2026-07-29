@@ -1,0 +1,18 @@
+{
+  "name": "xiangneng-ai-business-assistant",
+  "display_name": "祥能AI业务助手",
+  "version": "1.0.0-demo",
+  "language": "zh-CN",
+  "timezone": "Asia/Shanghai",
+  "skills": [
+    "project-personnel-statistics",
+    "employee-information-query",
+    "recruitment-progress-query",
+    "employee-entry",
+    "employee-resignation"
+  ],
+  "execution_model": "rule-first-model-fallback-tool-execution",
+  "write_confirmation_required": true,
+  "direct_sql_allowed": false,
+  "production_ready": false
+}

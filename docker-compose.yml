@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: xiangneng_hrms
+      POSTGRES_USER: xiangneng
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xiangneng -d xiangneng_hrms"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 3310
+      DATABASE_URL: postgresql://xiangneng:${POSTGRES_PASSWORD:-change-me}@postgres:5432/xiangneng_hrms?schema=public
+      JWT_SECRET: ${JWT_SECRET:-replace-before-production-with-32-characters}
+      ADMIN_ORIGIN: http://localhost:8080
+      UPLOAD_DIR: /app/uploads
+      XIANGNENG_LLM_PROVIDER: ollama
+      XIANGNENG_LLM_BASE_URL: ${XIANGNENG_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      XIANGNENG_LLM_MODEL: ${XIANGNENG_LLM_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_FALLBACK_MODEL: ${XIANGNENG_LLM_FALLBACK_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_CHAT_MODEL: ${XIANGNENG_LLM_CHAT_MODEL:-qwen3.5:4b}
+      XIANGNENG_LLM_API_KEY: ${XIANGNENG_LLM_API_KEY:-ollama-local}
+      AI_MODEL_TIMEOUT_MS: ${AI_MODEL_TIMEOUT_MS:-10000}
+      WECHAT_MINIAPP_APP_ID: ${WECHAT_MINIAPP_APP_ID:-}
+      WECHAT_MINIAPP_APP_SECRET: ${WECHAT_MINIAPP_APP_SECRET:-}
+      WECHAT_OFFICIAL_APP_ID: ${WECHAT_OFFICIAL_APP_ID:-}
+      WECHAT_OFFICIAL_APP_SECRET: ${WECHAT_OFFICIAL_APP_SECRET:-}
+      WECHAT_TEMPLATE_APPLICATION_SUCCESS: ${WECHAT_TEMPLATE_APPLICATION_SUCCESS:-}
+      WECHAT_TEMPLATE_INTERVIEW_REMINDER: ${WECHAT_TEMPLATE_INTERVIEW_REMINDER:-}
+      WECHAT_TEMPLATE_EMPLOYMENT_STATUS: ${WECHAT_TEMPLATE_EMPLOYMENT_STATUS:-}
+      WECHAT_TEMPLATE_SALARY_PUBLISHED: ${WECHAT_TEMPLATE_SALARY_PUBLISHED:-}
+      WECHAT_TEMPLATE_JOB_DEMAND: ${WECHAT_TEMPLATE_JOB_DEMAND:-}
+      WECHAT_MINIAPP_PATH: ${WECHAT_MINIAPP_PATH:-/pages/index/index}
+    ports:
+      - "3310:3310"
+    volumes:
+      - uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+
+  init:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["sh", "-c", "pnpm --filter @xiangneng/api db:migrate && pnpm --filter @xiangneng/api db:seed"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://xiangneng:${POSTGRES_PASSWORD:-change-me}@postgres:5432/xiangneng_hrms?schema=public
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:?请在 .env 中设置 SEED_ADMIN_USERNAME}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?请在 .env 中设置 SEED_ADMIN_PASSWORD}
+      SEED_ADMIN_DISPLAY_NAME: ${SEED_ADMIN_DISPLAY_NAME:-系统管理员}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  uploads:

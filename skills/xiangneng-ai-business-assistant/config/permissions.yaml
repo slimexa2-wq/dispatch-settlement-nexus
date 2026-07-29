@@ -1,0 +1,30 @@
+roles:
+  group_leader:
+    readable_scope: group
+    allowed_skills: [project_personnel_statistics, employee_information_query, recruitment_progress_query]
+    write_skills: []
+  branch_leader:
+    readable_scope: branch
+    allowed_skills: [project_personnel_statistics, employee_information_query, recruitment_progress_query]
+    write_skills: []
+  project_leader:
+    readable_scope: authorized_projects
+    allowed_skills: [project_personnel_statistics, employee_information_query, recruitment_progress_query]
+    write_skills: []
+  onsite_operator:
+    readable_scope: authorized_projects
+    allowed_skills: [project_personnel_statistics, employee_information_query, recruitment_progress_query, employee_entry, employee_resignation]
+    write_skills: [employee_entry, employee_resignation]
+  supplier:
+    readable_scope: own_referred_employees
+    allowed_skills: [employee_information_query]
+    write_skills: []
+  employee:
+    readable_scope: self
+    allowed_skills: [employee_information_query]
+    write_skills: []
+enforcement:
+  frontend_visibility_only_is_not_security: true
+  backend_permission_check_required: true
+  database_scope_check_required: true
+  deny_by_default: true
