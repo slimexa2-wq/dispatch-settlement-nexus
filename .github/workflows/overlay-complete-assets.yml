@@ -1,0 +1,56 @@
+name: Overlay complete HRMS binary assets
+
+on:
+  push:
+    branches:
+      - feat/data-migration-workflow-access-accounts
+    paths:
+      - .github/assets-upload.trigger
+      - .github/workflows/overlay-complete-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  overlay-assets:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/data-migration-workflow-access-accounts
+
+      - name: Download asset archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            'https://at.adobe.com/c2jwot69BRzj6QvI'
+            'https://at.adobe.com/ZZ4KE4GVrhvXtXXy'
+            'https://at.adobe.com/UVMEFZ54las45UZB'
+            'https://at.adobe.com/Mf4pyYct9MrvLQBP'
+            'https://at.adobe.com/TXj64dXGacAjnluJ'
+            'https://at.adobe.com/p72NoH88btMvDFw1'
+          )
+          for i in "${!urls[@]}"; do
+            file="/tmp/hrms-assets-$((i+1)).zip"
+            curl -fL --retry 3 --retry-delay 2 "${urls[$i]}" -o "$file"
+            test -s "$file"
+            unzip -t "$file"
+          done
+
+      - name: Overlay binary assets and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in /tmp/hrms-assets-*.zip; do
+            unzip -qo "$file" -d .
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: restore complete HRMS binary and UI reference assets'
+          git push origin HEAD:feat/data-migration-workflow-access-accounts
