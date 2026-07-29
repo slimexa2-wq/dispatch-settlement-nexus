@@ -1,0 +1,11 @@
+{"role": "group_leader", "request": "查询全集团每月入职人数", "expected": "allow_read"}
+{"role": "group_leader", "request": "给张三办理离职", "expected": "deny_write"}
+{"role": "branch_leader", "request": "查询其他分公司人员", "expected": "deny_out_of_scope"}
+{"role": "project_leader", "request": "查询负责项目招聘缺口", "expected": "allow_read"}
+{"role": "project_leader", "request": "办理人员入职", "expected": "deny_write"}
+{"role": "onsite_operator", "request": "办理负责项目人员离职", "expected": "allow_preview"}
+{"role": "onsite_operator", "request": "办理非授权项目人员离职", "expected": "deny_out_of_scope"}
+{"role": "supplier", "request": "查询自己输送人员状态", "expected": "allow_read"}
+{"role": "supplier", "request": "查询其他供应商人员状态", "expected": "deny_out_of_scope"}
+{"role": "employee", "request": "查询本人状态", "expected": "allow_read"}
+{"role": "employee", "request": "查询其他员工", "expected": "deny_out_of_scope"}
