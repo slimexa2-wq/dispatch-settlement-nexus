@@ -873,6 +873,18 @@ model User {
   reimbursementApprovals    ReimbursementApproval[]   @relation("ReimbursementApprovalActors")
   reimbursementPayments     ReimbursementPayment[]    @relation("ReimbursementPayers")
   reimbursementArtifacts    ReimbursementArtifact[]   @relation("ReimbursementArtifactGenerators")
+  migrationBatches          MigrationBatch[]          @relation("MigrationBatchCreators")
+  workflowVersions          WorkflowVersion[]         @relation("WorkflowVersionCreators")
+  workflowInstances         WorkflowInstance[]        @relation("WorkflowInstanceInitiators")
+  workflowTasksAssigned     WorkflowTask[]            @relation("WorkflowTaskAssignees")
+  workflowTasksActed        WorkflowTask[]            @relation("WorkflowTaskActors")
+  accessRequestsSubject     AccessRequest[]           @relation("AccessRequestSubjects")
+  accessRequestsCreated     AccessRequest[]           @relation("AccessRequestCreators")
+  accessRequestsReviewed    AccessRequest[]           @relation("AccessRequestReviewers")
+  portalAccesses            UserPortalAccess[]        @relation("UserPortalAccessUsers")
+  portalAccessesGranted     UserPortalAccess[]        @relation("UserPortalAccessGranters")
+  lifecycleLogs             AccountLifecycleLog[]     @relation("AccountLifecycleUsers")
+  lifecycleLogsActed        AccountLifecycleLog[]     @relation("AccountLifecycleActors")
 
   @@index([role, isActive])
   @@map("users")
@@ -1320,6 +1332,13 @@ enum MigrationBatchStatus {
   FAILED
 }
 
+enum PortalType {
+  ADMIN
+  INTERNAL_MINIAPP
+  SUPPLIER_MINIAPP
+  EMPLOYEE_MINIAPP
+}
+
 model MigrationTemplate {
   id           String           @id @default(uuid()) @db.Uuid
   code         String           @unique @db.VarChar(64)
@@ -1581,8 +1600,8 @@ model UserPortalAccess {
   grantedBy       User?        @relation("UserPortalAccessGranters", fields: [grantedById], references: [id], onDelete: SetNull)
   accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
 
-  @@index([userId, portal, enabled])
-  @@index([portal, enabled, validTo])
+  @@index([userId, enabled])
+  @@index([enabled, validTo])
   @@index([accessRequestId])
   @@map("user_portal_accesses")
 }
