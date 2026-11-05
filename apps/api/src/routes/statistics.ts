@@ -1,3 +1,4 @@
+import { calculateGrossMargin } from "../services/margin-reconciliation.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { EmploymentStatus, InterviewStatus, Permission, UserRole } from "@xiangneng/shared";
@@ -49,7 +50,22 @@ function filteredMetricWhere(metric: (typeof personMetricValues)[number], from?:
   }
 }
 
+
+const grossMarginSchema = z.object({
+  projectId: z.string().uuid(),
+  month: z.string(),
+  customerBilledAmount: z.coerce.number()
+});
+
 export async function statisticsRoutes(app: FastifyInstance): Promise<void> {
+  app.get("/statistics/gross-margin", {
+    preHandler: [app.authenticate, app.requirePermission(Permission.DASHBOARD_READ)]
+  }, async (request) => {
+    const query = grossMarginSchema.parse(request.query);
+    const result = await calculateGrossMargin(app.prisma, query.projectId, query.month, query.customerBilledAmount);
+    return success(request, result);
+  });
+
   app.get("/statistics/overview", {
     preHandler: [app.authenticate, app.requirePermission(Permission.DASHBOARD_READ)]
   }, async (request) => {
