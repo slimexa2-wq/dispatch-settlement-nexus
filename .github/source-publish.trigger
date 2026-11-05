@@ -1,0 +1,2 @@
+publish full HRMS source from verified Slack archive
+archive_sha256=0c375e52d853fbdaf489c1837e650a2ac4d16896b40283bd9fb910e73c512405
