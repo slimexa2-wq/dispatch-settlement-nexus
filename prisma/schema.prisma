@@ -830,19 +830,6 @@ model DataScopeBinding {
 }
 
 model User {
-  migrationBatchCreators     MigrationBatch[] @relation("MigrationBatchCreators")
-  workflowVersionCreators    WorkflowVersion[] @relation("WorkflowVersionCreators")
-  workflowInstanceInitiators WorkflowInstance[] @relation("WorkflowInstanceInitiators")
-  workflowTaskAssignees      WorkflowTask[] @relation("WorkflowTaskAssignees")
-  workflowTaskActors         WorkflowTask[] @relation("WorkflowTaskActors")
-  accessRequestSubjects      AccessRequest[] @relation("AccessRequestSubjects")
-  accessRequestCreators      AccessRequest[] @relation("AccessRequestCreators")
-  accessRequestReviewers     AccessRequest[] @relation("AccessRequestReviewers")
-  userPortalAccessUsers      UserPortalAccess[] @relation("UserPortalAccessUsers")
-  userPortalAccessGranters   UserPortalAccess[] @relation("UserPortalAccessGranters")
-  accountLifecycleUsers      AccountLifecycleLog[] @relation("AccountLifecycleUsers")
-  accountLifecycleActors     AccountLifecycleLog[] @relation("AccountLifecycleActors")
-
   id                      String                   @id @default(uuid()) @db.Uuid
   username                String                   @unique @db.VarChar(64)
   passwordHash            String                   @map("password_hash") @db.VarChar(255)
