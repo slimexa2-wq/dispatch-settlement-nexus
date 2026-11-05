@@ -29,6 +29,7 @@ import { aiRoutes } from "./routes/ai.js";
 import { portalRoutes } from "./routes/portal.js";
 import { internalEmployeeRoutes } from "./routes/internal-employees.js";
 import { reimbursementRoutes } from "./routes/reimbursements.js";
+import reimbursementAssistantRoutes from "./routes/reimbursements-assistant.js";
 import { leadershipRoutes } from "./routes/leadership.js";
 import { migrationCenterRoutes } from "./routes/migration-center.js";
 import { workflowRoutes } from "./routes/workflows.js";
@@ -122,6 +123,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     await portalRoutes(api);
     await internalEmployeeRoutes(api);
     await reimbursementRoutes(api);
+    await api.register(reimbursementAssistantRoutes, { prefix: "/reimbursements/assistant" });
     await leadershipRoutes(api);
     await migrationCenterRoutes(api);
     await workflowRoutes(api);
