@@ -135,23 +135,20 @@ export async function createWritePreview(
   let tool: string;
   let toolInput: Record<string, unknown>;
   let preview: Awaited<ReturnType<typeof previewPersonOnboard>> | Awaited<ReturnType<typeof previewPersonOffboard>>;
-  const todayStr = new Date().toISOString().slice(0, 10);
   if (input.skill === "employee_entry") {
     tool = "preview_employee_entry";
-    let fallbackPositionId = current.applications[0]?.jobDemandId ?? null;
-    if (!fallbackPositionId && current.projectId && typeof db.jobDemand?.findFirst === "function") {
-      const jd = await db.jobDemand.findFirst({ where: { projectId: current.projectId }, select: { id: true } });
-      fallbackPositionId = jd?.id ?? null;
-    }
     toolInput = {
       employee_id: current.id,
-      entry_date: typeof input.parameters.entry_date === "string" && input.parameters.entry_date.trim() ? input.parameters.entry_date : todayStr,
+      entry_date: typeof input.parameters.entry_date === "string" ? input.parameters.entry_date : null,
       project_id: typeof input.parameters.project_id === "string" ? input.parameters.project_id : current.projectId,
-      position_id: typeof input.parameters.position_id === "string" && input.parameters.position_id.trim() ? input.parameters.position_id : (fallbackPositionId ?? "default-position"),
+      position_id: typeof input.parameters.position_id === "string" ? input.parameters.position_id : current.applications[0]?.jobDemandId,
       supplier_id: typeof input.parameters.supplier_id === "string" ? input.parameters.supplier_id : null,
       insurance_status: typeof input.parameters.insurance_status === "string" ? input.parameters.insurance_status : null,
       remark: typeof input.parameters.remark === "string" ? input.parameters.remark : null
     };
+    if (!toolInput.entry_date || !toolInput.position_id) {
+      throw new AppError(400, "AI_PARAMETERS_REQUIRED", "办理入职还需要入职日期和岗位信息", { missing: [!toolInput.entry_date && "entry_date", !toolInput.position_id && "position_id"].filter(Boolean) });
+    }
     schemas.validateToolInput(input.skill, tool, toolInput);
     preview = await previewPersonOnboard(db, user, current.id, {
       onboardDate: parseDateOnly(String(toolInput.entry_date)),
@@ -161,15 +158,16 @@ export async function createWritePreview(
     });
   } else {
     tool = "preview_employee_resignation";
-    const reason = typeof input.parameters.resignation_reason === "string" && input.parameters.resignation_reason.trim()
-      ? normalizedReason(input.parameters.resignation_reason)
-      : "个人原因辞职";
+    const reason = typeof input.parameters.resignation_reason === "string" ? normalizedReason(input.parameters.resignation_reason) : null;
     toolInput = {
       employee_id: current.id,
-      resignation_date: typeof input.parameters.resignation_date === "string" && input.parameters.resignation_date.trim() ? input.parameters.resignation_date : todayStr,
+      resignation_date: typeof input.parameters.resignation_date === "string" ? input.parameters.resignation_date : null,
       resignation_reason: reason,
       remark: typeof input.parameters.remark === "string" ? input.parameters.remark : null
     };
+    if (!toolInput.resignation_date || !toolInput.resignation_reason) {
+      throw new AppError(400, "AI_PARAMETERS_REQUIRED", "办理离职还需要离职日期和原因", { missing: [!toolInput.resignation_date && "resignation_date", !toolInput.resignation_reason && "resignation_reason"].filter(Boolean) });
+    }
     schemas.validateToolInput(input.skill, tool, toolInput);
     preview = await previewPersonOffboard(db, user, current.id, {
       offboardDate: parseDateOnly(String(toolInput.resignation_date)),

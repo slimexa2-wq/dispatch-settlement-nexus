@@ -2,7 +2,6 @@ import { spawnSync } from "node:child_process";
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertPublicArtifactSafe } from "./public-data-policy.mjs";
 
 const projectDir = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = join(projectDir, "..", "..");
@@ -127,6 +126,10 @@ if (
 ) {
   throw new Error("Public demo artifact is missing the offline synthetic-data runtime.");
 }
-assertPublicArtifactSafe(bundledText);
+for (const forbiddenMarker of ["唯一数据.xls", "唯一数据.xlsx", "demo-data.full.json", "data/derived/"]) {
+  if (bundledText.toLowerCase().includes(forbiddenMarker.toLowerCase())) {
+    throw new Error(`Public demo artifact contains forbidden source marker: ${forbiddenMarker}`);
+  }
+}
 
 console.log(JSON.stringify({ status: "ok", ...summary }));

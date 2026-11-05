@@ -7,7 +7,6 @@ import {
 } from "@xiangneng/shared";
 import {
   applicationWhere,
-  internalEmployeeWhere,
   personWhere,
   projectWhere
 } from "../src/data-scope.js";
@@ -101,29 +100,4 @@ describe("数据库查询范围", () => {
       )
     ).toEqual({ id: { in: ["project-a"] } });
   });
-  it("多个部门范围都会进入内部员工查询条件", () => {
-    const where = internalEmployeeWhere(session({
-      scopeBindings: [
-        {
-          type: DataScopeType.ORG_UNIT,
-          organizationUnitId: "org-a",
-          branchId: null,
-          projectId: null,
-          supplierId: null
-        },
-        {
-          type: DataScopeType.CENTER,
-          organizationUnitId: "org-b",
-          branchId: null,
-          projectId: null,
-          supplierId: null
-        }
-      ]
-    }));
-
-    const serialized = JSON.stringify(where);
-    expect(serialized).toContain("org-a");
-    expect(serialized).toContain("org-b");
-  });
-
 });

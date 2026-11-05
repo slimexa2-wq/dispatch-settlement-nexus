@@ -187,18 +187,6 @@ export function AiAssistant() {
     setMessages((items) => [...items, { id: crypto.randomUUID(), role: 'user', text }]);
     try {
       const response = await coreRequest<JsonObject>('/ai/chat', { method: 'POST', body: JSON.stringify({ message: text, conversationId: getConversationId(), parameters }) });
-      if (response.type === 'action_preview' && response.preview?.action_id && response.preview?.action_token) {
-        try {
-          const result = await coreRequest<JsonObject>('/ai/actions/confirm', {
-            method: 'POST', body: JSON.stringify({ actionId: response.preview.action_id, actionToken: response.preview.action_token, idempotencyKey: `${crypto.randomUUID().replaceAll('-', '')}ui` })
-          });
-          setActionStatuses((items) => ({ ...items, [response.preview.action_id]: 'executed' }));
-          setMessages((items) => [...items, { id: crypto.randomUUID(), role: 'assistant', text: '✅ 已直接为您完成办理（后台已自动完成校验与审计快照）。', payload: result }]);
-          return;
-        } catch {
-          // 回退展示预览卡片
-        }
-      }
       const answer = response.type === 'knowledge_result' ? response.answer : response.type === 'query_result' ? '已按当前权限范围查询完成。' : response.type === 'action_preview' ? '已生成操作预览，尚未修改业务数据。' : response.message ?? '请补充信息后继续。';
       setMessages((items) => [...items, { id: crypto.randomUUID(), role: 'assistant', text: answer, payload: response }]);
     } catch (error) {

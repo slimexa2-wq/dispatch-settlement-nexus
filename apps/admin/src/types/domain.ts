@@ -57,22 +57,11 @@ export type OrganizationUnit = {
   id: string;
   code: string;
   name: string;
-  type: "GROUP" | "LEADERSHIP" | "CENTER" | "DEPARTMENT" | "BUSINESS_DEPARTMENT" | "BRANCH" | "SUBSIDIARY" | "OTHER";
+  type: "GROUP" | "LEGAL_ENTITY" | "BRANCH" | "CENTER" | "DEPARTMENT";
   parentId?: Nullable<string>;
+  legalEntityId?: Nullable<string>;
+  branchId?: Nullable<string>;
   path: string;
-};
-
-export type PositionRoleBindingOption = {
-  id: string;
-  positionId: string;
-  scopeType: "SELF" | "ORG_UNIT" | "CENTER" | "GROUP";
-  role: { id: string; code: UserRole; name: string };
-};
-
-export type JobGradeApprovalPolicyOption = {
-  id: string;
-  jobGradeId: string;
-  maxReimbursementApprovalCents?: Nullable<number>;
 };
 
 export type OrganizationOptionSet = {
@@ -81,15 +70,6 @@ export type OrganizationOptionSet = {
   organizationUnits: OrganizationUnit[];
   positions: Array<{ id: string; code: string; name: string; organizationUnitId?: Nullable<string> }>;
   jobGrades: Array<{ id: string; code: string; name: string; level: number }>;
-  roles?: Array<{ id: string; code: UserRole; name: string }>;
-  positionRoleBindings?: PositionRoleBindingOption[];
-  jobGradeApprovalPolicies?: JobGradeApprovalPolicyOption[];
-  accounts?: Array<{
-    id: string;
-    username: string;
-    displayName: string;
-    internalEmployee?: Nullable<{ id: string; employeeNo: string; name: string }>;
-  }>;
 };
 
 export type InternalEmployment = {
@@ -99,6 +79,7 @@ export type InternalEmployment = {
   isPrimary: boolean;
   reason?: Nullable<string>;
   legalEntity?: Nullable<{ id: string; name: string }>;
+  branch?: Nullable<Branch>;
   organizationUnit: { id: string; name: string };
   position: { id: string; name: string };
   jobGrade?: Nullable<{ id: string; name: string }>;
@@ -106,7 +87,7 @@ export type InternalEmployment = {
 
 export type InternalEmployeeChange = {
   id: string;
-  type: "ONBOARD" | "TRANSFER" | "DISABLE" | "ENABLE" | "OFFBOARD" | "ARCHIVE" | "ACCOUNT_BIND" | "ACCOUNT_UNBIND";
+  type: "ONBOARD" | "TRANSFER" | "DISABLE" | "ENABLE" | "OFFBOARD" | "ARCHIVE";
   effectiveAt: string;
   reason?: Nullable<string>;
   before?: unknown;
@@ -118,12 +99,12 @@ export type InternalEmployee = {
   id: string;
   employeeNo: string;
   userId?: Nullable<string>;
-  user?: Nullable<{ id: string; username: string; displayName: string; isActive: boolean }>;
   name: string;
   phone: string;
   idCard: string;
   email?: Nullable<string>;
   legalEntityId?: Nullable<string>;
+  branchId?: Nullable<string>;
   organizationUnitId?: Nullable<string>;
   positionId?: Nullable<string>;
   jobGradeId?: Nullable<string>;
@@ -133,6 +114,7 @@ export type InternalEmployee = {
   offboardReason?: Nullable<string>;
   version: number;
   legalEntity?: Nullable<{ id: string; code: string; name: string }>;
+  branch?: Nullable<Branch>;
   organizationUnit?: Nullable<OrganizationUnit>;
   position?: Nullable<{ id: string; code: string; name: string }>;
   jobGrade?: Nullable<{ id: string; code: string; name: string; level: number }>;
@@ -704,7 +686,6 @@ export type Reimbursement = {
   supplier?: Nullable<{ id: string; name: string }>;
   status: ReimbursementStatus;
   totalPaymentCents: number;
-  approvedAmountCents?: Nullable<number>;
   totalInvoiceCents: number;
   invoiceExcessCents: number;
   version: number;
@@ -733,65 +714,6 @@ export type Reimbursement = {
   }>;
   artifacts: ReimbursementArtifact[];
   _count?: { lines: number; issues: number; attachments: number };
-};
-
-export type DepartmentReimbursementSummary = {
-  key: string;
-  period: string;
-  organizationUnitId: string;
-  organizationUnitName: string;
-  batchCount: number;
-  applicantCount: number;
-  totalPaymentCents: number;
-  totalApprovedAmountCents: number;
-  totalInvoiceCents: number;
-  openIssueCount: number;
-  readyForFinance: boolean;
-  statusCounts: Record<string, number>;
-  batchIds: string[];
-  categorySummaries: Array<{
-    category: string;
-    lineCount: number;
-    totalPaymentCents: number;
-    totalInvoiceCents: number;
-  }>;
-  applicantSummaries: Array<{
-    applicantUserId: string;
-    applicantName: string;
-    batchCount: number;
-    totalPaymentCents: number;
-    totalApprovedAmountCents: number;
-    totalInvoiceCents: number;
-  }>;
-  detailRows: Array<{
-    batchId: string;
-    code: string;
-    lineId: string;
-    sequence: number;
-    expenseDate: string | null;
-    applicantUserId: string;
-    applicantName: string;
-    category: string;
-    description: string;
-    paymentCents: number;
-    invoiceCents: number;
-  }>;
-};
-
-export type ReimbursementPaymentRosterRow = {
-  batchId: string;
-  code: string;
-  organizationUnitId: Nullable<string>;
-  organizationUnitName: string;
-  applicantUserId: string;
-  applicantName: string;
-  payeeAccount: Nullable<string>;
-  payeeBank: Nullable<string>;
-  approvedAmountCents: number;
-  paymentStatus: "PENDING" | "PAID";
-  paidAmountCents: Nullable<number>;
-  paidAt: Nullable<string>;
-  paymentReference: Nullable<string>;
 };
 
 export type LeadershipDashboard = {

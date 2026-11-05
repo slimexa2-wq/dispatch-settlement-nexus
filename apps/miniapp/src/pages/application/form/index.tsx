@@ -1,7 +1,7 @@
 import Taro from "@tarojs/taro";
 import { RegistrationForm } from "../../../components/registration-form";
 import { AccessDenied, PageShell } from "../../../components/ui";
-import { isOperatorUser } from "../../../domain/roles";
+import { isOperatorRole } from "../../../domain/roles";
 import { useSession } from "../../../hooks/useSession";
 import type { RegistrationInput } from "../../../api/types";
 
@@ -11,9 +11,9 @@ export default function ApplicationFormPage() {
   if (user && !user.permissions.includes("application:create") && !user.permissions.includes("referral:create")) return <AccessDenied />;
 
   let source: RegistrationInput["source"] = "SELF";
-  if (user?.roles.some((role) => role === "SUPPLIER" || role === "SUPPLIER_ADMIN")) source = "SUPPLIER";
-  else if (user?.roles.some((role) => role === "EMPLOYEE") && user.permissions.includes("referral:create")) source = "REFERRAL";
-  else if (user && isOperatorUser(user)) source = "OPERATOR";
+  if (user?.role === "SUPPLIER") source = "SUPPLIER";
+  else if (user?.role === "EMPLOYEE") source = "REFERRAL";
+  else if (user && isOperatorRole(user.role)) source = "OPERATOR";
 
   const title = source === "REFERRAL" ? "推荐报名" : source === "SUPPLIER" ? "立即报人" : "在线报名";
   return (

@@ -6,7 +6,6 @@ import { useAsyncData } from "../../../hooks/useAsyncData";
 import { useSession } from "../../../hooks/useSession";
 import { localMonthString } from "../../../domain/format";
 import { jobDetailPath } from "../../../domain/links";
-import { hasRole } from "../../../domain/roles";
 
 export default function ReferralHomePage() {
   const user = useSession();
@@ -14,7 +13,7 @@ export default function ReferralHomePage() {
   const referrals = useAsyncData(() => api.myReferrals(), []);
   const rewards = useAsyncData(() => api.myRewards(), []);
   if (!user) return <PageShell title="内部推荐" />;
-  if (!hasRole(user, "EMPLOYEE") || !user.permissions.includes("referral:create")) {
+  if (user.role !== "EMPLOYEE" || !user.permissions.includes("referral:create")) {
     return <AccessDenied message="内部推荐仅向已绑定人员档案的内部员工开放。" />;
   }
   const referralItems = referrals.data ? itemsOf(referrals.data) : [];

@@ -12,7 +12,6 @@ import {
 } from "@xiangneng/shared";
 import { z } from "zod";
 import { writeAudit } from "../audit.js";
-import { authorizationForAnyPermission, authorizationForPermission } from "../authorization.js";
 import {
   andWhere,
   reimbursementWhere
@@ -22,11 +21,7 @@ import { paginationMeta, parsePagination, success } from "../http.js";
 import { getSession } from "../plugins/auth.js";
 import {
   ReimbursementStatus,
-  assertFinalPaymentProof,
-  assertReimbursementApprovalLimit,
   buildReimbursementArtifactPlan,
-  normalizeEmployeeReimbursementScope,
-  reimbursementAttachmentUploadAuthorization,
   summarizeReimbursement,
   transitionReimbursement,
   validateReimbursementLine,
@@ -37,12 +32,6 @@ import {
   createReimbursementWorkbook,
   createStoredZip
 } from "../services/reimbursement-artifacts.js";
-import {
-  buildDepartmentSummaries,
-  buildPaymentRoster,
-  validateDepartmentBatchSelection,
-  validateReimbursementSubmission
-} from "../services/reimbursement-automation.js";
 
 const reimbursementStatuses = [
   "PENDING_SUBMISSION",
@@ -93,8 +82,7 @@ const patchSchema = z.object({
 const transitionSchema = z.object({
   expectedVersion: z.number().int().positive(),
   targetStatus: statusSchema,
-  comment: z.string().trim().max(500).optional(),
-  approvedAmountCents: z.number().int().positive().optional()
+  comment: z.string().trim().max(500).optional()
 });
 const issueSchema = z.object({
   lineId: idSchema.optional().nullable(),
@@ -109,7 +97,7 @@ const paymentSchema = z.object({
   amountCents: z.number().int().positive(),
   reference: z.string().trim().min(1).max(120),
   paidAt: z.coerce.date(),
-  proofAttachmentId: idSchema
+  proofAttachmentId: idSchema.optional().nullable()
 });
 const attachmentQuerySchema = z.object({
   type: z.enum(["PAYMENT_VOUCHER", "INVOICE", "SUPPORTING"]),
@@ -122,32 +110,6 @@ const artifactSchema = z.object({
     "INVOICE_PACKAGE"
   ])
 });
-const summaryQuerySchema = z.object({
-  period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
-  organizationUnitId: idSchema.optional()
-});
-const departmentTransitionSchema = z.object({
-  batchIds: z.array(idSchema).min(1).max(500),
-  targetStatus: z.enum([
-    "OWNER_REVIEWING",
-    "FINANCE_REVIEWING",
-    "APPROVED",
-    "PENDING_PAYMENT"
-  ]),
-  comment: z.string().trim().max(500).optional(),
-  approvedAmounts: z.array(z.object({
-    batchId: idSchema,
-    approvedAmountCents: z.number().int().positive()
-  })).max(500).optional()
-});
-
-function monthRange(period: string | undefined): { gte?: Date; lt?: Date } | undefined {
-  if (!period) return undefined;
-  const [year, month] = period.split("-").map(Number);
-  const gte = new Date(Date.UTC(year, month - 1, 1));
-  const lt = new Date(Date.UTC(year, month, 1));
-  return { gte, lt };
-}
 
 const listInclude = {
   applicant: { select: { id: true, displayName: true } },
@@ -155,10 +117,6 @@ const listInclude = {
   organizationUnit: { select: { id: true, name: true } },
   project: { select: { id: true, name: true } },
   supplier: { select: { id: true, name: true } },
-  issues: {
-    where: { status: "OPEN" as const },
-    select: { id: true, status: true }
-  },
   _count: { select: { lines: true, issues: true, attachments: true } }
 };
 const detailInclude = {
@@ -238,10 +196,45 @@ type ReimbursementCreateScope = Pick<
   "branchId" | "organizationUnitId" | "projectId" | "supplierId"
 >;
 
-function normalizeManagedCreateScope(
+function normalizeCreateScope(
   user: SessionUser,
   input: ReimbursementCreateScope
 ): ReimbursementCreateScope {
+  if (
+    user.permissions.includes(Permission.REIMBURSEMENT_SELF) &&
+    !user.permissions.includes(Permission.REIMBURSEMENT_MANAGE)
+  ) {
+    const allowed = {
+      branchId: [
+        user.branchId,
+        ...user.scopeBindings.filter((binding) => binding.type === DataScopeType.BRANCH).map((binding) => binding.branchId)
+      ].filter((value): value is string => Boolean(value)),
+      organizationUnitId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.ORG_UNIT || binding.type === DataScopeType.CENTER)
+        .map((binding) => binding.organizationUnitId)
+        .filter((value): value is string => Boolean(value)),
+      projectId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.PROJECT)
+        .map((binding) => binding.projectId)
+        .filter((value): value is string => Boolean(value)),
+      supplierId: user.scopeBindings
+        .filter((binding) => binding.type === DataScopeType.SUPPLIER)
+        .map((binding) => binding.supplierId)
+        .filter((value): value is string => Boolean(value))
+    };
+    for (const key of ["branchId", "organizationUnitId", "projectId", "supplierId"] as const) {
+      const requested = input[key];
+      if (requested && !allowed[key].includes(requested)) {
+        throw new AppError(403, "OUT_OF_SCOPE", "员工自助报销不能指定当前登录态范围外的业务归属");
+      }
+    }
+    return {
+      branchId: input.branchId ?? allowed.branchId[0] ?? null,
+      organizationUnitId: input.organizationUnitId ?? null,
+      projectId: input.projectId ?? null,
+      supplierId: input.supplierId ?? null
+    };
+  }
   if (
     !isWithinDataScope(scopeContext(user), {
       ownerUserId: user.id,
@@ -311,7 +304,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
     preHandler: [app.authenticate, requireAnyPermission(readPermissions)]
   }, async (request) => {
     const query = querySchema.parse(request.query);
-    const user = authorizationForAnyPermission(getSession(request), readPermissions);
+    const user = getSession(request);
     const { page, pageSize, skip } = parsePagination(query);
     const where = andWhere(reimbursementWhere(user), {
       status: query.status,
@@ -347,199 +340,11 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
-  app.get("/reimbursements/department-summaries", {
-    preHandler: [
-      app.authenticate,
-      requireAnyPermission([
-        Permission.REIMBURSEMENT_MANAGE,
-        Permission.REIMBURSEMENT_APPROVE,
-        Permission.REIMBURSEMENT_FINANCE_REVIEW,
-        Permission.REIMBURSEMENT_EXPORT
-      ])
-    ]
-  }, async (request) => {
-    const query = summaryQuerySchema.parse(request.query);
-    const user = authorizationForAnyPermission(getSession(request), [
-      Permission.REIMBURSEMENT_MANAGE,
-      Permission.REIMBURSEMENT_APPROVE,
-      Permission.REIMBURSEMENT_FINANCE_REVIEW,
-      Permission.REIMBURSEMENT_EXPORT
-    ]);
-    const batches = await app.prisma.reimbursementBatch.findMany({
-      where: andWhere(reimbursementWhere(user), {
-        organizationUnitId: query.organizationUnitId ?? { not: null },
-        status: { not: "PENDING_SUBMISSION" },
-        submittedAt: monthRange(query.period)
-      }),
-      select: {
-        id: true,
-        code: true,
-        organizationUnitId: true,
-        organizationUnit: { select: { name: true } },
-        applicantUserId: true,
-        applicant: { select: { displayName: true } },
-        status: true,
-        totalPaymentCents: true,
-        approvedAmountCents: true,
-        totalInvoiceCents: true,
-        submittedAt: true,
-        createdAt: true,
-        issues: { where: { status: "OPEN" }, select: { id: true } },
-        lines: {
-          select: {
-            id: true,
-            sequence: true,
-            expenseDate: true,
-            category: true,
-            description: true,
-            paymentCents: true,
-            invoiceCents: true
-          },
-          orderBy: { sequence: "asc" }
-        }
-      },
-      orderBy: [{ createdAt: "desc" }, { code: "asc" }]
-    });
-    return success(request, buildDepartmentSummaries(batches.map((batch) => ({
-      id: batch.id,
-      code: batch.code,
-      organizationUnitId: batch.organizationUnitId,
-      organizationUnitName: batch.organizationUnit?.name ?? null,
-      applicantUserId: batch.applicantUserId,
-      applicantName: batch.applicant.displayName,
-      status: batch.status,
-      totalPaymentCents: batch.totalPaymentCents,
-      approvedAmountCents: batch.approvedAmountCents,
-      totalInvoiceCents: batch.totalInvoiceCents,
-      openIssueCount: batch.issues.length,
-      createdAt: batch.submittedAt ?? batch.createdAt,
-      lines: batch.lines
-    }))));
-  });
-
-  app.get("/reimbursements/payment-roster", {
-    preHandler: [
-      app.authenticate,
-      requireAnyPermission([
-        Permission.REIMBURSEMENT_FINANCE_REVIEW,
-        Permission.REIMBURSEMENT_PAY,
-        Permission.REIMBURSEMENT_EXPORT
-      ])
-    ]
-  }, async (request) => {
-    const query = summaryQuerySchema.parse(request.query);
-    const user = authorizationForAnyPermission(getSession(request), [
-      Permission.REIMBURSEMENT_FINANCE_REVIEW,
-      Permission.REIMBURSEMENT_PAY,
-      Permission.REIMBURSEMENT_EXPORT
-    ]);
-    const batches = await app.prisma.reimbursementBatch.findMany({
-      where: andWhere(reimbursementWhere(user), {
-        status: { in: ["APPROVED", "PENDING_PAYMENT", "PAID"] },
-        organizationUnitId: query.organizationUnitId,
-        submittedAt: monthRange(query.period)
-      }),
-      select: {
-        id: true,
-        code: true,
-        organizationUnitId: true,
-        organizationUnit: { select: { name: true } },
-        applicantUserId: true,
-        applicant: {
-          select: {
-            displayName: true,
-            internalEmployee: { select: { bankAccount: true } }
-          }
-        },
-        status: true,
-        totalPaymentCents: true,
-        approvedAmountCents: true,
-        createdAt: true,
-        lines: {
-          select: { payeeAccount: true, payeeBank: true },
-          orderBy: { sequence: "asc" },
-          take: 1
-        },
-        payment: { select: { amountCents: true, paidAt: true, reference: true } }
-      },
-      orderBy: [{ organizationUnitId: "asc" }, { createdAt: "asc" }]
-    });
-    return success(request, buildPaymentRoster(batches.map((batch) => ({
-      id: batch.id,
-      code: batch.code,
-      organizationUnitId: batch.organizationUnitId,
-      organizationUnitName: batch.organizationUnit?.name ?? null,
-      applicantUserId: batch.applicantUserId,
-      applicantName: batch.applicant.displayName,
-      payeeAccount: batch.lines[0]?.payeeAccount ?? batch.applicant.internalEmployee?.bankAccount ?? null,
-      payeeBank: batch.lines[0]?.payeeBank ?? null,
-      status: batch.status,
-      totalPaymentCents: batch.totalPaymentCents,
-      approvedAmountCents: batch.approvedAmountCents,
-      createdAt: batch.createdAt,
-      payment: batch.payment
-    }))));
-  });
-
-  app.post("/reimbursements/department-summaries/transition", {
-    preHandler: [app.authenticate, requireAnyPermission(readPermissions)]
-  }, async (request) => {
-    const input = departmentTransitionSchema.parse(request.body);
-    const session = getSession(request);
-    const candidateUser = authorizationForAnyPermission(session, readPermissions);
-    const batches = await app.prisma.reimbursementBatch.findMany({
-      where: andWhere(reimbursementWhere(candidateUser), { id: { in: input.batchIds } }),
-      include: { issues: { where: { status: "OPEN" }, select: { id: true } } },
-      orderBy: { code: "asc" }
-    });
-    if (batches.length !== new Set(input.batchIds).size) {
-      throw new AppError(404, "REIMBURSEMENT_BATCH_NOT_FOUND", "部分报销单不存在或不在当前数据范围内");
-    }
-    const selection = validateDepartmentBatchSelection(
-      batches.map((batch) => ({
-        id: batch.id,
-        organizationUnitId: batch.organizationUnitId,
-        createdAt: batch.submittedAt ?? batch.createdAt
-      }))
-    );
-    if (!selection.valid) {
-      throw new AppError(400, selection.code, selection.message);
-    }
-    const permission = transitionPermission(input.targetStatus, session, batches[0]!.applicantUserId);
-    const user = authorizationForPermission(session, permission);
-    const approvedAmounts = new Map(
-      (input.approvedAmounts ?? []).map((item) => [item.batchId, item.approvedAmountCents])
-    );
-    if (input.targetStatus !== ReimbursementStatus.APPROVED && approvedAmounts.size) {
-      throw new AppError(400, "APPROVED_AMOUNT_NOT_ALLOWED", "只有财务审核通过时才能填写审核通过金额");
-    }
-    if ([...approvedAmounts.keys()].some((batchId) => !input.batchIds.includes(batchId))) {
-      throw new AppError(400, "APPROVED_AMOUNT_BATCH_MISMATCH", "审核金额包含不属于当前部门汇总的报销单");
-    }
-    const updated = await app.prisma.$transaction(async (tx) => {
-      const values = [];
-      for (const batch of batches) {
-        values.push(await transitionReimbursement(tx, {
-          batchId: batch.id,
-          actorId: user.id,
-          expectedVersion: batch.version,
-          targetStatus: input.targetStatus,
-          permission,
-          comment: input.comment,
-          approvedAmountCents: approvedAmounts.get(batch.id)
-        }));
-      }
-      return values;
-    });
-    return success(request, { updatedCount: updated.length, items: updated });
-  });
-
   app.get("/reimbursements/:id", {
     preHandler: [app.authenticate, requireAnyPermission(readPermissions)]
   }, async (request) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
-    const user = authorizationForAnyPermission(getSession(request), readPermissions);
-    return success(request, await scopedBatch(app, user, id));
+    return success(request, await scopedBatch(app, getSession(request), id));
   });
 
   app.post("/reimbursements", {
@@ -552,28 +357,11 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
     ]
   }, async (request, reply) => {
     const input = createSchema.parse(request.body);
-    const session = getSession(request);
-    const createPermission = session.permissions.includes(Permission.REIMBURSEMENT_SELF)
-      ? Permission.REIMBURSEMENT_SELF
-      : Permission.REIMBURSEMENT_MANAGE;
-    const user = authorizationForPermission(session, createPermission);
+    const user = getSession(request);
     input.lines.forEach(validateReimbursementLine);
     const { lineCount: _lineCount, ...summary } =
       summarizeReimbursement(input.lines);
-    const createScope = createPermission === Permission.REIMBURSEMENT_SELF
-      ? normalizeEmployeeReimbursementScope(
-          input,
-          await app.prisma.internalEmployee.findFirst({
-            where: { userId: user.id, status: "ACTIVE" },
-            select: { organizationUnitId: true }
-          }).then((employee) => {
-            if (!employee) {
-              throw new AppError(409, "INTERNAL_EMPLOYEE_PROFILE_REQUIRED", "发起报销前请先绑定有效的内部员工档案");
-            }
-            return employee;
-          })
-        )
-      : normalizeManagedCreateScope(user, input);
+    const createScope = normalizeCreateScope(user, input);
     const created = await app.prisma.$transaction(async (tx) => {
       const batch = await tx.reimbursementBatch.create({
         data: {
@@ -626,18 +414,8 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = patchSchema.parse(request.body);
-    const session = getSession(request);
-    const candidateUser = authorizationForAnyPermission(session, [
-      Permission.REIMBURSEMENT_SELF,
-      Permission.REIMBURSEMENT_MANAGE
-    ]);
-    let before = await scopedBatch(app, candidateUser, id);
-    const editPermission = before.applicantUserId === session.id &&
-      session.permissions.includes(Permission.REIMBURSEMENT_SELF)
-      ? Permission.REIMBURSEMENT_SELF
-      : Permission.REIMBURSEMENT_MANAGE;
-    const user = authorizationForPermission(session, editPermission);
-    before = await scopedBatch(app, user, id);
+    const user = getSession(request);
+    const before = await scopedBatch(app, user, id);
     if (
       before.status !== ReimbursementStatus.PENDING_SUBMISSION &&
       before.status !== ReimbursementStatus.DEPARTMENT_PREPARING
@@ -720,74 +498,11 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = transitionSchema.parse(request.body);
-    const session = getSession(request);
-    const candidateUser = authorizationForAnyPermission(session, readPermissions);
-    let before = await scopedBatch(app, candidateUser, id);
-    const permission = transitionPermission(input.targetStatus, session, before.applicantUserId);
-    const user = authorizationForPermission(session, permission);
-    before = await scopedBatch(app, user, id);
+    const user = getSession(request);
+    const before = await scopedBatch(app, user, id);
+    const permission = transitionPermission(input.targetStatus, user, before.applicantUserId);
     if (!user.permissions.includes(permission)) {
       throw new AppError(403, "FORBIDDEN", "当前账号不能执行该报销流转");
-    }
-    if (
-      before.status === ReimbursementStatus.PENDING_SUBMISSION &&
-      input.targetStatus === ReimbursementStatus.DEPARTMENT_PREPARING
-    ) {
-      const invoiceHashes = before.attachments
-        .filter((attachment) => attachment.type === "INVOICE")
-        .map((attachment) => attachment.sha256);
-      const duplicateRows = invoiceHashes.length
-        ? await app.prisma.reimbursementAttachment.findMany({
-            where: {
-              batchId: { not: id },
-              type: "INVOICE",
-              sha256: { in: invoiceHashes }
-            },
-            select: { sha256: true }
-          })
-        : [];
-      const validation = validateReimbursementSubmission({
-        lines: before.lines.map((line) => ({
-          id: line.id,
-          sequence: line.sequence,
-          paymentCents: line.paymentCents,
-          invoiceCents: line.invoiceCents
-        })),
-        attachments: before.attachments.map((attachment) => ({
-          id: attachment.id,
-          lineId: attachment.lineId,
-          type: attachment.type,
-          sha256: attachment.sha256
-        })),
-        existingInvoiceHashes: new Set(duplicateRows.map((row) => row.sha256))
-      });
-      if (!validation.valid) {
-        throw new AppError(
-          409,
-          "REIMBURSEMENT_AUTOMATIC_VALIDATION_FAILED",
-          "系统自动校验未通过，请按提示补齐或修正材料",
-          { issues: validation.issues }
-        );
-      }
-    }
-    if (permission === Permission.REIMBURSEMENT_APPROVE) {
-      const approver = await app.prisma.internalEmployee.findFirst({
-        where: { userId: user.id, status: "ACTIVE" },
-        select: {
-          jobGrade: {
-            select: {
-              reimbursementApprovalPolicy: {
-                select: { maxReimbursementApprovalCents: true, isActive: true }
-              }
-            }
-          }
-        }
-      });
-      const policy = approver?.jobGrade?.reimbursementApprovalPolicy;
-      assertReimbursementApprovalLimit(
-        before.totalPaymentCents,
-        policy?.isActive ? policy.maxReimbursementApprovalCents : null
-      );
     }
     const updated = await app.prisma.$transaction(async (tx) => {
       const value = await transitionReimbursement(tx, {
@@ -796,8 +511,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
         expectedVersion: input.expectedVersion,
         targetStatus: input.targetStatus,
         permission,
-        comment: input.comment,
-        approvedAmountCents: input.approvedAmountCents
+        comment: input.comment
       });
       await writeAudit(tx, request, {
         action: "reimbursement.transition",
@@ -820,47 +534,37 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
       app.authenticate,
       requireAnyPermission([
         Permission.REIMBURSEMENT_SELF,
-        Permission.REIMBURSEMENT_MANAGE,
-        Permission.REIMBURSEMENT_PAY
+        Permission.REIMBURSEMENT_MANAGE
       ])
     ]
   }, async (request, reply) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const query = attachmentQuerySchema.parse(request.query);
-    const session = getSession(request);
-    const candidateUser = authorizationForAnyPermission(session, [
-      Permission.REIMBURSEMENT_SELF,
-      Permission.REIMBURSEMENT_MANAGE,
-      Permission.REIMBURSEMENT_PAY
-    ]);
-    let batch = await scopedBatch(app, candidateUser, id);
-    const uploadAccess = reimbursementAttachmentUploadAuthorization({
-      status: batch.status,
-      applicantUserId: batch.applicantUserId,
-      userId: session.id,
-      permissions: session.permissions,
-      type: query.type,
-      lineId: query.lineId,
-      openIssueCount: batch.issues.filter((issue) => issue.status === "OPEN").length
-    });
-    if (!uploadAccess) {
-      throw new AppError(
-        409,
-        "REIMBURSEMENT_ATTACHMENTS_LOCKED",
-        "当前报销节点不允许上传该类型材料"
-      );
+    const user = getSession(request);
+    const batch = await scopedBatch(app, user, id);
+    if (
+      batch.status !== ReimbursementStatus.PENDING_SUBMISSION &&
+      batch.status !== ReimbursementStatus.DEPARTMENT_PREPARING
+    ) {
+      throw new AppError(409, "REIMBURSEMENT_ATTACHMENTS_LOCKED", "报销单已进入审核，不能再修改附件");
     }
-    const user = authorizationForPermission(session, uploadAccess.permission);
-    batch = await scopedBatch(app, user, id);
-    const isFinalPaymentProof = uploadAccess.mode === "FINAL_PAYMENT_PROOF";
+    if (
+      batch.applicantUserId !== user.id &&
+      !user.permissions.includes(Permission.REIMBURSEMENT_MANAGE)
+    ) {
+      throw new AppError(403, "FORBIDDEN", "只能维护自己的报销附件");
+    }
     if (query.lineId && !batch.lines.some((line) => line.id === query.lineId)) {
       notFound("报销明细");
     }
-    if (query.type !== "SUPPORTING" && !query.lineId && !isFinalPaymentProof) {
+    if (
+      query.type !== "SUPPORTING" &&
+      !query.lineId
+    ) {
       throw new AppError(
         400,
         "REIMBURSEMENT_LINE_REQUIRED",
-        "报销阶段的付款凭证和发票必须关联到具体报销明细"
+        "付款凭证和发票必须关联到具体报销明细"
       );
     }
     const upload = await request.file();
@@ -927,7 +631,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
       id: idSchema,
       attachmentId: idSchema
     }).parse(request.params);
-    const user = authorizationForAnyPermission(getSession(request), readPermissions);
+    const user = getSession(request);
     await scopedBatch(app, user, id);
     const attachment = await app.prisma.reimbursementAttachment.findFirst({
       where: { id: attachmentId, batchId: id }
@@ -950,10 +654,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = artifactSchema.parse(request.body);
-    const user = authorizationForPermission(
-      getSession(request),
-      Permission.REIMBURSEMENT_EXPORT
-    );
+    const user = getSession(request);
     const batch = await scopedBatch(app, user, id);
     if (
       batch.status !== ReimbursementStatus.APPROVED &&
@@ -1095,10 +796,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
       id: idSchema,
       artifactId: idSchema
     }).parse(request.params);
-    const user = authorizationForPermission(
-      getSession(request),
-      Permission.REIMBURSEMENT_EXPORT
-    );
+    const user = getSession(request);
     await scopedBatch(app, user, id);
     const artifact = await app.prisma.reimbursementArtifact.findFirst({
       where: {
@@ -1133,11 +831,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request, reply) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = issueSchema.parse(request.body);
-    const user = authorizationForAnyPermission(getSession(request), [
-      Permission.REIMBURSEMENT_MANAGE,
-      Permission.REIMBURSEMENT_APPROVE,
-      Permission.REIMBURSEMENT_FINANCE_REVIEW
-    ]);
+    const user = getSession(request);
     await scopedBatch(app, user, id);
     const issue = await app.prisma.$transaction(async (tx) => {
       if (input.lineId) {
@@ -1188,11 +882,7 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
       issueId: idSchema
     }).parse(request.params);
     const input = resolveIssueSchema.parse(request.body);
-    const user = authorizationForAnyPermission(getSession(request), [
-      Permission.REIMBURSEMENT_MANAGE,
-      Permission.REIMBURSEMENT_APPROVE,
-      Permission.REIMBURSEMENT_FINANCE_REVIEW
-    ]);
+    const user = getSession(request);
     await scopedBatch(app, user, id);
     const issue = await app.prisma.reimbursementIssue.findFirst({
       where: { id: issueId, batchId: id }
@@ -1235,19 +925,22 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request, reply) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = paymentSchema.parse(request.body);
-    const user = authorizationForPermission(
-      getSession(request),
-      Permission.REIMBURSEMENT_PAY
-    );
+    const user = getSession(request);
     const before = await scopedBatch(app, user, id);
     if (before.status !== ReimbursementStatus.PENDING_PAYMENT) {
       throw new AppError(409, "REIMBURSEMENT_NOT_PAYABLE", "报销单尚未进入待打款状态");
     }
-    const payableAmountCents = before.approvedAmountCents ?? before.totalPaymentCents;
-    if (payableAmountCents !== input.amountCents) {
-      throw new AppError(400, "PAYMENT_AMOUNT_MISMATCH", "打款金额必须与财务审核通过金额一致");
+    if (before.totalPaymentCents !== input.amountCents) {
+      throw new AppError(400, "PAYMENT_AMOUNT_MISMATCH", "打款金额必须与报销付款合计一致");
     }
-    assertFinalPaymentProof(before.attachments, input.proofAttachmentId);
+    if (input.proofAttachmentId) {
+      const proof = before.attachments.find(
+        (attachment) => attachment.id === input.proofAttachmentId
+      );
+      if (!proof || proof.type !== "PAYMENT_VOUCHER") {
+        throw new AppError(400, "INVALID_PAYMENT_PROOF", "付款凭证不属于当前报销单");
+      }
+    }
     const payment = await app.prisma.$transaction(async (tx) => {
       const created = await tx.reimbursementPayment.create({
         data: {

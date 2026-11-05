@@ -30,13 +30,3 @@ docs/source/*.xlsx
 output/
 # tailwind / 临时测试产物
 .tailtest/
-.worktrees/
-# 祥能内部真实数据，仅用于私有部署，严禁进入公开仓库或公开演示包
-data/internal/
-data/internal-source/
-
-# 小程序编译器本地缓存
-apps/miniapp/.swc/
-
-__pycache__/
-*.pyc

@@ -23,10 +23,6 @@ const AiAssistantPage = lazy(() => import("../pages/AiAssistantPage").then((modu
 const InternalEmployeesPage = lazy(() => import("../pages/InternalEmployeesPage").then((module) => ({ default: module.InternalEmployeesPage })));
 const ReimbursementsPage = lazy(() => import("../pages/ReimbursementsPage").then((module) => ({ default: module.ReimbursementsPage })));
 const LeadershipDashboardPage = lazy(() => import("../pages/LeadershipDashboardPage").then((module) => ({ default: module.LeadershipDashboardPage })));
-const DataMigrationPage = lazy(() => import("../pages/DataMigrationPage").then((module) => ({ default: module.DataMigrationPage })));
-const WorkflowDesignerPage = lazy(() => import("../pages/WorkflowDesignerPage").then((module) => ({ default: module.WorkflowDesignerPage })));
-const AccessCenterPage = lazy(() => import("../pages/AccessCenterPage").then((module) => ({ default: module.AccessCenterPage })));
-const AccountCenterPage = lazy(() => import("../pages/AccountCenterPage").then((module) => ({ default: module.AccountCenterPage })));
 
 function ProtectedLayout() {
   const { user, initializing } = useAuth();
@@ -64,10 +60,6 @@ export function AppRoutes() {
         <Route path="/statistics" element={<Navigate to="/dashboard" replace />} />
         <Route path="/imports" element={<ImportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/data-migration" element={<DataMigrationPage />} />
-        <Route path="/workflow-designer" element={<WorkflowDesignerPage />} />
-        <Route path="/access-center" element={<AccessCenterPage />} />
-        <Route path="/account-center" element={<AccountCenterPage />} />
         <Route path="/miniapp-demo" element={<MiniappDemoPage />} />
         <Route path="/ai-assistant" element={<AiAssistantPage />} />
         <Route index element={<HomeRedirect />} />

@@ -5,7 +5,6 @@ import type {
   ListResult,
   Reimbursement,
   ReimbursementArtifact,
-  ReimbursementAttachment,
   ReimbursementStatus
 } from "../types/domain";
 import { handleDemoRequest } from "./demo";
@@ -135,24 +134,6 @@ describe("断网演示业务层", () => {
       {},
       { type: "REIMBURSEMENT_FORM" }
     );
-    await expect(handleDemoRequest(
-      "POST",
-      `/reimbursements/${batch.id}/payments`,
-      {},
-      {
-        expectedVersion: batch.version,
-        amountCents: batch.totalPaymentCents,
-        reference: "DEMO-OFFLINE-MISSING-PROOF",
-        paidAt: "2026-07-26T16:00:00.000Z"
-      }
-    )).rejects.toThrow("登记付款前必须上传最终付款凭证");
-
-    const finalPaymentProof = await handleDemoRequest<ReimbursementAttachment>(
-      "POST",
-      `/reimbursements/${batch.id}/attachments`,
-      { type: "PAYMENT_VOUCHER" },
-      {}
-    );
     await handleDemoRequest(
       "POST",
       `/reimbursements/${batch.id}/payments`,
@@ -161,8 +142,7 @@ describe("断网演示业务层", () => {
         expectedVersion: batch.version,
         amountCents: batch.totalPaymentCents,
         reference: "DEMO-OFFLINE-001",
-        paidAt: "2026-07-26T16:00:00.000Z",
-        proofAttachmentId: finalPaymentProof.id
+        paidAt: "2026-07-26T16:00:00.000Z"
       }
     );
     const completed = await handleDemoRequest<Reimbursement>(

@@ -1,16 +1,15 @@
-import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Card } from "antd";
 
 type Props = PropsWithChildren<{
   title?: ReactNode;
   extra?: ReactNode;
   className?: string;
-  style?: CSSProperties;
 }>;
 
-export function ContentCard({ title, extra, className, style, children }: Props) {
+export function ContentCard({ title, extra, className, children }: Props) {
   return (
-    <Card className={`content-card${className ? ` ${className}` : ""}`} style={style} title={title} extra={extra}>
+    <Card className={`content-card${className ? ` ${className}` : ""}`} title={title} extra={extra}>
       {children}
     </Card>
   );

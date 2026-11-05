@@ -21,7 +21,7 @@ export function TextField({
 }: {
   value: string;
   placeholder: string;
-  type?: "text" | "number" | "digit" | "idcard";
+  type?: "text" | "number" | "idcard";
   onChange: (value: string) => void;
   maxlength?: number;
 }) {

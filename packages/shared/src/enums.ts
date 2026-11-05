@@ -172,30 +172,3 @@ export const labels = {
     [JobStatus.ENDED]: "已结束"
   }
 } as const;
-
-export const PortalType = {
-  ADMIN: "ADMIN",
-  INTERNAL_MINIAPP: "INTERNAL_MINIAPP",
-  SUPPLIER_MINIAPP: "SUPPLIER_MINIAPP",
-  EMPLOYEE_MINIAPP: "EMPLOYEE_MINIAPP"
-} as const;
-export type PortalType = (typeof PortalType)[keyof typeof PortalType];
-
-export const WorkflowTemplateStatus = {
-  DRAFT: "DRAFT",
-  PUBLISHED: "PUBLISHED",
-  DISABLED: "DISABLED"
-} as const;
-export type WorkflowTemplateStatus = (typeof WorkflowTemplateStatus)[keyof typeof WorkflowTemplateStatus];
-
-export const AccessRequestStatus = {
-  DRAFT: "DRAFT",
-  PENDING: "PENDING",
-  APPROVED: "APPROVED",
-  REJECTED: "REJECTED",
-  PROVISIONING: "PROVISIONING",
-  COMPLETED: "COMPLETED",
-  REVOKED: "REVOKED",
-  FAILED: "FAILED"
-} as const;
-export type AccessRequestStatus = (typeof AccessRequestStatus)[keyof typeof AccessRequestStatus];

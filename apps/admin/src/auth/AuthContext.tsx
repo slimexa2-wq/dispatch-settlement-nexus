@@ -112,7 +112,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [refreshUser]);
 
   const login = useCallback(async (username: string, password: string) => {
-    const result = await api.post<LoginResult>("/auth/login", { username, password, portal: "ADMIN" });
+    const result = await api.post<LoginResult>("/auth/login", { username, password });
     const token = result.accessToken ?? result.token;
     if (!token) throw new Error("登录响应缺少访问令牌");
     setToken(token);

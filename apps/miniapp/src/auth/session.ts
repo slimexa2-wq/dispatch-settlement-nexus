@@ -16,15 +16,7 @@ export function getAccessToken(): string | null {
 export function getSessionUser(): SessionUser | null {
   try {
     const value = Taro.getStorageSync<SessionUser>(USER_KEY);
-    if (!value || typeof value !== "object" || !value.role) return null;
-    return {
-      ...value,
-      roles: Array.isArray(value.roles) && value.roles.length ? value.roles : [value.role],
-      projectIds: Array.isArray(value.projectIds) ? value.projectIds : [],
-      permissions: Array.isArray(value.permissions) ? value.permissions : [],
-      scopeBindings: Array.isArray(value.scopeBindings) ? value.scopeBindings : [],
-      authorizationGrants: Array.isArray(value.authorizationGrants) ? value.authorizationGrants : []
-    };
+    return value && typeof value === "object" ? value : null;
   } catch {
     return null;
   }

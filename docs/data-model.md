@@ -68,7 +68,7 @@
 
 固定校验：
 
-- 每条明细 `invoiceCents >= paymentCents > 0`，允许发票金额与付款金额相等。
+- 每条明细 `invoiceCents > paymentCents > 0`。
 - 批次金额由明细聚合，不接受前端提交的合计覆盖。
 - `(batchId, sequence)` 唯一。
 - `(batchId, status, version)` 用于并发更新前置条件。

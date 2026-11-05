@@ -3,13 +3,12 @@ import { AccessDenied, AsyncBoundary, FieldRow, PageShell, SectionCard, StatusTa
 import { formatMoney } from "../../../domain/format";
 import { useAsyncData } from "../../../hooks/useAsyncData";
 import { useSession } from "../../../hooks/useSession";
-import { hasRole } from "../../../domain/roles";
 
 export default function SalarySlipsPage() {
   const user = useSession();
   const salarySlips = useAsyncData(() => api.mySalarySlips(), []);
   if (!user) return <PageShell title="我的工资条" />;
-  if (!hasRole(user, "EMPLOYEE") || !user.permissions.includes("salary:self-read")) {
+  if (user.role !== "EMPLOYEE" || !user.permissions.includes("salary:self-read")) {
     return <AccessDenied message="工资条仅允许已绑定人员档案的员工本人查看。" />;
   }
   const items = salarySlips.data ? itemsOf(salarySlips.data) : [];

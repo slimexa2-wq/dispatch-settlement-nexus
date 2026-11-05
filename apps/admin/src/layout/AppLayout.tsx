@@ -86,11 +86,7 @@ const menuItems: ItemType[] = [
   { key: "/product", icon: <GlobalOutlined />, label: "产品介绍" },
   { key: "/internal-employees", icon: <IdcardOutlined />, label: "内部员工" },
   { key: "/reimbursements", icon: <AccountBookOutlined />, label: "报销管理" },
-  { key: "/leadership", icon: <CrownOutlined />, label: "领导驾驶舱" },
-  { key: "/data-migration", icon: <DatabaseOutlined />, label: "数据迁移中心" },
-  { key: "/workflow-designer", icon: <AuditOutlined />, label: "审批流搭建" },
-  { key: "/access-center", icon: <SafetyCertificateOutlined />, label: "权限开通中心" },
-  { key: "/account-center", icon: <TeamOutlined />, label: "各端口账户" }
+  { key: "/leadership", icon: <CrownOutlined />, label: "领导驾驶舱" }
 ];
 
 type ModuleActionConfig = {
@@ -119,10 +115,6 @@ function selectedPath(pathname: string): string {
     "/salary-slips",
     "/electronic-contracts",
     "/imports",
-    "/data-migration",
-    "/workflow-designer",
-    "/access-center",
-    "/account-center",
     "/settings",
     "/miniapp-demo"
   ];
@@ -204,10 +196,6 @@ export function AppLayout() {
     ...(can(Permission.CONTRACT_MANAGE) ? [menuItems[7]!] : []),
     ...(can(Permission.IMPORT_MANAGE) ? [menuItems[8]!] : []),
     ...(can(Permission.USER_MANAGE) || can(Permission.AUDIT_READ) ? [menuItems[9]!] : []),
-    ...(can(Permission.IMPORT_MANAGE) ? [menuItems[16]!] : []),
-    ...(can(Permission.WORKFLOW_MANAGE) ? [menuItems[17]!] : []),
-    ...([Permission.ACCESS_REQUEST_CREATE, Permission.ACCESS_REQUEST_APPROVE].some(can) ? [menuItems[18]!] : []),
-    ...(can(Permission.ACCOUNT_MANAGE) ? [menuItems[19]!] : []),
     ...(can(Permission.DASHBOARD_READ) ? [menuItems[10]!] : []),
     menuItems[11]!, // AI 助手
     menuItems[12]!  // 产品介绍

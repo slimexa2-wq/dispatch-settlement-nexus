@@ -26,8 +26,9 @@ describe("InternalEmployeesPage", () => {
     apiGet.mockImplementation((path: string) => {
       if (path === "/organization/options") {
         return Promise.resolve({
-          legalEntities: [{ id: "legal-1", code: "LE-01", name: "四川祥能人力资本服务有限公司" }],
-          organizationUnits: [{ id: "org-1", code: "OU-01-D1", name: "人力资源部", type: "DEPARTMENT", path: "/group/management-center/hr" }],
+          legalEntities: [{ id: "legal-1", code: "LE-01", name: "祥能一分公司有限公司" }],
+          branches: [{ id: "branch-1", name: "祥能一分公司" }],
+          organizationUnits: [{ id: "org-1", code: "OU-01-D1", name: "人力资源中心", type: "DEPARTMENT", path: "/group/branch/org" }],
           positions: [{ id: "position-1", code: "POS-01", name: "内部人事" }],
           jobGrades: [{ id: "grade-1", code: "G5", name: "专业岗位", level: 5 }]
         });
@@ -42,8 +43,8 @@ describe("InternalEmployeesPage", () => {
           status: "ACTIVE",
           onboardDate: "2025-01-01",
           version: 1,
-          legalEntity: { id: "legal-1", code: "LE-01", name: "四川祥能人力资本服务有限公司" },
-          organizationUnit: { id: "org-1", code: "OU-01-D1", name: "人力资源部", type: "DEPARTMENT", path: "/group/management-center/hr" },
+          branch: { id: "branch-1", name: "祥能一分公司" },
+          organizationUnit: { id: "org-1", code: "OU-01-D1", name: "人力资源中心", type: "DEPARTMENT", path: "/group/branch/org" },
           position: { id: "position-1", code: "POS-01", name: "内部人事" },
           employments: [],
           changes: []
@@ -59,8 +60,8 @@ describe("InternalEmployeesPage", () => {
           status: "ACTIVE",
           onboardDate: "2025-01-01",
           version: 1,
-          legalEntity: { id: "legal-1", code: "LE-01", name: "四川祥能人力资本服务有限公司" },
-          organizationUnit: { id: "org-1", code: "OU-01-D1", name: "人力资源部", type: "DEPARTMENT", path: "/group/management-center/hr" },
+          branch: { id: "branch-1", name: "祥能一分公司" },
+          organizationUnit: { id: "org-1", code: "OU-01-D1", name: "人力资源中心", type: "DEPARTMENT", path: "/group/branch/org" },
           position: { id: "position-1", code: "POS-01", name: "内部人事" }
         }],
         pagination: { page: 1, pageSize: 20, total: 1 }

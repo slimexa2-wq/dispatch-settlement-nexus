@@ -68,7 +68,7 @@ describe("报销接口", () => {
     expect(JSON.stringify(listWhere)).toContain(branchId);
   });
 
-  it("创建报销单时在服务端拒绝发票金额低于付款金额", async () => {
+  it("创建报销单时在服务端拒绝发票金额不高于付款金额", async () => {
     const user = userFixture({
       username: "clerk",
       role: UserRole.DEPARTMENT_REIMBURSEMENT_CLERK,
@@ -103,14 +103,14 @@ describe("报销接口", () => {
           category: "差旅费",
           description: "宜宾至成都项目巡检",
           paymentCents: 100_00,
-          invoiceCents: 99_00
+          invoiceCents: 100_00
         }]
       }
     });
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({
-      error: { code: "INVOICE_BELOW_PAYMENT" }
+      error: { code: "INVOICE_MUST_EXCEED_PAYMENT" }
     });
     expect(createCalled).toBe(false);
   });
@@ -125,9 +125,6 @@ describe("报销接口", () => {
     let createCalled = false;
     const prisma = createPrismaMock({
       user: { findUnique: async () => user },
-      internalEmployee: {
-        findFirst: async () => ({ branchId, organizationUnitId })
-      },
       reimbursementBatch: {
         create: async () => {
           createCalled = true;
@@ -162,44 +159,6 @@ describe("报销接口", () => {
     expect(response.statusCode).toBe(403);
     expect(response.json()).toMatchObject({ error: { code: "OUT_OF_SCOPE" } });
     expect(createCalled).toBe(false);
-  });
-
-  it("员工自助报销未绑定有效内部员工档案时拒绝创建", async () => {
-    const user = userFixture({
-      username: "employee-no-profile",
-      role: UserRole.EMPLOYEE,
-      branchId: null,
-      passwordHash: await passwordHash()
-    });
-    const prisma = createPrismaMock({
-      user: { findUnique: async () => user },
-      internalEmployee: { findFirst: async () => null }
-    });
-    const app = await buildTestApp(prisma);
-    apps.push(app);
-    const token = await login(app, "employee-no-profile");
-
-    const response = await app.inject({
-      method: "POST",
-      url: "/api/reimbursements",
-      headers: { authorization: `Bearer ${token}` },
-      payload: {
-        title: "员工差旅报销",
-        lines: [{
-          sequence: 1,
-          expenseDate: "2026-07-20",
-          category: "差旅费",
-          description: "现场交通",
-          paymentCents: 100_00,
-          invoiceCents: 100_00
-        }]
-      }
-    });
-
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toMatchObject({
-      error: { code: "INTERNAL_EMPLOYEE_PROFILE_REQUIRED" }
-    });
   });
 
   it("合法报销单在事务内创建并记录完整审计", async () => {

@@ -114,18 +114,12 @@ enum AiActionStatus {
   FAILED
 }
 
-/// Organization nodes are dynamic and keep their real business type.
-/// All types may participate in the active internal organization tree.
 enum OrganizationUnitType {
   GROUP
-  LEADERSHIP
   LEGAL_ENTITY
+  BRANCH
   CENTER
   DEPARTMENT
-  BUSINESS_DEPARTMENT
-  BRANCH
-  SUBSIDIARY
-  OTHER
 }
 
 enum InternalEmployeeStatus {
@@ -142,21 +136,12 @@ enum InternalEmployeeChangeType {
   ENABLE
   OFFBOARD
   ARCHIVE
-  ACCOUNT_BIND
-  ACCOUNT_UNBIND
 }
 
 enum RoleAssignmentStatus {
   ACTIVE
   REVOKED
   EXPIRED
-}
-
-enum RoleAssignmentSource {
-  MANUAL
-  POSITION
-  TEMPORARY
-  LEGACY
 }
 
 enum DataScopeType {
@@ -167,92 +152,6 @@ enum DataScopeType {
   PROJECT
   SUPPLIER
   GROUP
-}
-
-
-enum MigrationBatchStatus {
-  DRAFT
-  PREVIEWING
-  READY
-  COMMITTING
-  COMMITTED
-  PARTIAL
-  FAILED
-  ROLLED_BACK
-}
-
-enum MigrationRowStatus {
-  CREATE
-  UPDATE
-  SKIP
-  ERROR
-  COMMITTED
-  ROLLED_BACK
-}
-
-enum WorkflowTemplateStatus {
-  DRAFT
-  PUBLISHED
-  DISABLED
-}
-
-enum WorkflowInstanceStatus {
-  RUNNING
-  APPROVED
-  REJECTED
-  CANCELLED
-}
-
-enum WorkflowTaskStatus {
-  WAITING
-  PENDING
-  APPROVED
-  REJECTED
-  RETURNED
-  CANCELLED
-}
-
-enum AccessRequestStatus {
-  DRAFT
-  PENDING
-  APPROVED
-  REJECTED
-  PROVISIONING
-  COMPLETED
-  REVOKED
-  FAILED
-}
-
-enum AccessRiskLevel {
-  NORMAL
-  HIGH
-}
-
-enum PermissionProvisionTaskStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
-enum PortalType {
-  ADMIN
-  INTERNAL_MINIAPP
-  SUPPLIER_MINIAPP
-  EMPLOYEE_MINIAPP
-}
-
-enum AccountLifecycleAction {
-  CREATED
-  ACTIVATED
-  DISABLED
-  PASSWORD_RESET
-  FORCE_LOGOUT
-  WECHAT_BOUND
-  WECHAT_UNBOUND
-  PORTAL_GRANTED
-  PORTAL_REVOKED
-  MERGED
 }
 
 enum ReimbursementStatus {
@@ -303,6 +202,9 @@ model Branch {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   projects   Project[]
   users      User[]
+  organizationUnits OrganizationUnit[]
+  internalEmployees InternalEmployee[]
+  internalEmployments InternalEmployment[]
   dataScopeBindings DataScopeBinding[]
   reimbursementBatches ReimbursementBatch[]
 
@@ -317,6 +219,7 @@ model LegalEntity {
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  organizationUnits OrganizationUnit[]
   internalEmployees InternalEmployee[]
   employments InternalEmployment[]
 
@@ -330,6 +233,8 @@ model OrganizationUnit {
   name          String               @db.VarChar(200)
   type          OrganizationUnitType
   parentId      String?              @map("parent_id") @db.Uuid
+  legalEntityId String?              @map("legal_entity_id") @db.Uuid
+  branchId      String?              @map("branch_id") @db.Uuid
   path          String               @db.VarChar(1000)
   sortOrder     Int                  @default(0) @map("sort_order")
   isActive      Boolean              @default(true) @map("is_active")
@@ -337,6 +242,8 @@ model OrganizationUnit {
   updatedAt     DateTime             @updatedAt @map("updated_at")
   parent        OrganizationUnit?    @relation("OrganizationUnitTree", fields: [parentId], references: [id], onDelete: Restrict)
   children      OrganizationUnit[]   @relation("OrganizationUnitTree")
+  legalEntity   LegalEntity?         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch        Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
   positions     Position[]
   internalEmployees InternalEmployee[]
   employments   InternalEmployment[]
@@ -345,6 +252,8 @@ model OrganizationUnit {
 
   @@unique([parentId, name])
   @@index([parentId, sortOrder])
+  @@index([legalEntityId, type, isActive])
+  @@index([branchId, type, isActive])
   @@index([path])
   @@map("organization_units")
 }
@@ -361,7 +270,6 @@ model Position {
   organizationUnit   OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
   internalEmployees  InternalEmployee[]
   employments        InternalEmployment[]
-  roleBindings       PositionRoleBinding[]
 
   @@index([organizationUnitId, isActive])
   @@index([name])
@@ -379,36 +287,21 @@ model JobGrade {
   updatedAt   DateTime @updatedAt @map("updated_at")
   internalEmployees InternalEmployee[]
   employments InternalEmployment[]
-  reimbursementApprovalPolicy JobGradeApprovalPolicy?
 
   @@index([level, isActive])
   @@map("job_grades")
 }
 
-model JobGradeApprovalPolicy {
-  id                            String   @id @default(uuid()) @db.Uuid
-  jobGradeId                    String   @unique @map("job_grade_id") @db.Uuid
-  maxReimbursementApprovalCents Int?     @map("max_reimbursement_approval_cents")
-  isActive                      Boolean  @default(true) @map("is_active")
-  createdAt                     DateTime @default(now()) @map("created_at")
-  updatedAt                     DateTime @updatedAt @map("updated_at")
-  jobGrade                      JobGrade @relation(fields: [jobGradeId], references: [id], onDelete: Cascade)
-
-  @@index([isActive, jobGradeId])
-  @@map("job_grade_approval_policies")
-}
-
 model InternalEmployee {
   id                 String                 @id @default(uuid()) @db.Uuid
   employeeNo         String                 @unique @map("employee_no") @db.VarChar(64)
-  sourceEmployeeNo   String?                @map("source_employee_no") @db.VarChar(64)
   userId             String?                @unique @map("user_id") @db.Uuid
   name               String                 @db.VarChar(64)
   phone              String                 @unique @db.VarChar(32)
   idCard             String                 @unique @map("id_card") @db.VarChar(32)
   email              String?                @db.VarChar(200)
-  bankAccount        String?                @map("bank_account") @db.VarChar(120)
   legalEntityId      String?                @map("legal_entity_id") @db.Uuid
+  branchId           String?                @map("branch_id") @db.Uuid
   organizationUnitId String?                @map("organization_unit_id") @db.Uuid
   positionId         String?                @map("position_id") @db.Uuid
   jobGradeId         String?                @map("job_grade_id") @db.Uuid
@@ -421,6 +314,7 @@ model InternalEmployee {
   updatedAt          DateTime               @updatedAt @map("updated_at")
   user               User?                  @relation("InternalEmployeeUser", fields: [userId], references: [id], onDelete: Restrict)
   legalEntity        LegalEntity?           @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch             Branch?                @relation(fields: [branchId], references: [id], onDelete: Restrict)
   organizationUnit   OrganizationUnit?      @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
   position           Position?              @relation(fields: [positionId], references: [id], onDelete: Restrict)
   jobGrade           JobGrade?              @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
@@ -428,7 +322,7 @@ model InternalEmployee {
   changes            InternalEmployeeChange[]
 
   @@unique([id, version])
-  @@index([status, organizationUnitId])
+  @@index([status, branchId, organizationUnitId])
   @@index([legalEntityId, status])
   @@index([positionId, status])
   @@index([name])
@@ -439,6 +333,7 @@ model InternalEmployment {
   id                 String   @id @default(uuid()) @db.Uuid
   employeeId         String   @map("employee_id") @db.Uuid
   legalEntityId      String?  @map("legal_entity_id") @db.Uuid
+  branchId           String?  @map("branch_id") @db.Uuid
   organizationUnitId String   @map("organization_unit_id") @db.Uuid
   positionId         String   @map("position_id") @db.Uuid
   jobGradeId         String?  @map("job_grade_id") @db.Uuid
@@ -449,12 +344,14 @@ model InternalEmployment {
   createdAt          DateTime @default(now()) @map("created_at")
   employee           InternalEmployee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   legalEntity        LegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch             Branch? @relation(fields: [branchId], references: [id], onDelete: Restrict)
   organizationUnit   OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
   position           Position @relation(fields: [positionId], references: [id], onDelete: Restrict)
   jobGrade           JobGrade? @relation(fields: [jobGradeId], references: [id], onDelete: Restrict)
 
   @@index([employeeId, endedAt])
   @@index([organizationUnitId, endedAt])
+  @@index([branchId, endedAt])
   @@index([positionId, endedAt])
   @@map("internal_employments")
 }
@@ -503,31 +400,10 @@ model Project {
   portalQrCodes    PortalQrCode[]
   dataScopeBindings DataScopeBinding[]
   reimbursementBatches ReimbursementBatch[]
-  weeklySnapshots ProjectWeeklySnapshot[]
 
   @@unique([branchId, name])
   @@index([branchId, status])
   @@map("projects")
-}
-
-model ProjectWeeklySnapshot {
-  id                String   @id @default(uuid()) @db.Uuid
-  projectId         String   @map("project_id") @db.Uuid
-  snapshotDate      DateTime @map("snapshot_date") @db.Date
-  selfRecruited     Int      @default(0) @map("self_recruited")
-  supplierRecruited Int      @default(0) @map("supplier_recruited")
-  activeCount       Int      @default(0) @map("active_count")
-  onboardedCount    Int      @default(0) @map("onboarded_count")
-  offboardedCount   Int      @default(0) @map("offboarded_count")
-  changeCount       Int      @default(0) @map("change_count")
-  reason            String?  @db.Text
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, snapshotDate])
-  @@index([snapshotDate, activeCount])
-  @@map("project_weekly_snapshots")
 }
 
 model ProjectImage {
@@ -852,29 +728,9 @@ model Role {
   updatedAt   DateTime @updatedAt @map("updated_at")
   permissions RolePermission[]
   assignments UserRoleAssignment[]
-  positionBindings PositionRoleBinding[]
 
   @@index([isActive, name])
   @@map("roles")
-}
-
-
-model PositionRoleBinding {
-  id         String        @id @default(uuid()) @db.Uuid
-  positionId String        @map("position_id") @db.Uuid
-  roleId     String        @map("role_id") @db.Uuid
-  scopeType  DataScopeType @map("scope_type")
-  isActive   Boolean       @default(true) @map("is_active")
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt @map("updated_at")
-  position   Position      @relation(fields: [positionId], references: [id], onDelete: Cascade)
-  role       Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  assignments UserRoleAssignment[]
-
-  @@unique([positionId, roleId, scopeType])
-  @@index([positionId, isActive])
-  @@index([roleId, isActive])
-  @@map("position_role_bindings")
 }
 
 model PermissionDefinition {
@@ -907,9 +763,6 @@ model UserRoleAssignment {
   userId      String               @map("user_id") @db.Uuid
   roleId      String               @map("role_id") @db.Uuid
   status      RoleAssignmentStatus @default(ACTIVE)
-  source      RoleAssignmentSource @default(MANUAL)
-  positionRoleBindingId String?    @map("position_role_binding_id") @db.Uuid
-  accessRequestId String?          @map("access_request_id") @db.Uuid
   validFrom   DateTime             @default(now()) @map("valid_from")
   validTo     DateTime?            @map("valid_to")
   createdById String?              @map("created_by_id") @db.Uuid
@@ -919,16 +772,11 @@ model UserRoleAssignment {
   updatedAt   DateTime             @updatedAt @map("updated_at")
   user        User                 @relation("UserAssignedRoles", fields: [userId], references: [id], onDelete: Cascade)
   role        Role                 @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  positionRoleBinding PositionRoleBinding? @relation(fields: [positionRoleBindingId], references: [id], onDelete: SetNull)
-  accessRequest AccessRequest? @relation("AccessRequestRoleAssignments", fields: [accessRequestId], references: [id], onDelete: SetNull)
   scopes      DataScopeBinding[]
 
   @@unique([userId, roleId, validFrom])
   @@index([userId, status, validTo])
   @@index([roleId, status])
-  @@index([userId, source, status])
-  @@index([positionRoleBindingId, status])
-  @@index([accessRequestId, status])
   @@index([createdById, createdAt])
   @@index([revokedById, revokedAt])
   @@map("user_role_assignments")
@@ -938,7 +786,6 @@ model DataScopeBinding {
   id                 String        @id @default(uuid()) @db.Uuid
   userId             String        @map("user_id") @db.Uuid
   roleAssignmentId   String?       @map("role_assignment_id") @db.Uuid
-  accessRequestId     String?       @map("access_request_id") @db.Uuid
   type               DataScopeType
   organizationUnitId String?       @map("organization_unit_id") @db.Uuid
   branchId           String?       @map("branch_id") @db.Uuid
@@ -958,11 +805,9 @@ model DataScopeBinding {
   branch             Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
   project            Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   supplier           Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  accessRequest      AccessRequest? @relation("AccessRequestScopeBindings", fields: [accessRequestId], references: [id], onDelete: SetNull)
 
   @@index([userId, isActive, validTo])
   @@index([roleAssignmentId, isActive])
-  @@index([accessRequestId, isActive])
   @@index([organizationUnitId, isActive])
   @@index([branchId, isActive])
   @@index([projectId, isActive])
@@ -1022,18 +867,6 @@ model User {
   reimbursementApprovals    ReimbursementApproval[]   @relation("ReimbursementApprovalActors")
   reimbursementPayments     ReimbursementPayment[]    @relation("ReimbursementPayers")
   reimbursementArtifacts    ReimbursementArtifact[]   @relation("ReimbursementArtifactGenerators")
-  migrationBatchesCreated     MigrationBatch[]            @relation("MigrationBatchCreators")
-  workflowVersionsCreated    WorkflowVersion[]           @relation("WorkflowVersionCreators")
-  workflowInstancesInitiated WorkflowInstance[]          @relation("WorkflowInstanceInitiators")
-  workflowTasksAssigned      WorkflowTask[]              @relation("WorkflowTaskAssignees")
-  workflowTasksActed         WorkflowTask[]              @relation("WorkflowTaskActors")
-  accessRequestsSubject      AccessRequest[]             @relation("AccessRequestSubjects")
-  accessRequestsCreated      AccessRequest[]             @relation("AccessRequestCreators")
-  accessRequestsReviewed     AccessRequest[]             @relation("AccessRequestReviewers")
-  portalAccesses             UserPortalAccess[]          @relation("UserPortalAccessUsers")
-  portalAccessGrants         UserPortalAccess[]          @relation("UserPortalAccessGranters")
-  accountLifecycleLogs       AccountLifecycleLog[]       @relation("AccountLifecycleUsers")
-  accountLifecycleActions    AccountLifecycleLog[]       @relation("AccountLifecycleActors")
 
   @@index([role, isActive])
   @@map("users")
@@ -1317,7 +1150,6 @@ model ReimbursementBatch {
   status             ReimbursementStatus @default(PENDING_SUBMISSION)
   currency           String              @default("CNY") @db.VarChar(3)
   totalPaymentCents  Int                 @default(0) @map("total_payment_cents")
-  approvedAmountCents Int?                @map("approved_amount_cents")
   totalInvoiceCents  Int                 @default(0) @map("total_invoice_cents")
   invoiceExcessCents Int                 @default(0) @map("invoice_excess_cents")
   version            Int                 @default(1)
@@ -1471,257 +1303,4 @@ model ReimbursementArtifact {
   @@index([batchId, status])
   @@index([generatedById, createdAt])
   @@map("reimbursement_artifacts")
-}
-
-
-model MigrationTemplate {
-  id          String   @id @default(uuid()) @db.Uuid
-  code        String   @unique @db.VarChar(64)
-  name        String   @db.VarChar(120)
-  targetEntity String  @map("target_entity") @db.VarChar(64)
-  description String?  @db.Text
-  fields      Json
-  uniqueKeys  String[] @default([]) @map("unique_keys")
-  aliasMap    Json     @default("{}") @map("alias_map")
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  batches     MigrationBatch[]
-
-  @@index([targetEntity, isActive])
-  @@map("migration_templates")
-}
-
-model MigrationBatch {
-  id               String               @id @default(uuid()) @db.Uuid
-  templateId       String               @map("template_id") @db.Uuid
-  sourceFile       String               @map("source_file") @db.VarChar(255)
-  sourceHash       String               @map("source_hash") @db.VarChar(64)
-  sourceStorageKey String?              @map("source_storage_key") @db.VarChar(128)
-  sourceMimeType   String?              @map("source_mime_type") @db.VarChar(160)
-  sourceSizeBytes  Int?                 @map("source_size_bytes")
-  status           MigrationBatchStatus @default(DRAFT)
-  mapping          Json                 @default("{}")
-  conflictPolicy   String               @default("UPDATE") @map("conflict_policy") @db.VarChar(32)
-  totalRows        Int                  @default(0) @map("total_rows")
-  createRows       Int                  @default(0) @map("create_rows")
-  updateRows       Int                  @default(0) @map("update_rows")
-  skipRows         Int                  @default(0) @map("skip_rows")
-  errorRows        Int                  @default(0) @map("error_rows")
-  processedRows    Int                  @default(0) @map("processed_rows")
-  summary          Json                 @default("{}")
-  errors           Json                 @default("[]")
-  rollbackSnapshot Json?                @map("rollback_snapshot")
-  createdById      String?              @map("created_by_id") @db.Uuid
-  committedAt      DateTime?            @map("committed_at")
-  rolledBackAt     DateTime?            @map("rolled_back_at")
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
-  template         MigrationTemplate    @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  createdBy        User?                @relation("MigrationBatchCreators", fields: [createdById], references: [id], onDelete: SetNull)
-  rows             MigrationRowResult[]
-
-  @@unique([templateId, sourceHash])
-  @@index([status, createdAt])
-  @@index([createdById, createdAt])
-  @@map("migration_batches")
-}
-
-model MigrationRowResult {
-  id             String             @id @default(uuid()) @db.Uuid
-  batchId        String             @map("batch_id") @db.Uuid
-  sourceRow      Int                @map("source_row")
-  status         MigrationRowStatus
-  action         String             @db.VarChar(32)
-  uniqueKey      String?            @map("unique_key") @db.VarChar(500)
-  sourceData     Json               @map("source_data")
-  normalizedData Json               @map("normalized_data")
-  errors         Json               @default("[]")
-  entityId       String?            @map("entity_id") @db.VarChar(128)
-  before         Json?
-  after          Json?
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  batch          MigrationBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
-
-  @@unique([batchId, sourceRow])
-  @@index([batchId, status])
-  @@index([uniqueKey])
-  @@map("migration_row_results")
-}
-
-model WorkflowTemplate {
-  id           String                 @id @default(uuid()) @db.Uuid
-  code         String                 @unique @db.VarChar(64)
-  name         String                 @db.VarChar(120)
-  businessType String                 @map("business_type") @db.VarChar(64)
-  description  String?                @db.Text
-  status       WorkflowTemplateStatus @default(DRAFT)
-  createdAt    DateTime               @default(now()) @map("created_at")
-  updatedAt    DateTime               @updatedAt @map("updated_at")
-  versions     WorkflowVersion[]
-  instances    WorkflowInstance[]
-
-  @@index([businessType, status])
-  @@map("workflow_templates")
-}
-
-model WorkflowVersion {
-  id          String   @id @default(uuid()) @db.Uuid
-  templateId  String   @map("template_id") @db.Uuid
-  version     Int
-  definition  Json
-  isPublished Boolean  @default(false) @map("is_published")
-  publishedAt DateTime? @map("published_at")
-  createdById String?  @map("created_by_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at")
-  template    WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  createdBy   User?    @relation("WorkflowVersionCreators", fields: [createdById], references: [id], onDelete: SetNull)
-  instances   WorkflowInstance[]
-
-  @@unique([templateId, version])
-  @@index([templateId, isPublished, version])
-  @@map("workflow_versions")
-}
-
-model WorkflowInstance {
-  id             String                 @id @default(uuid()) @db.Uuid
-  templateId     String                 @map("template_id") @db.Uuid
-  versionId      String                 @map("version_id") @db.Uuid
-  businessType   String                 @map("business_type") @db.VarChar(64)
-  businessId     String                 @map("business_id") @db.VarChar(128)
-  status         WorkflowInstanceStatus @default(RUNNING)
-  context        Json                   @default("{}")
-  currentNodeKey String?                @map("current_node_key") @db.VarChar(64)
-  initiatedById  String?                @map("initiated_by_id") @db.Uuid
-  completedAt    DateTime?              @map("completed_at")
-  createdAt      DateTime               @default(now()) @map("created_at")
-  updatedAt      DateTime               @updatedAt @map("updated_at")
-  template       WorkflowTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  version        WorkflowVersion        @relation(fields: [versionId], references: [id], onDelete: Restrict)
-  initiatedBy    User?                  @relation("WorkflowInstanceInitiators", fields: [initiatedById], references: [id], onDelete: SetNull)
-  tasks          WorkflowTask[]
-  accessRequests AccessRequest[]
-
-  @@unique([businessType, businessId])
-  @@index([status, createdAt])
-  @@index([templateId, versionId])
-  @@map("workflow_instances")
-}
-
-model WorkflowTask {
-  id             String             @id @default(uuid()) @db.Uuid
-  instanceId     String             @map("instance_id") @db.Uuid
-  nodeKey        String             @map("node_key") @db.VarChar(64)
-  nodeName       String             @map("node_name") @db.VarChar(120)
-  nodeOrder      Int                @map("node_order")
-  assigneeType   String             @map("assignee_type") @db.VarChar(64)
-  assigneeRefId  String?            @map("assignee_ref_id") @db.VarChar(128)
-  assignedUserId String?            @map("assigned_user_id") @db.Uuid
-  status         WorkflowTaskStatus @default(PENDING)
-  actionById     String?            @map("action_by_id") @db.Uuid
-  comment        String?            @db.Text
-  dueAt          DateTime?          @map("due_at")
-  completedAt    DateTime?          @map("completed_at")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  instance       WorkflowInstance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  assignedUser   User?              @relation("WorkflowTaskAssignees", fields: [assignedUserId], references: [id], onDelete: SetNull)
-  actionBy       User?              @relation("WorkflowTaskActors", fields: [actionById], references: [id], onDelete: SetNull)
-
-  @@unique([instanceId, nodeKey, assignedUserId])
-  @@index([assignedUserId, status, createdAt])
-  @@index([instanceId, status, nodeOrder])
-  @@map("workflow_tasks")
-}
-
-model AccessRequest {
-  id                 String              @id @default(uuid()) @db.Uuid
-  subjectUserId      String              @map("subject_user_id") @db.Uuid
-  requestedById      String              @map("requested_by_id") @db.Uuid
-  reviewedById       String?             @map("reviewed_by_id") @db.Uuid
-  workflowInstanceId String?             @unique @map("workflow_instance_id") @db.Uuid
-  status             AccessRequestStatus @default(PENDING)
-  riskLevel          AccessRiskLevel     @default(NORMAL) @map("risk_level")
-  portals            Json
-  roles              Json
-  scopes             Json
-  validFrom          DateTime            @map("valid_from")
-  validTo            DateTime?           @map("valid_to")
-  reason             String              @db.Text
-  reviewComment      String?             @map("review_comment") @db.Text
-  reviewedAt         DateTime?           @map("reviewed_at")
-  provisionedAt      DateTime?           @map("provisioned_at")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
-  subjectUser        User                @relation("AccessRequestSubjects", fields: [subjectUserId], references: [id], onDelete: Cascade)
-  requestedBy        User                @relation("AccessRequestCreators", fields: [requestedById], references: [id], onDelete: Restrict)
-  reviewedBy         User?               @relation("AccessRequestReviewers", fields: [reviewedById], references: [id], onDelete: SetNull)
-  workflowInstance   WorkflowInstance?   @relation(fields: [workflowInstanceId], references: [id], onDelete: SetNull)
-  provisionTasks     PermissionProvisionTask[]
-  portalAccesses     UserPortalAccess[]
-  roleAssignments    UserRoleAssignment[] @relation("AccessRequestRoleAssignments")
-  scopeBindings      DataScopeBinding[] @relation("AccessRequestScopeBindings")
-
-  @@index([subjectUserId, status, createdAt])
-  @@index([requestedById, createdAt])
-  @@index([status, riskLevel, createdAt])
-  @@map("access_requests")
-}
-
-model PermissionProvisionTask {
-  id              String                        @id @default(uuid()) @db.Uuid
-  accessRequestId String                        @map("access_request_id") @db.Uuid
-  action          String                        @db.VarChar(64)
-  status          PermissionProvisionTaskStatus @default(PENDING)
-  payload         Json
-  error           String?                       @db.Text
-  attemptedAt     DateTime?                     @map("attempted_at")
-  completedAt     DateTime?                     @map("completed_at")
-  createdAt       DateTime                      @default(now()) @map("created_at")
-  updatedAt       DateTime                      @updatedAt @map("updated_at")
-  accessRequest   AccessRequest                 @relation(fields: [accessRequestId], references: [id], onDelete: Cascade)
-
-  @@index([accessRequestId, status])
-  @@map("permission_provision_tasks")
-}
-
-model UserPortalAccess {
-  id              String       @id @default(uuid()) @db.Uuid
-  userId          String       @map("user_id") @db.Uuid
-  portal          PortalType
-  enabled         Boolean      @default(true)
-  source          String       @default("MANUAL") @db.VarChar(32)
-  validFrom       DateTime     @default(now()) @map("valid_from")
-  validTo         DateTime?    @map("valid_to")
-  grantedById     String?      @map("granted_by_id") @db.Uuid
-  accessRequestId String?      @map("access_request_id") @db.Uuid
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-  user            User         @relation("UserPortalAccessUsers", fields: [userId], references: [id], onDelete: Cascade)
-  grantedBy       User?        @relation("UserPortalAccessGranters", fields: [grantedById], references: [id], onDelete: SetNull)
-  accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
-
-  @@index([userId, portal, enabled])
-  @@index([portal, enabled, validTo])
-  @@index([accessRequestId])
-  @@map("user_portal_accesses")
-}
-
-model AccountLifecycleLog {
-  id        String                 @id @default(uuid()) @db.Uuid
-  userId    String                 @map("user_id") @db.Uuid
-  actorId   String?                @map("actor_id") @db.Uuid
-  action    AccountLifecycleAction
-  portal    PortalType?
-  before    Json?
-  after     Json?
-  reason    String?                @db.Text
-  createdAt DateTime               @default(now()) @map("created_at")
-  user      User                   @relation("AccountLifecycleUsers", fields: [userId], references: [id], onDelete: Cascade)
-  actor     User?                  @relation("AccountLifecycleActors", fields: [actorId], references: [id], onDelete: SetNull)
-
-  @@index([userId, createdAt])
-  @@index([actorId, createdAt])
-  @@map("account_lifecycle_logs")
 }

@@ -99,11 +99,11 @@ export function AccessDenied({ message = "当前账号没有访问此页面的�
   );
 }
 
-export function StatusTag({ status, label }: { status?: string | null; label?: string }) {
+export function StatusTag({ status }: { status?: string | null }) {
   const positive = ["RECRUITING", "ACTIVE", "PASSED", "ARRIVED", "ACHIEVED", "PAID", "PUBLISHED"].includes(status ?? "");
   const negative = ["FAILED", "ABANDONED", "LEFT", "ENDED", "CANCELLED", "WITHDRAWN"].includes(status ?? "");
   const className = "status-tag" + (positive ? " status-tag--positive" : "") + (negative ? " status-tag--negative" : "");
-  return <Text className={className}>{label ?? statusLabel(status)}</Text>;
+  return <Text className={className}>{statusLabel(status)}</Text>;
 }
 
 export function FieldRow({ label, value, sensitive = false }: { label: string; value?: ReactNode; sensitive?: boolean }) {
