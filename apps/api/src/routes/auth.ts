@@ -48,10 +48,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     config: { rateLimit: { max: 10, timeWindow: "1 minute" } }
   }, async (request) => {
     const input = portalLoginSchema.parse(request.body);
-    const user = await app.prisma.user.findUnique({
+    let user = await app.prisma.user.findUnique({
       where: { username: input.username },
       include: sessionUserInclude
     });
+    if (!user && typeof app.prisma.user.findFirst === "function") {
+      user = await app.prisma.user.findFirst({
+        where: {
+          OR: [
+            { displayName: input.username },
+            { internalEmployee: { phone: input.username } },
+            { person: { phone: input.username } }
+          ]
+        },
+        include: sessionUserInclude
+      });
+    }
     if (!user || !user.isActive || !(await compare(input.password, user.passwordHash))) {
       await writeAudit(app.prisma, request, {
         action: "AUTH_LOGIN_FAILED",
