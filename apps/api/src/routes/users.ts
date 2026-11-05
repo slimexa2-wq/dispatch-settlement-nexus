@@ -95,16 +95,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     };
     const [items, total] = await app.prisma.$transaction([
       app.prisma.user.findMany({
-        where,
+        where: where as any,
         include: { projectLinks: { select: { projectId: true } } },
         orderBy: { createdAt: "desc" },
         skip,
         take: pageSize
       }),
-      app.prisma.user.count({ where })
+      app.prisma.user.count({ where: where as any })
     ]);
     return success(request, {
-      items: items.map(publicUser),
+      items: items.map((item: any) => publicUser(item)),
       pagination: paginationMeta(page, pageSize, total)
     });
   });

@@ -82,7 +82,7 @@ export function WorkflowDesignerPage() {
   const [simulationContext, setSimulationContext] = useState<{ amount?: number; riskLevel?: string }>({ amount: 1000, riskLevel: "NORMAL" });
   const [saving, setSaving] = useState(false);
 
-  const selected = useMemo(() => templates.find((item) => item.id === selectedId), [templates, selectedId]);
+  const _selected = useMemo(() => templates.find((item) => item.id === selectedId), [templates, selectedId]);
 
   const reload = async () => {
     const [items, options] = await Promise.all([
@@ -212,7 +212,7 @@ export function WorkflowDesignerPage() {
             </Row>
             <Form.Item label="说明"><Input value={meta.description} onChange={(event) => setMeta((current) => ({ ...current, description: event.target.value }))} /></Form.Item>
           </Form>
-          <Divider orientation="left">审批环节设置</Divider>
+          <Divider>审批环节设置</Divider>
           <div className="workflow-step-list">
             {definition.nodes.map((node, index) => <Card key={node.key} size="small" className="workflow-step-card" style={{ marginBottom: 12 }}>
               <Row gutter={[12, 12]} align="middle">
@@ -245,7 +245,7 @@ export function WorkflowDesignerPage() {
             </Card>)}
           </div>
           <Button block type="dashed" icon={<PlusOutlined />} onClick={addApproval}>添加审批环节</Button>
-          <Divider orientation="left">流程测试</Divider>
+          <Divider>流程测试</Divider>
           <Space wrap align="end">
             <div><Typography.Text type="secondary">测试金额</Typography.Text><br /><InputNumber style={{ width: 180 }} min={0} precision={2} addonAfter="元" value={simulationContext.amount} onChange={(amount) => setSimulationContext((current) => ({ ...current, amount: amount ?? 0 }))} /></div>
             <div><Typography.Text type="secondary">测试风险等级</Typography.Text><br /><Select style={{ width: 180 }} value={simulationContext.riskLevel} options={[{ value: "NORMAL", label: "普通权限" }, { value: "HIGH", label: "高权限" }]} onChange={(riskLevel) => setSimulationContext((current) => ({ ...current, riskLevel }))} /></div>

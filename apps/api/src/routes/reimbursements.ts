@@ -143,7 +143,9 @@ const departmentTransitionSchema = z.object({
 
 function monthRange(period: string | undefined): { gte?: Date; lt?: Date } | undefined {
   if (!period) return undefined;
-  const [year, month] = period.split("-").map(Number);
+  const parts = period.split("-");
+  const year = Number(parts[0]);
+  const month = parts.length > 1 ? Number(parts[1]) : 1;
   const gte = new Date(Date.UTC(year, month - 1, 1));
   const lt = new Date(Date.UTC(year, month, 1));
   return { gte, lt };

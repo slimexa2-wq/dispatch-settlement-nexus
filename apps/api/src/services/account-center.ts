@@ -47,10 +47,10 @@ export function accountCategory(input: {
   return "SYSTEM";
 }
 
-export function mergeAccountCandidates(candidates: readonly Array<{
+export function mergeAccountCandidates(candidates: ReadonlyArray<{
   id: string;
   isActive: boolean;
-  portals: readonly PortalAccessInput[];
+  portals: ReadonlyArray<PortalAccessInput>;
   wechatMiniappOpenId?: string | null;
 }>): {
   primaryAccountId: string;
@@ -73,7 +73,7 @@ export function validateSelfAccountMutation(input: {
   actorId: string;
   targetUserId: string;
   action?: "ACTIVATE" | "DISABLE" | "RESET_PASSWORD" | "FORCE_LOGOUT" | "UNBIND_WECHAT";
-  portals?: readonly Array<{ portal: string; enabled: boolean }>;
+  portals?: ReadonlyArray<{ portal: string; enabled: boolean }>;
 }): string | null {
   if (input.actorId !== input.targetUserId) return null;
   if (input.action === "DISABLE") return "不能停用当前登录账户";

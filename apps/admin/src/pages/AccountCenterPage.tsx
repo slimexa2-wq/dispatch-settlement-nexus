@@ -59,13 +59,13 @@ export function AccountCenterPage() {
     setLoading(true);
     try {
       if (type === "INTERNAL_EMPLOYEE") {
-        const result = await getAllPages<any>("/internal-employees", { status: "ACTIVE" });
+        const result = await getAllPages<{ id: string; name: string; employeeNo?: string; phone?: string; }>("/internal-employees", { status: "ACTIVE" });
         setSources(result.items.map((item) => ({ id: item.id, name: item.name, employeeNo: item.employeeNo, phone: item.phone })));
       } else if (type === "PERSON") {
-        const result = await getAllPages<any>("/people");
+        const result = await getAllPages<{ id: string; name: string; employeeNo?: string; phone?: string; }>("/people");
         setSources(result.items.map((item) => ({ id: item.id, name: item.name, employeeNo: item.employeeNo, phone: item.phone })));
       } else {
-        const result = await getAllPages<any>("/suppliers");
+        const result = await getAllPages<{ id: string; name: string; contactPhone?: string; contactName?: string; }>("/suppliers");
         setSources(result.items.map((item) => ({ id: item.id, name: item.name, phone: item.contactPhone, contactName: item.contactName })));
       }
     } catch (error) { message.error(getErrorMessage(error)); }

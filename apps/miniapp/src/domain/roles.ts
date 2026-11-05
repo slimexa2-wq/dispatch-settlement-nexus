@@ -76,7 +76,7 @@ export function portalForUser(user: Pick<SessionUser, "role" | "roles">): Portal
 export function jobPortalForUser(user: Pick<SessionUser, "role" | "roles" | "permissions">): Portal {
   const roles = rolesForUser(user);
   if (roles.some((role) => role === "SUPPLIER" || role === "SUPPLIER_ADMIN")) return "supplier";
-  if (roles.includes("EMPLOYEE") && user.permissions.includes("referral:create")) return "employee";
+  if (roles.includes("EMPLOYEE") && (user.permissions.includes("referral:create") || user.permissions.includes("reimbursement:self"))) return "employee";
   return portalForUser(user);
 }
 
