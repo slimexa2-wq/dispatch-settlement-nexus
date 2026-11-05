@@ -35,8 +35,8 @@ export async function provisionAccessRequest(prisma: PrismaClient, requestId: st
       include: { provisionTasks: true }
     });
     if (!request) throw new Error("权限申请不存在");
-    if ([AccessRequestStatus.COMPLETED, AccessRequestStatus.REVOKED].includes(request.status)) return request;
-    if (![AccessRequestStatus.APPROVED, AccessRequestStatus.PROVISIONING].includes(request.status)) {
+    if (request.status === AccessRequestStatus.COMPLETED || request.status === AccessRequestStatus.REVOKED) return request;
+    if (request.status !== AccessRequestStatus.APPROVED && request.status !== AccessRequestStatus.PROVISIONING) {
       throw new Error("权限申请尚未审批通过");
     }
 

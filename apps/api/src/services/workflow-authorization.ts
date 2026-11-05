@@ -2,8 +2,8 @@ import type { WorkflowNode } from "./workflow-designer.js";
 
 export type WorkflowActor = {
   id: string;
-  roles: readonly string[];
-  scopeBindings?: readonly Array<{
+  roles: ReadonlyArray<string>;
+  scopeBindings?: ReadonlyArray<{
     type: string;
     organizationUnitId?: string | null;
     branchId?: string | null;

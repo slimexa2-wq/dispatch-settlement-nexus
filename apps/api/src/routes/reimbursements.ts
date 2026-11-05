@@ -120,6 +120,34 @@ const artifactSchema = z.object({
     "INVOICE_PACKAGE"
   ])
 });
+const summaryQuerySchema = z.object({
+  period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  organizationUnitId: idSchema.optional()
+});
+const departmentTransitionSchema = z.object({
+  batchIds: z.array(idSchema).min(1).max(500),
+  targetStatus: z.enum([
+    "OWNER_REVIEWING",
+    "FINANCE_REVIEWING",
+    "APPROVED",
+    "PENDING_PAYMENT"
+  ]),
+  comment: z.string().trim().max(500).optional(),
+  approvedAmounts: z.array(z.object({
+    batchId: idSchema,
+    approvedAmountCents: z.number().int().positive()
+  })).max(500).optional()
+});
+
+function monthRange(period: string | undefined): { gte?: Date; lt?: Date } | undefined {
+  if (!period) return undefined;
+  const parts = period.split("-");
+  const year = Number(parts[0]);
+  const month = parts.length > 1 ? Number(parts[1]) : 1;
+  const gte = new Date(Date.UTC(year, month - 1, 1));
+  const lt = new Date(Date.UTC(year, month, 1));
+  return { gte, lt };
+}
 
 const listInclude = {
   applicant: { select: { id: true, displayName: true } },

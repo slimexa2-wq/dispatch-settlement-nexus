@@ -215,7 +215,7 @@ export async function migrationCenterRoutes(app: FastifyInstance): Promise<void>
       const existing = await app.prisma.migrationBatch.findUnique({
         where: { templateId_sourceHash: { templateId, sourceHash: saved.sha256 } }
       });
-      if (existing && [MigrationBatchStatus.COMMITTED, MigrationBatchStatus.PARTIAL].includes(existing.status)) {
+      if (existing && (existing.status === MigrationBatchStatus.COMMITTED || existing.status === MigrationBatchStatus.PARTIAL)) {
         throw new AppError(409, "MIGRATION_ALREADY_COMMITTED", "同一模板和文件已执行过迁移", { batchId: existing.id, status: existing.status });
       }
       const user = getSession(request);
@@ -262,7 +262,7 @@ export async function migrationCenterRoutes(app: FastifyInstance): Promise<void>
     const batch = await app.prisma.migrationBatch.findUnique({ where: { id }, include: { template: true } });
     if (!batch) notFound("迁移批次");
     if (!batch.sourceStorageKey) throw new AppError(409, "MIGRATION_SOURCE_MISSING", "当前批次没有已上传的源文件，请重新上传");
-    if ([MigrationBatchStatus.COMMITTED, MigrationBatchStatus.COMMITTING].includes(batch.status)) {
+    if (batch.status === MigrationBatchStatus.COMMITTED || batch.status === MigrationBatchStatus.COMMITTING) {
       throw new AppError(409, "MIGRATION_PREVIEW_LOCKED", "迁移已提交或正在执行，不能重新预览");
     }
 
@@ -337,7 +337,7 @@ export async function migrationCenterRoutes(app: FastifyInstance): Promise<void>
     const existingBatch = await app.prisma.migrationBatch.findUnique({
       where: { templateId_sourceHash: { templateId: template.id, sourceHash: input.sourceHash } }
     });
-    if (existingBatch && [MigrationBatchStatus.COMMITTED, MigrationBatchStatus.PARTIAL].includes(existingBatch.status)) {
+    if (existingBatch && (existingBatch.status === MigrationBatchStatus.COMMITTED || existingBatch.status === MigrationBatchStatus.PARTIAL)) {
       throw new AppError(409, "MIGRATION_ALREADY_COMMITTED", "同一模板和文件已执行过迁移", { batchId: existingBatch.id, status: existingBatch.status });
     }
     const batch = await app.prisma.$transaction(async (tx) => {
@@ -438,7 +438,7 @@ export async function migrationCenterRoutes(app: FastifyInstance): Promise<void>
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const batch = await app.prisma.migrationBatch.findUnique({ where: { id }, include: { template: true } });
     if (!batch) notFound("迁移批次");
-    if (![MigrationBatchStatus.READY, MigrationBatchStatus.PREVIEWING, MigrationBatchStatus.FAILED, MigrationBatchStatus.PARTIAL].includes(batch.status)) {
+    if (batch.status !== MigrationBatchStatus.READY && batch.status !== MigrationBatchStatus.PREVIEWING && batch.status !== MigrationBatchStatus.FAILED && batch.status !== MigrationBatchStatus.PARTIAL) {
       throw new AppError(409, "MIGRATION_NOT_COMMITTABLE", "当前迁移批次不能提交", { status: batch.status });
     }
     if (batch.status === MigrationBatchStatus.PREVIEWING && batch.errorRows > 0) throw new AppError(409, "MIGRATION_HAS_ERRORS", "仍有预览校验错误，请修复或在预览时跳过后再提交", { errorRows: batch.errorRows });
@@ -497,7 +497,7 @@ export async function migrationCenterRoutes(app: FastifyInstance): Promise<void>
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const batch = await app.prisma.migrationBatch.findUnique({ where: { id }, include: { template: true } });
     if (!batch) notFound("迁移批次");
-    if (![MigrationBatchStatus.COMMITTED, MigrationBatchStatus.PARTIAL].includes(batch.status)) {
+    if (batch.status !== MigrationBatchStatus.COMMITTED && batch.status !== MigrationBatchStatus.PARTIAL) {
       throw new AppError(409, "MIGRATION_NOT_ROLLBACKABLE", "只有已提交的迁移批次可以撤销");
     }
     const rows = await app.prisma.migrationRowResult.findMany({
