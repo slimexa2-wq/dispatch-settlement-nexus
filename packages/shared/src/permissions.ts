@@ -21,7 +21,9 @@ export const Permission = {
   CONTRACT_MANAGE: "contract:manage",
   CONTRACT_SIGN: "contract:sign",
   IMPORT_MANAGE: "import:manage",
+  ACCESS_REQUEST_CREATE: "access-request:create",
   USER_MANAGE: "user:manage",
+  ACCOUNT_MANAGE: "account:manage",
   AUDIT_READ: "audit:read",
   ORG_READ: "org:read",
   ORG_WRITE: "org:write",
@@ -118,6 +120,8 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.INTERNAL_EMPLOYEE_DELETE,
     Permission.IMPORT_MANAGE,
     Permission.USER_MANAGE,
+    Permission.ACCOUNT_MANAGE,
+    Permission.ACCESS_REQUEST_CREATE,
     Permission.AUDIT_READ
   ],
   [UserRole.RECRUITER]: [
