@@ -830,12 +830,6 @@ model DataScopeBinding {
 }
 
 model User {
-  accessRequestsSubject  AccessRequest[]       @relation("AccessRequestSubjects")
-  accessRequestsCreated  AccessRequest[]       @relation("AccessRequestCreators")
-  accessRequestsReviewed AccessRequest[]       @relation("AccessRequestReviewers")
-  accountLifecycleLogs   AccountLifecycleLog[] @relation("AccountLifecycleUsers")
-  accountLifecycleActed  AccountLifecycleLog[] @relation("AccountLifecycleActors")
-
   id                      String                   @id @default(uuid()) @db.Uuid
   username                String                   @unique @db.VarChar(64)
   passwordHash            String                   @map("password_hash") @db.VarChar(255)
