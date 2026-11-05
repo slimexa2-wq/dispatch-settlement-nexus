@@ -105,6 +105,12 @@ enum NotificationStatus {
   FAILED
   SKIPPED_NOT_CONFIGURED
 }
+enum PortalType {
+  PERSONAL
+  INTERNAL
+  SUPPLIER
+}
+
 
 enum AiActionStatus {
   PREVIEWED
@@ -824,6 +830,12 @@ model DataScopeBinding {
 }
 
 model User {
+  accessRequestsSubject  AccessRequest[]       @relation("AccessRequestSubjects")
+  accessRequestsCreated  AccessRequest[]       @relation("AccessRequestCreators")
+  accessRequestsReviewed AccessRequest[]       @relation("AccessRequestReviewers")
+  accountLifecycleLogs   AccountLifecycleLog[] @relation("AccountLifecycleUsers")
+  accountLifecycleActed  AccountLifecycleLog[] @relation("AccountLifecycleActors")
+
   id                      String                   @id @default(uuid()) @db.Uuid
   username                String                   @unique @db.VarChar(64)
   passwordHash            String                   @map("password_hash") @db.VarChar(255)
@@ -873,6 +885,13 @@ model User {
   reimbursementApprovals    ReimbursementApproval[]   @relation("ReimbursementApprovalActors")
   reimbursementPayments     ReimbursementPayment[]    @relation("ReimbursementPayers")
   reimbursementArtifacts    ReimbursementArtifact[]   @relation("ReimbursementArtifactGenerators")
+  createdMigrationBatches   MigrationBatch[]          @relation("MigrationBatchCreators")
+  createdWorkflowVersions   WorkflowVersion[]         @relation("WorkflowVersionCreators")
+  initiatedWorkflowInstances WorkflowInstance[]       @relation("WorkflowInstanceInitiators")
+  assignedWorkflowTasks     WorkflowTask[]            @relation("WorkflowTaskAssignees")
+  actionedWorkflowTasks     WorkflowTask[]            @relation("WorkflowTaskActors")
+  userPortalAccesses        UserPortalAccess[]        @relation("UserPortalAccessUsers")
+  grantedPortalAccesses     UserPortalAccess[]        @relation("UserPortalAccessGranters")
 
   @@index([role, isActive])
   @@map("users")
