@@ -43,20 +43,32 @@ def explain_pay_hold(data: dict) -> dict:
     base_salary = max(0.0, _clean_float(data.get("base_salary"), 0.0))
     deduction_requested = max(0.0, _clean_float(data.get("deduction_requested"), 0.0))
     is_abrupt_resignation = _clean_bool(data.get("is_abrupt_resignation"), False)
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-prisma-schema
     max_deduction_rate = _clean_float(data.get("max_deduction_rate"), 0.2)
     if not (0.0 <= max_deduction_rate <= 1.0):
         max_deduction_rate = 0.2
 
     max_deduction_cap = 0.0
     actual_deduction = 0.0
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-prisma-schema
     if is_abrupt_resignation:
         max_deduction_cap = base_salary * max_deduction_rate
         actual_deduction = min(deduction_requested, max_deduction_cap)
 
     final_pay = base_salary - actual_deduction
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-prisma-schema
     # 格式化输出 (Format outputs)
     rate_pct = f"{max_deduction_rate * 100:.0f}%"
 
@@ -72,7 +84,11 @@ def explain_pay_hold(data: dict) -> dict:
             status_text = f"正常离职，不得因急辞扣款。原申报的 {deduction_requested:.2f} 元扣款已被系统自动拦截。最终应发：{final_pay:.2f}元。"
         else:
             status_text = f"正常离职，无相关扣款。最终应发：{final_pay:.2f}元。"
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-prisma-schema
     summary = f"【员工：{worker_name}】基础薪资 {base_salary:.2f} 元。{status_text}"
 
     html_card = f"""<div class="pay-hold-card" style="border: 1px solid #e8e8e8; padding: 16px; border-radius: 8px; font-family: sans-serif;">
