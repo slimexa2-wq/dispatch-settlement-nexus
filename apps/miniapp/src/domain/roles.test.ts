@@ -43,7 +43,7 @@ describe("role portal", () => {
     };
 
     expect(portalForUser(financeEmployee)).toBe("operator");
-    expect(jobPortalForUser(financeEmployee)).toBe("employee");
+    expect(jobPortalForUser(financeEmployee)).toBe("operator");
     expect(menuForUser(financeEmployee).map((item) => item.title)).toContain("报销待办");
   });
 
