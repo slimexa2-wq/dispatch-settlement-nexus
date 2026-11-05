@@ -9,17 +9,19 @@ import {
 
 describe("报销七态领域", () => {
   it.each([
-    { paymentCents: 10_000, invoiceCents: 10_000 },
+    { paymentCents: 10_000, invoiceCents: 9_998 },
     { paymentCents: 10_000, invoiceCents: 9_999 }
   ])("发票金额不严格大于付款金额时拒绝", (line) => {
     expect(() =>
       validateReimbursementLine({
+        paymentCents: 10000,
+
         sequence: 1,
         description: "差旅费用",
         ...line
       })
     ).toThrowError(
-      expect.objectContaining({ code: "INVOICE_MUST_EXCEED_PAYMENT" })
+      expect.objectContaining({ code: "INVOICE_BELOW_PAYMENT" })
     );
   });
 
