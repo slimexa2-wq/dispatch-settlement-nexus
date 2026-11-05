@@ -37,3 +37,6 @@ data/internal-source/
 
 # 小程序编译器本地缓存
 apps/miniapp/.swc/
+
+__pycache__/
+*.pyc
