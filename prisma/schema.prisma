@@ -824,6 +824,18 @@ model DataScopeBinding {
 }
 
 model User {
+  migrationBatches       MigrationBatch[]      @relation("MigrationBatchCreators")
+  workflowVersions       WorkflowVersion[]     @relation("WorkflowVersionCreators")
+  workflowInstances      WorkflowInstance[]    @relation("WorkflowInstanceInitiators")
+  assignedTasks          WorkflowTask[]        @relation("WorkflowTaskAssignees")
+  actionedTasks          WorkflowTask[]        @relation("WorkflowTaskActors")
+  accessRequestsSubject  AccessRequest[]       @relation("AccessRequestSubjects")
+  accessRequestsCreated  AccessRequest[]       @relation("AccessRequestCreators")
+  accessRequestsReviewed AccessRequest[]       @relation("AccessRequestReviewers")
+  portalAccesses         UserPortalAccess[]    @relation("UserPortalAccessUsers")
+  portalAccessesGranted  UserPortalAccess[]    @relation("UserPortalAccessGranters")
+  accountLifecycleLogs   AccountLifecycleLog[] @relation("AccountLifecycleUsers")
+  accountLifecycleActed  AccountLifecycleLog[] @relation("AccountLifecycleActors")
   id                      String                   @id @default(uuid()) @db.Uuid
   username                String                   @unique @db.VarChar(64)
   passwordHash            String                   @map("password_hash") @db.VarChar(255)
@@ -1617,3 +1629,9 @@ model AccountLifecycleLog {
 }
 
 // Add the relation back to UserRoleAssignment and DataScopeBinding
+
+enum PortalType {
+  ADMIN
+  MINIAPP
+  WEB
+}

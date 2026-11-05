@@ -85,10 +85,17 @@ class TestTieredRebateCalculator(unittest.TestCase):
     def test_undo_mechanism_expired(self):
         """Test the 5-second undo snapshot mechanism fails after window expires."""
         self.calculator.calculate_rebate({"worker_id": "W-Undo-2", "days_worked": 15})
+<<<<<<< Updated upstream
 
         # Override timestamp to simulate 6 seconds passing
         self.calculator.snapshots_timestamp["W-Undo-2"] -= 6.0
 
+=======
+
+        # Override timestamp to simulate 6 seconds passing
+        self.calculator.snapshots_timestamp["W-Undo-2"] -= 6.0
+
+>>>>>>> Stashed changes
         undo_res = self.calculator.undo("W-Undo-2")
         self.assertEqual(undo_res["status"], "error")
         self.assertEqual(undo_res["message"], "Undo window expired.")
