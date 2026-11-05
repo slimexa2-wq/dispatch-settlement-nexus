@@ -65,17 +65,12 @@ def split_utility_fee(total_fee, residents):
     total_days = sum(r['days'] for r in clean_residents)
 
     if total_days == 0:
-        # If total days is 0 (can only happen if all were originally 0 and we somehow allowed it,
-        # but our cleaning rule says fallback is 1. If someone passed 0 and we accepted it,
-        # wait, the instruction says "fallback to 1 day on invalid day count". Does "0" count as invalid?
-        # A person can be there for 0 days. Let's allow 0 days, but if they are invalid (like "abc"), fallback to 1.
-        # Wait, if days is negative, fallback to 1? Or 0? Let's say if total_days is 0, we split equally.
         split_fee = round(clean_total_fee / len(clean_residents), 2)
         for r in clean_residents:
             r['fee'] = split_fee
 
         # fix remainder
-        remainder = clean_total_fee - sum(r['fee'] for r in clean_residents)
+        remainder = round(clean_total_fee - sum(r['fee'] for r in clean_residents), 2)
         if remainder != 0:
             clean_residents[0]['fee'] = round(clean_residents[0]['fee'] + remainder, 2)
         return clean_residents
@@ -90,9 +85,7 @@ def split_utility_fee(total_fee, residents):
     remainder = round(clean_total_fee - total_assigned, 2)
 
     # Assign remainder to the person with the most days to minimize relative error
-    # Or just the first person if we don't care
     if remainder != 0:
-        # Find the one with most days
         max_r = max(clean_residents, key=lambda x: x['days'])
         max_r['fee'] = round(max_r['fee'] + remainder, 2)
 
