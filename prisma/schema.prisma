@@ -1344,13 +1344,6 @@ enum MigrationBatchStatus {
   FAILED
 }
 
-enum PortalType {
-  ADMIN
-  INTERNAL_MINIAPP
-  SUPPLIER_MINIAPP
-  EMPLOYEE_MINIAPP
-}
-
 model MigrationTemplate {
   id           String           @id @default(uuid()) @db.Uuid
   code         String           @unique @db.VarChar(64)
@@ -1612,8 +1605,8 @@ model UserPortalAccess {
   grantedBy       User?        @relation("UserPortalAccessGranters", fields: [grantedById], references: [id], onDelete: SetNull)
   accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
 
-  @@index([userId, enabled])
-  @@index([enabled, validTo])
+
+
   @@index([accessRequestId])
   @@map("user_portal_accesses")
 }
