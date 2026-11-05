@@ -1605,8 +1605,8 @@ model UserPortalAccess {
   grantedBy       User?        @relation("UserPortalAccessGranters", fields: [grantedById], references: [id], onDelete: SetNull)
   accessRequest   AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
 
-
-
+  @@index([userId, portal, enabled])
+  @@index([portal, enabled, validTo])
   @@index([accessRequestId])
   @@map("user_portal_accesses")
 }

@@ -74,7 +74,11 @@ class TestResignedWorkerPayHoldPlainExplainer(unittest.TestCase):
         self.assertEqual(res["actual_deduction"], 0.0)
         self.assertEqual(res["final_pay"], 0.0)
         self.assertIn("正常离职，无相关扣款", res["plain_summary"])
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-prisma-schema
     def test_clean_float_boolean(self):
         # Additional coverage for _clean_float with boolean
         data = {
