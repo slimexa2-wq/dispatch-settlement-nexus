@@ -43,7 +43,7 @@ describe("public demo data safety", () => {
       const screenshots = join(root, "apps", "admin", "screenshots");
       await mkdir(screenshots, { recursive: true });
       await writeFile(join(screenshots, "debug-person.png"), "not-a-real-image");
-      await expect(assertPublicDataSafe(root)).rejects.toThrow("apps\\admin\\screenshots");
+      await expect(assertPublicDataSafe(root)).rejects.toThrow("apps/admin/screenshots");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

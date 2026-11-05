@@ -1,4 +1,5 @@
 import { AppError, notFound } from "../errors.js";
+import { validateApprovedAmount } from "./reimbursement-automation.js";
 
 export const ReimbursementStatus = {
   PENDING_SUBMISSION: "PENDING_SUBMISSION",
@@ -11,6 +12,148 @@ export const ReimbursementStatus = {
 } as const;
 export type ReimbursementStatus =
   (typeof ReimbursementStatus)[keyof typeof ReimbursementStatus];
+
+
+export type EmployeeReimbursementScopeInput = {
+  branchId?: string | null;
+  organizationUnitId?: string | null;
+  projectId?: string | null;
+  supplierId?: string | null;
+};
+
+export function normalizeEmployeeReimbursementScope(
+  input: EmployeeReimbursementScopeInput,
+  employee: { organizationUnitId: string | null }
+): Required<EmployeeReimbursementScopeInput> {
+  if (!employee.organizationUnitId) {
+    throw new AppError(
+      409,
+      "INTERNAL_EMPLOYEE_ORG_REQUIRED",
+      "当前内部员工档案尚未绑定部门，不能发起报销"
+    );
+  }
+  const expected = {
+    branchId: null,
+    organizationUnitId: employee.organizationUnitId,
+    projectId: null,
+    supplierId: null
+  };
+  for (const key of ["branchId", "organizationUnitId", "projectId", "supplierId"] as const) {
+    const requested = input[key];
+    if (requested && requested !== expected[key]) {
+      throw new AppError(
+        403,
+        "OUT_OF_SCOPE",
+        "员工自助报销的组织归属必须与当前内部员工档案一致"
+      );
+    }
+  }
+  return expected;
+}
+
+export type PaymentProofAttachment = {
+  id: string;
+  type: "PAYMENT_VOUCHER" | "INVOICE" | "SUPPORTING";
+  lineId?: string | null;
+};
+
+export function assertFinalPaymentProof<T extends PaymentProofAttachment>(
+  attachments: readonly T[],
+  proofAttachmentId: string | null | undefined
+): T {
+  if (!proofAttachmentId) {
+    throw new AppError(
+      400,
+      "PAYMENT_PROOF_REQUIRED",
+      "登记付款前必须上传最终付款凭证"
+    );
+  }
+  const proof = attachments.find((attachment) => attachment.id === proofAttachmentId);
+  if (
+    !proof ||
+    proof.type !== "PAYMENT_VOUCHER" ||
+    Boolean(proof.lineId)
+  ) {
+    throw new AppError(
+      400,
+      "INVALID_PAYMENT_PROOF",
+      "付款凭证必须是当前报销单的整单最终付款凭证"
+    );
+  }
+  return proof;
+}
+
+export function assertReimbursementApprovalLimit(
+  totalPaymentCents: number,
+  maxApprovalCents: number | null | undefined
+): void {
+  if (maxApprovalCents === null || maxApprovalCents === undefined) return;
+  if (totalPaymentCents > maxApprovalCents) {
+    throw new AppError(
+      403,
+      "REIMBURSEMENT_APPROVAL_LIMIT_EXCEEDED",
+      "报销金额超过当前职级审批上限，请由更高职级的负责人处理",
+      { totalPaymentCents, maxApprovalCents }
+    );
+  }
+}
+
+export type ReimbursementAttachmentUploadAuthorization = {
+  mode: "EDITABLE_MATERIAL" | "APPLICANT_SUPPLEMENT" | "FINAL_PAYMENT_PROOF";
+  permission: "reimbursement:self" | "reimbursement:manage" | "reimbursement:pay";
+};
+
+export function reimbursementAttachmentUploadAuthorization(input: {
+  status: ReimbursementStatus;
+  applicantUserId: string;
+  userId: string;
+  permissions: readonly string[];
+  type: "PAYMENT_VOUCHER" | "INVOICE" | "SUPPORTING";
+  lineId?: string | null;
+  openIssueCount: number;
+}): ReimbursementAttachmentUploadAuthorization | null {
+  const has = (permission: string) => input.permissions.includes(permission);
+  const hasNoLine = !input.lineId;
+
+  if (
+    input.status === ReimbursementStatus.PENDING_PAYMENT &&
+    has("reimbursement:pay") &&
+    input.type === "PAYMENT_VOUCHER" &&
+    hasNoLine
+  ) {
+    return { mode: "FINAL_PAYMENT_PROOF", permission: "reimbursement:pay" };
+  }
+
+  if (
+    input.applicantUserId === input.userId &&
+    has("reimbursement:self") &&
+    input.type === "SUPPORTING" &&
+    hasNoLine &&
+    input.openIssueCount > 0 &&
+    (input.status === ReimbursementStatus.OWNER_REVIEWING ||
+      input.status === ReimbursementStatus.FINANCE_REVIEWING)
+  ) {
+    return { mode: "APPLICANT_SUPPLEMENT", permission: "reimbursement:self" };
+  }
+
+  if (
+    input.status === ReimbursementStatus.PENDING_SUBMISSION &&
+    input.applicantUserId === input.userId &&
+    has("reimbursement:self")
+  ) {
+    return { mode: "EDITABLE_MATERIAL", permission: "reimbursement:self" };
+  }
+
+  if (
+    (input.status === ReimbursementStatus.PENDING_SUBMISSION ||
+      input.status === ReimbursementStatus.DEPARTMENT_PREPARING) &&
+    has("reimbursement:manage")
+  ) {
+    return { mode: "EDITABLE_MATERIAL", permission: "reimbursement:manage" };
+  }
+
+  return null;
+}
 
 export type ReimbursementLineInput = {
   sequence: number;
@@ -39,11 +182,11 @@ export function validateReimbursementLine(line: ReimbursementLineInput): void {
   if (!Number.isSafeInteger(line.invoiceCents) || line.invoiceCents <= 0) {
     throw new AppError(400, "INVALID_INVOICE_AMOUNT", "发票金额必须为正整数分");
   }
-  if (line.invoiceCents <= line.paymentCents) {
+  if (line.invoiceCents < line.paymentCents) {
     throw new AppError(
       400,
-      "INVOICE_MUST_EXCEED_PAYMENT",
-      "发票金额必须严格大于付款金额"
+      "INVOICE_BELOW_PAYMENT",
+      "发票金额不能低于付款金额"
     );
   }
 }
@@ -82,6 +225,7 @@ type TransitionCommand = {
   targetStatus: ReimbursementStatus;
   permission: TransitionPermission;
   comment?: string;
+  approvedAmountCents?: number | null;
 };
 
 type ReimbursementDelegate = {
@@ -168,6 +312,24 @@ export async function transitionReimbursement(
     );
   }
 
+  let approvedAmountCents: number | undefined;
+  if (command.targetStatus === ReimbursementStatus.APPROVED) {
+    const validation = validateApprovedAmount(
+      Number(batch.totalPaymentCents),
+      command.approvedAmountCents
+    );
+    if (!validation.valid) {
+      throw new AppError(400, validation.code, validation.message);
+    }
+    approvedAmountCents = validation.approvedAmountCents;
+  }
+  if (
+    command.targetStatus === ReimbursementStatus.PENDING_PAYMENT &&
+    !Number.isSafeInteger(batch.approvedAmountCents)
+  ) {
+    throw new AppError(409, "APPROVED_AMOUNT_REQUIRED", "财务审核通过金额尚未确定，不能进入待付款");
+  }
+
   const now = new Date();
   const updated = await tx.reimbursementBatch.update({
     where: {
@@ -183,6 +345,7 @@ export async function transitionReimbursement(
         currentStatus === ReimbursementStatus.PENDING_SUBMISSION ? now : undefined,
       approvedAt:
         command.targetStatus === ReimbursementStatus.APPROVED ? now : undefined,
+      approvedAmountCents,
       paidAt: command.targetStatus === ReimbursementStatus.PAID ? now : undefined
     }
   });

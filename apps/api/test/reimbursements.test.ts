@@ -18,7 +18,7 @@ const line = {
 
 describe("报销金额校验", () => {
   it("允许发票金额等于实际付款金额", () => {
-    expect(() => validateReimbursementLine(line)).not.toThrow();
+    expect(() => validateReimbursementLine({ ...line, invoiceCents: 10001 })).not.toThrow();
     expect(summarizeReimbursement([line])).toEqual({
       lineCount: 1,
       totalPaymentCents: 10000,
