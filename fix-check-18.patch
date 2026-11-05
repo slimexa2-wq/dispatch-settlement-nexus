@@ -1,0 +1,10 @@
+--- apps/api/src/routes/imports.ts
++++ apps/api/src/routes/imports.ts
+@@ -26,6 +26,7 @@
+ import { registerPerson } from "../services/registration.js";
+ import { writeAudit } from "../audit.js";
+ import { createPeopleTemplate, parsePeopleWorkbook } from "../services/people-workbook.js";
++import { identifyTableFingerprint } from "@xiangneng/data-import";
+
+ const warningSchema = z.object({
+   code: z.string(),

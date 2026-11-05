@@ -1,0 +1,34 @@
+--- apps/api/src/services/people-workbook.ts
++++ apps/api/src/services/people-workbook.ts
+@@ -1,5 +1,6 @@
+ import { createHash } from "node:crypto";
+ import * as XLSX from "xlsx";
++import { identifyTableFingerprint } from "@xiangneng/data-import";
+
+ export const peopleHeaders = [
+   "姓名",
+@@ -29,15 +30,17 @@
+   if (!sheet) throw new Error("人员工作簿没有可读取的工作表");
+   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, defval: "" });
+   const headers = (matrix[0] ?? []).map((value) => String(value).trim());
+-  if (peopleHeaders.some((expected, index) => headers[index] !== expected)) {
+-    throw new Error(`人员导入表头不匹配，应为：${peopleHeaders.join("、")}`);
+-  }
++
++  const fingerprint = identifyTableFingerprint(headers, matrix.slice(1) as string[][]);
++  const nameIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "name");
++  const idCardIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "idCard");
++
+   const rows = matrix.slice(1).map((row, index) => ({
+     sourceRow: index + 2,
+-    name: String(row[0] ?? "").trim(),
+-    idCard: String(row[1] ?? "").trim(),
+-    phone: String(row[2] ?? "").trim(),
+-    sourceProjectId: String(row[3] ?? "").trim() || undefined,
++    name: nameIndex >= 0 ? String(row[nameIndex] ?? "").trim() : String(row[0] ?? "").trim(),
++    idCard: idCardIndex >= 0 ? String(row[idCardIndex] ?? "").trim() : String(row[1] ?? "").trim(),
++    phone: headers.includes(peopleHeaders[2]) ? String(row[headers.indexOf(peopleHeaders[2])] ?? "").trim() : String(row[2] ?? "").trim(),
++    sourceProjectId: headers.includes(peopleHeaders[3]) ? String(row[headers.indexOf(peopleHeaders[3])] ?? "").trim() || undefined : String(row[3] ?? "").trim() || undefined,
+     branchName: String(row[4] ?? "").trim() || undefined,
+     projectName: String(row[5] ?? "").trim() || undefined,
+     jobTitle: String(row[6] ?? "").trim(),

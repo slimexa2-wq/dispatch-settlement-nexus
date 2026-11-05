@@ -1,0 +1,28 @@
+--- apps/api/src/services/people-workbook.ts
++++ apps/api/src/services/people-workbook.ts
+@@ -35,8 +35,8 @@
+   const headers = (matrix[0] ?? []).map((value) => String(value).trim());
+
+   const fingerprint = identifyTableFingerprint(headers, matrix.slice(1) as string[][]);
+-  const nameIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "name");
+-  const idCardIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "idCard");
++  const nameIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "name");
++  const idCardIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "idCard");
+
+   const rows = matrix.slice(1).map((row, index) => ({
+     sourceRow: index + 2,
+--- apps/api/src/services/salary-workbook.ts
++++ apps/api/src/services/salary-workbook.ts
+@@ -34,9 +34,9 @@
+   const headers = (matrix[0] ?? []).map((value) => String(value).trim());
+
+   const fingerprint = identifyTableFingerprint(headers, matrix.slice(1) as string[][]);
+-  const idCardIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "idCard");
+-  const hoursIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "hours");
+-  const daysIndex = fingerprint.mappings.findIndex((m) => m.mappedField === "days");
++  const idCardIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "idCard");
++  const hoursIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "hours");
++  const daysIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "days");
+   const divisor = fingerprint.divisor;
+
+   const rows = matrix.slice(1).flatMap((row, index) => {

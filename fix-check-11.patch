@@ -1,0 +1,39 @@
+--- apps/admin/src/pages/AccountCenterPage.tsx
++++ apps/admin/src/pages/AccountCenterPage.tsx
+@@ -59,13 +59,13 @@
+     setWorking(true);
+     try {
+       if (type === "INTERNAL_EMPLOYEE") {
+-        const result = await getAllPages<any>("/internal-employees", { status: "ACTIVE" });
++        const result = await getAllPages<unknown>("/internal-employees", { status: "ACTIVE" });
+         setSources(result.items.map((item) => ({ id: item.id, name: item.name, employeeNo: item.employeeNo, phone: item.phone })));
+       } else if (type === "PERSON") {
+-        const result = await getAllPages<any>("/people");
++        const result = await getAllPages<unknown>("/people");
+         setSources(result.items.map((item) => ({ id: item.id, name: item.name, employeeNo: item.employeeNo, phone: item.phone })));
+       } else {
+-        const result = await getAllPages<any>("/suppliers");
++        const result = await getAllPages<unknown>("/suppliers");
+         setSources(result.items.map((item) => ({ id: item.id, name: item.name, phone: item.contactPhone, contactName: item.contactName })));
+       }
+     } catch (error) {
+--- apps/admin/src/pages/DataMigrationPage.tsx
++++ apps/admin/src/pages/DataMigrationPage.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from "react";
+-import { UploadOutlined, DownloadOutlined, ReloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
++import { UploadOutlined, DownloadOutlined, ReloadOutlined } from "@ant-design/icons";
+ import { Alert, App, Button, Card, Col, Descriptions, Form, Modal, Row, Select, Space, Table, Tag, Typography, Upload, Checkbox } from "antd";
+ import type { TableColumnsType } from "antd";
+ import { Permission } from "@xiangneng/shared";
+--- apps/admin/src/pages/WorkflowDesignerPage.tsx
++++ apps/admin/src/pages/WorkflowDesignerPage.tsx
+@@ -82,7 +82,7 @@
+   };
+
+   const simulate = async () => {
+-    const selected = workflowOptions.find((w) => w.id === selectedId);
++    // const selected = workflowOptions.find((w) => w.id === selectedId);
+     setWorking(true);
+     try {
+       const result = await api.post<WorkflowSimulationResult>(`/workflow-designer/${selectedId}/simulate`, simulationContext);

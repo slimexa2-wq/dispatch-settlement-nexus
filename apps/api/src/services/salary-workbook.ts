@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import * as XLSX from "xlsx";
 import { neutralizeSpreadsheetFormula } from "./spreadsheet-safety.js";
+import { identifyTableFingerprint } from "@xiangneng/data-import";
 
 export const salaryHeaders = [
   "工资月份",
@@ -36,16 +37,20 @@ export function parseSalaryWorkbook(buffer: Buffer): { sourceHash: string; rows:
   if (!sheet) throw new Error("工资条工作簿没有可读取的工作表");
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, defval: "" });
   const headers = (matrix[0] ?? []).map((value) => String(value).trim());
-  if (salaryHeaders.some((expected, index) => headers[index] !== expected)) {
-    throw new Error(`工资条表头不匹配，应为：${salaryHeaders.join("、")}`);
-  }
+
+  const fingerprint = identifyTableFingerprint(headers, matrix.slice(1) as string[][]);
+  const idCardIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "idCard");
+  const hoursIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "hours");
+  const daysIndex = fingerprint.mappings.findIndex((m: any) => m.mappedField === "days");
+  const divisor = fingerprint.divisor;
+
   const rows = matrix.slice(1).flatMap((row, index) => {
     if (!row.some((value) => String(value).trim() !== "")) return [];
     return [{
       sourceRow: index + 2,
-      salaryMonth: String(row[0] ?? "").trim(),
-      idCard: String(row[1] ?? "").trim() || undefined,
-      employeeNo: String(row[2] ?? "").trim() || undefined,
+      salaryMonth: headers.includes(salaryHeaders[0]) ? String(row[headers.indexOf(salaryHeaders[0])] ?? "").trim() : String(row[0] ?? "").trim(),
+      idCard: idCardIndex >= 0 ? String(row[idCardIndex] ?? "").trim() || undefined : String(row[1] ?? "").trim() || undefined,
+      employeeNo: headers.includes(salaryHeaders[2]) ? String(row[headers.indexOf(salaryHeaders[2])] ?? "").trim() || undefined : String(row[2] ?? "").trim() || undefined,
       grossPay: row[3],
       netPay: row[4],
       hourlyPay: row[5] === "" ? 0 : row[5],
@@ -54,7 +59,8 @@ export function parseSalaryWorkbook(buffer: Buffer): { sourceHash: string; rows:
       referralReward: row[8] === "" ? 0 : row[8],
       socialSecurityDeduction: row[9] === "" ? 0 : row[9],
       otherDeduction: row[10] === "" ? 0 : row[10],
-      notes: String(row[11] ?? "").trim() || undefined
+      notes: String(row[11] ?? "").trim() || undefined,
+      _divisor: divisor
     }];
   });
   return { sourceHash, rows };

@@ -1,0 +1,9 @@
+--- apps/admin/src/pages/DataMigrationPage.tsx
++++ apps/admin/src/pages/DataMigrationPage.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from "react";
+-import { UploadOutlined, DownloadOutlined, ReloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
++import { UploadOutlined, DownloadOutlined, ReloadOutlined } from "@ant-design/icons";
+ import { Alert, App, Button, Card, Col, Descriptions, Form, Modal, Row, Select, Space, Table, Tag, Typography, Upload, Checkbox } from "antd";
+ import type { TableColumnsType } from "antd";
+ import { Permission } from "@xiangneng/shared";

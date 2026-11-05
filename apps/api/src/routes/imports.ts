@@ -20,6 +20,7 @@ import { getSession } from "../plugins/auth.js";
 import { registerPerson } from "../services/registration.js";
 import { writeAudit } from "../audit.js";
 import { createPeopleTemplate, parsePeopleWorkbook } from "../services/people-workbook.js";
+import { identifyTableFingerprint } from "@xiangneng/data-import";
 
 const warningSchema = z.object({
   code: z.string(),
