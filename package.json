@@ -19,14 +19,6 @@
     "verify:ollama": "pnpm --filter @xiangneng/api exec tsx ../../scripts/verify-ollama.mts",
     "dev:website": "pnpm --filter @xiangneng/website dev",
     "dev:miniapp": "pnpm --filter @xiangneng/miniapp dev:weapp",
-    "project:index": "node scripts/generate-project-index.mjs",
-    "project:index:check": "node scripts/generate-project-index.mjs --check",
-    "project:context": "node scripts/build-ai-context.mjs",
-    "project:check": "node scripts/check-architecture.mjs",
-    "project:verify": "node --test scripts/project-tools/*.test.mjs && node scripts/check-architecture.mjs && node scripts/generate-project-index.mjs --check",
-    "test:module:authorization": "pnpm --filter @xiangneng/api exec vitest run test/authorization.test.ts test/auth-and-scope.test.ts test/data-scope-bindings.test.ts test/session-user.test.ts test/position-authorizations.test.ts && pnpm --filter @xiangneng/admin exec vitest run src/auth/AuthContext.test.tsx && pnpm --filter @xiangneng/miniapp exec vitest run src/domain/roles.test.ts",
-    "test:module:organization": "pnpm --filter @xiangneng/api exec vitest run test/internal-employee-domain.test.ts test/internal-employee-routes.test.ts test/position-authorizations.test.ts && pnpm --filter @xiangneng/admin exec vitest run src/pages/InternalEmployeesPage.test.tsx",
-    "test:module:reimbursement": "pnpm --filter @xiangneng/api exec vitest run test/reimbursement-artifacts.test.ts test/reimbursement-domain.test.ts test/reimbursement-routes.test.ts test/reimbursements.test.ts && pnpm --filter @xiangneng/admin exec vitest run src/pages/ReimbursementsPage.test.tsx src/lib/demo-reimbursement.test.ts && pnpm --filter @xiangneng/miniapp exec vitest run src/domain/reimbursements.test.ts src/domain/roles.test.ts",
     "build:website": "pnpm --filter @xiangneng/website build",
     "build:public-demo": "pnpm --filter @xiangneng/sites-demo build",
     "demo:compact": "node scripts/compact-demo-data.mjs",
@@ -48,16 +40,7 @@
     "db:import-demo": "pnpm --filter @xiangneng/api db:import-demo",
     "data:preview": "pnpm --filter @xiangneng/data-import preview",
     "data:extract": "pnpm --filter @xiangneng/data-import extract",
-    "data:verify": "pnpm --filter @xiangneng/data-import verify",
-    "data:normalize-real": "python scripts/real-data/normalize_real_business_data.py --weekly \"data/internal-source/祥能人力周度在离职数据统计_20260719.xlsx\" --enterprise \"data/internal-source/所有企业名单汇总2026-07-21.xls\" --roster \"data/internal-source/202606集团花名册.xlsx\" --output data/internal/real-business-data.json --reconciliation data/internal/real-business-data-reconciliation.json",
-    "db:import-real": "pnpm --filter @xiangneng/api exec tsx ../../scripts/import-real-business-data.mts",
-    "test:real-data": "python -m unittest discover -s scripts/real-data -p \"test_*.py\" && node --test scripts/project-tools/business-data-source.test.mjs scripts/project-tools/real-business-import-plan.test.mjs",
-    "test:reimbursement-automation": "node --experimental-strip-types --test apps/api/test/reimbursement-automation.node.test.ts",
-    "internal:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-internal-system.ps1",
-    "db:bootstrap-internal": "pnpm --filter @xiangneng/api exec tsx ../../scripts/seed-internal-system.mts",
-    "db:bootstrap-employee-accounts": "pnpm --filter @xiangneng/api exec tsx ../../scripts/bootstrap-real-employee-accounts.mts",
-    "test:internal-startup": "node --test scripts/project-tools/internal-startup-contract.test.mjs",
-    "internal:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-internal-system.ps1"
+    "data:verify": "pnpm --filter @xiangneng/data-import verify"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1"

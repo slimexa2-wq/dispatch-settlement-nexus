@@ -96,8 +96,7 @@ export function validateSyntheticDemoData(input: unknown): SyntheticDemoValidati
   requireReference("people", "branchId", "分公司", ids.branch);
   requireReference("people", "projectId", "项目", ids.project);
   requireReference("people", "supplierId", "供应商", ids.supplier);
-  // Synthetic source keeps branchId as a seed key; import maps it to an internal business department.
-  requireReference("internalEmployees", "branchId", "业务部门来源", ids.branch);
+  requireReference("internalEmployees", "branchId", "分公司", ids.branch);
   requireReference("applications", "personId", "人员", ids.person);
   requireReference("applications", "jobDemandId", "岗位需求", ids.job);
 

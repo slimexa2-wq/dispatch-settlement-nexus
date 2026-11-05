@@ -11,9 +11,8 @@ import { getSession } from "../plugins/auth.js";
 import { writeAudit } from "../audit.js";
 import { createReferralShare } from "../services/referral-share.js";
 import { sessionUserInclude, toSessionUser } from "../session-user.js";
-import { hasCurrentPortalAccess } from "../services/account-center.js";
 
-const wxCodeSchema = z.object({ code: z.string().trim().min(1).max(256), portal: z.literal("MINIAPP").optional() });
+const wxCodeSchema = z.object({ code: z.string().trim().min(1).max(256) });
 
 type WechatSessionResponse = {
   openid?: string;
@@ -60,9 +59,6 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
     });
     if (!user || !user.isActive) {
       throw new AppError(409, "WECHAT_NOT_BOUND", "该微信身份尚未绑定系统账号，请先使用账号密码登录后绑定");
-    }
-    if (!hasCurrentPortalAccess(user.portalAccesses, input.portal ?? "MINIAPP")) {
-      throw new AppError(403, "PORTAL_ACCESS_DENIED", "当前账号未开通小程序端口或端口权限已到期");
     }
     const sessionUser = toSessionUser(user);
     const token = app.jwt.sign({ sub: user.id, tokenVersion: user.tokenVersion });

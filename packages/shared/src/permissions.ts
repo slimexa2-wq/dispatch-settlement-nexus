@@ -22,10 +22,6 @@ export const Permission = {
   CONTRACT_SIGN: "contract:sign",
   IMPORT_MANAGE: "import:manage",
   USER_MANAGE: "user:manage",
-  ACCOUNT_MANAGE: "account:manage",
-  WORKFLOW_MANAGE: "workflow:manage",
-  ACCESS_REQUEST_CREATE: "access-request:create",
-  ACCESS_REQUEST_APPROVE: "access-request:approve",
   AUDIT_READ: "audit:read",
   ORG_READ: "org:read",
   ORG_WRITE: "org:write",
@@ -61,8 +57,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.ORG_READ,
     Permission.INTERNAL_EMPLOYEE_READ,
     Permission.REIMBURSEMENT_EXPORT,
-    Permission.AUDIT_READ,
-    Permission.ACCESS_REQUEST_APPROVE
+    Permission.AUDIT_READ
   ],
   [UserRole.HEADQUARTERS_MANAGER]: [
     Permission.DASHBOARD_READ,
@@ -77,8 +72,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.INTERNAL_EMPLOYEE_READ,
     Permission.REIMBURSEMENT_EXPORT,
     Permission.CONTRACT_MANAGE,
-    Permission.AUDIT_READ,
-    Permission.ACCESS_REQUEST_APPROVE
+    Permission.AUDIT_READ
   ],
   [UserRole.BRANCH_MANAGER]: [
     Permission.DASHBOARD_READ,
@@ -96,9 +90,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.INTERNAL_EMPLOYEE_READ,
     Permission.INTERNAL_EMPLOYEE_WRITE,
     Permission.REIMBURSEMENT_APPROVE,
-    Permission.LEADERSHIP_DASHBOARD_READ,
-    Permission.ACCESS_REQUEST_CREATE,
-    Permission.ACCESS_REQUEST_APPROVE
+    Permission.LEADERSHIP_DASHBOARD_READ
   ],
   [UserRole.DEPARTMENT_MANAGER]: [
     Permission.DASHBOARD_READ,
@@ -107,9 +99,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.JOB_READ,
     Permission.ORG_READ,
     Permission.INTERNAL_EMPLOYEE_READ,
-    Permission.REIMBURSEMENT_APPROVE,
-    Permission.ACCESS_REQUEST_CREATE,
-    Permission.ACCESS_REQUEST_APPROVE
+    Permission.REIMBURSEMENT_APPROVE
   ],
   [UserRole.INTERNAL_HR]: [
     Permission.DASHBOARD_READ,
@@ -128,9 +118,7 @@ export const rolePermissions: Record<UserRoleValue, readonly Permission[]> = {
     Permission.INTERNAL_EMPLOYEE_DELETE,
     Permission.IMPORT_MANAGE,
     Permission.USER_MANAGE,
-    Permission.AUDIT_READ,
-    Permission.ACCOUNT_MANAGE,
-    Permission.ACCESS_REQUEST_CREATE
+    Permission.AUDIT_READ
   ],
   [UserRole.RECRUITER]: [
     Permission.DASHBOARD_READ,

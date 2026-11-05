@@ -1,12 +1,8 @@
 import { useMemo, useState } from "react";
 import {
   ApartmentOutlined,
-  DollarOutlined,
-  MinusCircleOutlined,
   PlusOutlined,
-  SafetyCertificateOutlined,
   SwapOutlined,
-  UserSwitchOutlined,
   UserDeleteOutlined
 } from "@ant-design/icons";
 import {
@@ -18,7 +14,6 @@ import {
   Drawer,
   Form,
   Input,
-  InputNumber,
   Modal,
   Select,
   Space,
@@ -31,7 +26,7 @@ import {
 import type { TableColumnsType, TablePaginationConfig } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
-import { Permission, type UserRole } from "@xiangneng/shared";
+import { Permission } from "@xiangneng/shared";
 import { useAuth } from "../auth/AuthContext";
 import { ErrorBlock } from "../components/AsyncState";
 import { ContentCard } from "../components/ContentCard";
@@ -50,6 +45,7 @@ import type {
 type EmployeeFilters = {
   keyword?: string;
   status?: InternalEmployee["status"];
+  branchId?: string;
   organizationUnitId?: string;
 };
 
@@ -59,8 +55,8 @@ type EmployeeCreateValues = {
   phone: string;
   idCard: string;
   email?: string;
-  userId?: string;
   legalEntityId?: string;
+  branchId?: string;
   organizationUnitId: string;
   positionId: string;
   jobGradeId?: string;
@@ -72,30 +68,13 @@ type TransferValues = {
   effectiveDate: Dayjs;
   organizationUnitId: string;
   positionId: string;
-  jobGradeId?: string;
+  branchId?: string;
   reason: string;
 };
 
 type OffboardValues = {
   offboardDate: Dayjs;
   reason: string;
-};
-
-type AccountBindingValues = {
-  userId?: string;
-};
-
-type GradeApprovalPolicyValues = {
-  jobGradeId: string;
-  maxApprovalYuan?: number | null;
-};
-
-type PositionPermissionValues = {
-  positionId: string;
-  bindings: Array<{
-    roleCode: UserRole;
-    scopeType: "SELF" | "ORG_UNIT" | "CENTER" | "GROUP";
-  }>;
 };
 
 const statusOptions = [
@@ -112,22 +91,13 @@ const statusColor: Record<InternalEmployee["status"], string> = {
   ARCHIVED: "blue"
 };
 
-const positionScopeOptions = [
-  { value: "SELF", label: "本人" },
-  { value: "ORG_UNIT", label: "本部门" },
-  { value: "CENTER", label: "本中心" },
-  { value: "GROUP", label: "集团" }
-] satisfies Array<{ value: PositionPermissionValues["bindings"][number]["scopeType"]; label: string }>;
-
 const changeLabels: Record<string, string> = {
   ONBOARD: "入职",
   TRANSFER: "调动",
   DISABLE: "停用",
   ENABLE: "启用",
   OFFBOARD: "离职",
-  ARCHIVE: "归档",
-  ACCOUNT_BIND: "绑定账号",
-  ACCOUNT_UNBIND: "解绑账号"
+  ARCHIVE: "归档"
 };
 
 function statusLabel(status: InternalEmployee["status"]): string {
@@ -140,7 +110,7 @@ function dateValue(value?: Dayjs): string | undefined {
 
 function InternalEmployeesContent() {
   const { message } = App.useApp();
-  const { can, user } = useAuth();
+  const { can } = useAuth();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [filters, setFilters] = useState<EmployeeFilters>({});
@@ -151,16 +121,10 @@ function InternalEmployeesContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [offboardOpen, setOffboardOpen] = useState(false);
-  const [accountBindingOpen, setAccountBindingOpen] = useState(false);
-  const [positionPermissionOpen, setPositionPermissionOpen] = useState(false);
-  const [gradePolicyOpen, setGradePolicyOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [createForm] = Form.useForm<EmployeeCreateValues>();
   const [transferForm] = Form.useForm<TransferValues>();
   const [offboardForm] = Form.useForm<OffboardValues>();
-  const [accountBindingForm] = Form.useForm<AccountBindingValues>();
-  const [positionPermissionForm] = Form.useForm<PositionPermissionValues>();
-  const [gradePolicyForm] = Form.useForm<GradeApprovalPolicyValues>();
 
   const optionsResource = useApiResource(
     () => api.get<OrganizationOptionSet>("/organization/options"),
@@ -178,77 +142,17 @@ function InternalEmployeesContent() {
   const options = optionsResource.data;
   const list = employeesResource.data;
 
+  const branchOptions = options?.branches.map((item) => ({
+    value: item.id,
+    label: item.name
+  })) ?? [];
   const organizationOptions = options?.organizationUnits
-    .filter((item) => item.type !== "GROUP")
+    .filter((item) => item.type === "CENTER" || item.type === "DEPARTMENT")
     .map((item) => ({ value: item.id, label: item.name })) ?? [];
   const positionOptions = options?.positions.map((item) => ({
     value: item.id,
     label: `${item.name}（${item.code}）`
   })) ?? [];
-
-  const accountOptions = (options?.accounts ?? []).map((account) => ({
-    value: account.id,
-    label: `${account.displayName}（${account.username}）${account.internalEmployee ? ` · 已绑定 ${account.internalEmployee.name}` : ""}`,
-    disabled: Boolean(account.internalEmployee && account.internalEmployee.id !== detail?.id)
-  }));
-
-  const unboundAccountOptions = (options?.accounts ?? [])
-    .filter((account) => !account.internalEmployee)
-    .map((account) => ({
-      value: account.id,
-      label: `${account.displayName}（${account.username}）`
-    }));
-
-  const roleOptions = options?.roles?.map((item) => ({
-    value: item.code,
-    label: `${item.name}（${item.code}）`
-  })) ?? [];
-  const canGrantGlobalPositionAuthorization = Boolean(
-    user?.roles?.some((role) => role === "SUPER_ADMIN" || role === "SYSTEM_ADMIN") ||
-    user?.role === "SUPER_ADMIN" ||
-    user?.role === "SYSTEM_ADMIN"
-  );
-  const availablePositionScopeOptions = canGrantGlobalPositionAuthorization
-    ? positionScopeOptions
-    : positionScopeOptions.filter((option) => option.value !== "GROUP");
-
-  const bindingsForPosition = (positionId: string): PositionPermissionValues["bindings"] =>
-    (options?.positionRoleBindings ?? [])
-      .filter((binding) => binding.positionId === positionId)
-      .map((binding) => ({ roleCode: binding.role.code, scopeType: binding.scopeType }));
-
-
-  const approvalPolicyForGrade = (jobGradeId: string) =>
-    options?.jobGradeApprovalPolicies?.find((policy) => policy.jobGradeId === jobGradeId);
-
-  const openGradePolicy = () => {
-    const jobGradeId = options?.jobGrades[0]?.id;
-    if (!jobGradeId) {
-      message.warning("当前暂无可配置职级");
-      return;
-    }
-    const policy = approvalPolicyForGrade(jobGradeId);
-    gradePolicyForm.setFieldsValue({
-      jobGradeId,
-      maxApprovalYuan: policy?.maxReimbursementApprovalCents == null
-        ? null
-        : policy.maxReimbursementApprovalCents / 100
-    });
-    setGradePolicyOpen(true);
-  };
-
-  const openPositionPermissions = () => {
-    const positionId = options?.positions[0]?.id;
-    if (!positionId) {
-      message.warning("当前组织范围内暂无可配置岗位");
-      return;
-    }
-    positionPermissionForm.setFieldsValue({
-      positionId,
-      bindings: bindingsForPosition(positionId)
-    });
-    setPositionPermissionOpen(true);
-  };
 
   const openEmployee = async (employee: InternalEmployee) => {
     setDetail(employee);
@@ -274,7 +178,7 @@ function InternalEmployeesContent() {
       message.success("内部员工已创建，首条任职和入职变更已同步生成");
       createForm.resetFields();
       setCreateOpen(false);
-      await Promise.all([employeesResource.reload(), optionsResource.reload()]);
+      await employeesResource.reload();
     } catch (error) {
       message.error(getErrorMessage(error));
     } finally {
@@ -326,63 +230,6 @@ function InternalEmployeesContent() {
     }
   };
 
-
-
-  const submitAccountBinding = async (values: AccountBindingValues) => {
-    if (!detail) return;
-    setSubmitting(true);
-    try {
-      await api.put(`/internal-employees/${detail.id}/account`, {
-        expectedVersion: detail.version,
-        userId: values.userId ?? null
-      });
-      message.success(values.userId ? "系统账号已绑定，岗位权限已同步" : "系统账号已解绑，原岗位权限已撤销");
-      setAccountBindingOpen(false);
-      const next = await api.get<InternalEmployee>(`/internal-employees/${detail.id}`);
-      setDetail(next);
-      await Promise.all([employeesResource.reload(), optionsResource.reload()]);
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitGradePolicy = async (values: GradeApprovalPolicyValues) => {
-    setSubmitting(true);
-    try {
-      const maxReimbursementApprovalCents = values.maxApprovalYuan == null
-        ? null
-        : Math.round(values.maxApprovalYuan * 100);
-      await api.put(`/organization/job-grades/${values.jobGradeId}/reimbursement-policy`, {
-        maxReimbursementApprovalCents
-      });
-      message.success("职级报销审批额度已保存");
-      setGradePolicyOpen(false);
-      await optionsResource.reload();
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitPositionPermissions = async (values: PositionPermissionValues) => {
-    setSubmitting(true);
-    try {
-      await api.put(`/organization/positions/${values.positionId}/role-bindings`, {
-        bindings: values.bindings
-      });
-      message.success("岗位权限已保存，当前在职员工的岗位授权已同步刷新");
-      setPositionPermissionOpen(false);
-      await optionsResource.reload();
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const columns = useMemo<TableColumnsType<InternalEmployee>>(
     () => [
       {
@@ -413,7 +260,12 @@ function InternalEmployeesContent() {
         )
       },
       {
-        title: "所属部门",
+        title: "分公司",
+        width: 170,
+        render: (_, row) => row.branch?.name ?? "—"
+      },
+      {
+        title: "部门/中心",
         width: 170,
         render: (_, row) => row.organizationUnit?.name ?? "—"
       },
@@ -461,23 +313,11 @@ function InternalEmployeesContent() {
         title="内部员工管理"
         description="管理公司内部员工、组织任职、调动与离职。手机号和身份证号按当前账号权限完整显示，所有变更保留历史。"
         extra={
-          <Space>
-            {can(Permission.USER_MANAGE) ? (
-              <>
-                <Button icon={<SafetyCertificateOutlined />} onClick={openPositionPermissions}>
-                  岗位权限配置
-                </Button>
-                <Button icon={<DollarOutlined />} onClick={openGradePolicy}>
-                  职级审批额度
-                </Button>
-              </>
-            ) : null}
-            {can(Permission.INTERNAL_EMPLOYEE_WRITE) ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-                新增内部员工
-              </Button>
-            ) : null}
-          </Space>
+          can(Permission.INTERNAL_EMPLOYEE_WRITE) ? (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+              新增内部员工
+            </Button>
+          ) : undefined
         }
       />
       <ContentCard>
@@ -504,6 +344,17 @@ function InternalEmployeesContent() {
             value={draftFilters.status}
             onChange={(status) =>
               setDraftFilters((current) => ({ ...current, status }))
+            }
+          />
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="分公司"
+            options={branchOptions}
+            value={draftFilters.branchId}
+            onChange={(branchId) =>
+              setDraftFilters((current) => ({ ...current, branchId }))
             }
           />
           <Select
@@ -581,11 +432,11 @@ function InternalEmployeesContent() {
             <Form.Item name="phone" label="手机号" rules={[{ required: true }, { pattern: /^1\d{10}$/, message: "请输入11位手机号" }]}><Input maxLength={11} /></Form.Item>
             <Form.Item name="idCard" label="身份证号" rules={[{ required: true }]}><Input maxLength={32} /></Form.Item>
             <Form.Item name="email" label="邮箱" rules={[{ type: "email" }]}><Input maxLength={200} /></Form.Item>
-            <Form.Item name="legalEntityId" label="合同主体" tooltip="合同主体是劳动合同签订公司，与员工实际所属部门独立。"><Select allowClear showSearch optionFilterProp="label" options={options?.legalEntities.map((item) => ({ value: item.id, label: item.name }))} /></Form.Item>
-            <Form.Item name="organizationUnitId" label="所属部门/中心" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={organizationOptions} /></Form.Item>
+            <Form.Item name="legalEntityId" label="法人主体"><Select allowClear showSearch optionFilterProp="label" options={options?.legalEntities.map((item) => ({ value: item.id, label: item.name }))} /></Form.Item>
+            <Form.Item name="branchId" label="分公司"><Select allowClear showSearch optionFilterProp="label" options={branchOptions} /></Form.Item>
+            <Form.Item name="organizationUnitId" label="部门/中心" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={organizationOptions} /></Form.Item>
             <Form.Item name="positionId" label="岗位" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={positionOptions} /></Form.Item>
             <Form.Item name="jobGradeId" label="职级"><Select allowClear options={options?.jobGrades.map((item) => ({ value: item.id, label: `${item.name}（${item.code}）` }))} /></Form.Item>
-            {can(Permission.USER_MANAGE) ? <Form.Item name="userId" label="绑定系统账号" tooltip="可先在权限与审计中创建账号；绑定后按岗位自动同步角色和数据范围。"><Select allowClear showSearch optionFilterProp="label" options={unboundAccountOptions} placeholder="可暂不绑定" /></Form.Item> : null}
             <Form.Item name="onboardDate" label="入职日期" rules={[{ required: true }]}><DatePicker className="full-width" /></Form.Item>
             <Form.Item name="reason" label="入职说明"><Input maxLength={500} /></Form.Item>
           </div>
@@ -606,18 +457,7 @@ function InternalEmployeesContent() {
         onClose={() => setDetailOpen(false)}
         extra={detail?.status === "ACTIVE" ? (
           <Space>
-            {can(Permission.USER_MANAGE) && can(Permission.INTERNAL_EMPLOYEE_WRITE) ? <Button icon={<UserSwitchOutlined />} onClick={() => {
-              accountBindingForm.setFieldsValue({ userId: detail.userId ?? undefined });
-              setAccountBindingOpen(true);
-            }}>绑定账号</Button> : null}
-            {can(Permission.INTERNAL_EMPLOYEE_TRANSFER) ? <Button icon={<SwapOutlined />} onClick={() => {
-              transferForm.setFieldsValue({
-                organizationUnitId: detail.organizationUnitId ?? undefined,
-                positionId: detail.positionId ?? undefined,
-                jobGradeId: detail.jobGradeId ?? undefined
-              });
-              setTransferOpen(true);
-            }}>办理调动/晋升</Button> : null}
+            {can(Permission.INTERNAL_EMPLOYEE_TRANSFER) ? <Button icon={<SwapOutlined />} onClick={() => setTransferOpen(true)}>办理调动</Button> : null}
             {can(Permission.INTERNAL_EMPLOYEE_OFFBOARD) ? <Button danger icon={<UserDeleteOutlined />} onClick={() => setOffboardOpen(true)}>办理离职</Button> : null}
           </Space>
         ) : undefined}
@@ -637,13 +477,14 @@ function InternalEmployeesContent() {
                         <Descriptions.Item label="手机号">{detail.phone}</Descriptions.Item>
                         <Descriptions.Item label="身份证号">{detail.idCard}</Descriptions.Item>
                         <Descriptions.Item label="邮箱">{detail.email || "—"}</Descriptions.Item>
-                        <Descriptions.Item label="系统账号">{detail.user ? `${detail.user.displayName}（${detail.user.username}）` : "未绑定"}</Descriptions.Item>
+                        <Descriptions.Item label="系统账号">{detail.userId || "未绑定"}</Descriptions.Item>
                       </Descriptions>
                     </Card>
                     <Card size="small" title="当前任职">
                       <Descriptions column={2}>
-                        <Descriptions.Item label="合同主体">{detail.legalEntity?.name || "—"}</Descriptions.Item>
-                        <Descriptions.Item label="所属部门/中心">{detail.organizationUnit?.name || "—"}</Descriptions.Item>
+                        <Descriptions.Item label="法人主体">{detail.legalEntity?.name || "—"}</Descriptions.Item>
+                        <Descriptions.Item label="分公司">{detail.branch?.name || "—"}</Descriptions.Item>
+                        <Descriptions.Item label="部门/中心">{detail.organizationUnit?.name || "—"}</Descriptions.Item>
                         <Descriptions.Item label="岗位">{detail.position?.name || "—"}</Descriptions.Item>
                         <Descriptions.Item label="职级">{detail.jobGrade?.name || "—"}</Descriptions.Item>
                         <Descriptions.Item label="档案版本">V{detail.version}</Descriptions.Item>
@@ -669,6 +510,7 @@ function InternalEmployeesContent() {
                       columns={[
                         { title: "开始日期", dataIndex: "startedAt", render: (value: string) => formatDate(value) },
                         { title: "结束日期", dataIndex: "endedAt", render: (value) => value ? formatDate(value) : "当前" },
+                        { title: "分公司", render: (_, row) => row.branch?.name ?? "—" },
                         { title: "部门", render: (_, row) => row.organizationUnit.name },
                         { title: "岗位", render: (_, row) => row.position.name },
                         { title: "说明", dataIndex: "reason", render: (value) => value || "—" }
@@ -699,139 +541,8 @@ function InternalEmployeesContent() {
         ) : null}
       </Drawer>
 
-
       <Modal
-        title={`绑定系统账号${detail ? `：${detail.name}` : ""}`}
-        open={accountBindingOpen}
-        width={560}
-        confirmLoading={submitting}
-        onCancel={() => setAccountBindingOpen(false)}
-        onOk={() => accountBindingForm.submit()}
-        destroyOnHidden
-      >
-        <Typography.Paragraph type="secondary">
-          绑定后系统会根据员工当前岗位生成角色权限，并以所属部门或中心作为数据范围。换绑会撤销旧账号的岗位来源权限，但保留人工和临时授权。
-        </Typography.Paragraph>
-        <Form<AccountBindingValues> form={accountBindingForm} layout="vertical" onFinish={(values) => void submitAccountBinding(values)}>
-          <Form.Item name="userId" label="系统账号">
-            <Select allowClear showSearch optionFilterProp="label" options={accountOptions} placeholder="清空后保存即解除绑定" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="岗位权限配置"
-        open={positionPermissionOpen}
-        width={760}
-        confirmLoading={submitting}
-        onCancel={() => setPositionPermissionOpen(false)}
-        onOk={() => positionPermissionForm.submit()}
-        destroyOnHidden
-      >
-        <Typography.Paragraph type="secondary">
-          岗位决定系统职责，数据范围随员工当前组织归属自动生成。保存后会刷新该岗位全部在职员工的岗位授权，人工和临时授权不会被删除。
-        </Typography.Paragraph>
-        <Form<PositionPermissionValues>
-          form={positionPermissionForm}
-          layout="vertical"
-          onFinish={(values) => void submitPositionPermissions(values)}
-        >
-          <Form.Item name="positionId" label="岗位" rules={[{ required: true }]}>
-            <Select
-              showSearch
-              optionFilterProp="label"
-              options={positionOptions}
-              onChange={(positionId) => positionPermissionForm.setFieldValue("bindings", bindingsForPosition(positionId))}
-            />
-          </Form.Item>
-          <Form.List name="bindings">
-            {(fields, { add, remove }, { errors }) => (
-              <Space direction="vertical" className="full-width" size="middle">
-                {fields.map((field) => (
-                  <Space key={field.key} align="baseline" className="full-width">
-                    <Form.Item
-                      {...field}
-                      name={[field.name, "roleCode"]}
-                      rules={[{ required: true, message: "请选择角色" }]}
-                      style={{ minWidth: 300, marginBottom: 0 }}
-                    >
-                      <Select showSearch optionFilterProp="label" placeholder="系统角色" options={roleOptions} />
-                    </Form.Item>
-                    <Form.Item
-                      {...field}
-                      name={[field.name, "scopeType"]}
-                      rules={[{ required: true, message: "请选择数据范围" }]}
-                      style={{ minWidth: 190, marginBottom: 0 }}
-                    >
-                      <Select placeholder="数据范围" options={availablePositionScopeOptions} />
-                    </Form.Item>
-                    <Button danger type="text" icon={<MinusCircleOutlined />} onClick={() => remove(field.name)}>删除</Button>
-                  </Space>
-                ))}
-                <Button type="dashed" block onClick={() => add({ scopeType: "SELF" })}>+ 添加岗位角色</Button>
-                <Form.ErrorList errors={errors} />
-                {!fields.length ? <Typography.Text type="secondary">未配置岗位角色时，保存会撤销该岗位产生的自动授权，不影响人工或临时授权。</Typography.Text> : null}
-              </Space>
-            )}
-          </Form.List>
-        </Form>
-      </Modal>
-
-
-      <Modal
-        title="职级报销审批额度"
-        open={gradePolicyOpen}
-        width={560}
-        confirmLoading={submitting}
-        onCancel={() => setGradePolicyOpen(false)}
-        onOk={() => gradePolicyForm.submit()}
-        destroyOnHidden
-      >
-        <Typography.Paragraph type="secondary">
-          岗位决定是否具备审批职责，职级决定单笔报销可审批到的金额。留空表示该职级暂不限制审批金额，具体额度请按公司制度配置。
-        </Typography.Paragraph>
-        <Form<GradeApprovalPolicyValues>
-          form={gradePolicyForm}
-          layout="vertical"
-          onFinish={(values) => void submitGradePolicy(values)}
-        >
-          <Form.Item name="jobGradeId" label="职级" rules={[{ required: true }]}>
-            <Select
-              showSearch
-              optionFilterProp="label"
-              options={options?.jobGrades.map((grade) => ({
-                value: grade.id,
-                label: `${grade.name}（${grade.code} / L${grade.level}）`
-              })) ?? []}
-              onChange={(jobGradeId) => {
-                const policy = approvalPolicyForGrade(jobGradeId);
-                gradePolicyForm.setFieldValue(
-                  "maxApprovalYuan",
-                  policy?.maxReimbursementApprovalCents == null
-                    ? null
-                    : policy.maxReimbursementApprovalCents / 100
-                );
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="maxApprovalYuan"
-            label="单笔最高审批金额（元）"
-            tooltip="报销金额超过该额度时，当前职级负责人不能审批通过，需要由更高职级且具备审批角色的人员处理。"
-          >
-            <InputNumber
-              className="full-width"
-              min={0.01}
-              precision={2}
-              placeholder="留空表示暂不限制"
-              addonAfter="元"
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={`办理调动/晋升${detail ? `：${detail.name}` : ""}`}
+        title={`办理调动${detail ? `：${detail.name}` : ""}`}
         open={transferOpen}
         confirmLoading={submitting}
         onCancel={() => setTransferOpen(false)}
@@ -840,10 +551,10 @@ function InternalEmployeesContent() {
       >
         <Form<TransferValues> form={transferForm} layout="vertical" onFinish={(values) => void submitTransfer(values)}>
           <Form.Item name="effectiveDate" label="生效日期" rules={[{ required: true }]}><DatePicker className="full-width" minDate={dayjs("2020-01-01")} /></Form.Item>
+          <Form.Item name="branchId" label="调入分公司"><Select allowClear showSearch optionFilterProp="label" options={branchOptions} /></Form.Item>
           <Form.Item name="organizationUnitId" label="调入部门/中心" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={organizationOptions} /></Form.Item>
           <Form.Item name="positionId" label="调入岗位" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={positionOptions} /></Form.Item>
-          <Form.Item name="jobGradeId" label="调整后职级"><Select allowClear showSearch optionFilterProp="label" options={options?.jobGrades.map((item) => ({ value: item.id, label: `${item.name}（${item.code} / L${item.level}）` }))} /></Form.Item>
-          <Form.Item name="reason" label="调动/晋升原因" rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={500} showCount /></Form.Item>
+          <Form.Item name="reason" label="调动原因" rules={[{ required: true }]}><Input.TextArea rows={3} maxLength={500} showCount /></Form.Item>
         </Form>
       </Modal>
 

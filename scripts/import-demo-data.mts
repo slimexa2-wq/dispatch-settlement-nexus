@@ -96,11 +96,11 @@ const users = [
   { key: "demo-hq", username: "demo_hq", displayName: "演示-集团领导", role: "HEADQUARTERS_MANAGER", branchId: null, projectIds: [] },
   { key: "demo-branch", username: "demo_branch", displayName: "演示-分公司负责人", role: "BRANCH_MANAGER", branchId: uuid(data.branches[0]!.id), projectIds: [] },
   { key: "demo-operator", username: "demo_operator", displayName: "演示-现场运营", role: "PROJECT_OPERATOR", branchId: null, projectIds: data.projects.map((item) => uuid(item.id)) },
-  { key: "demo-hr", username: "demo_hr", displayName: "演示-内部人事", role: "INTERNAL_HR", branchId: null, projectIds: [] },
-  { key: "demo-recruiter", username: "demo_recruiter", displayName: "演示-招聘专员", role: "RECRUITER", branchId: null, projectIds: [] },
-  { key: "demo-finance", username: "demo_finance", displayName: "演示-财务审核", role: "FINANCE_REVIEWER", branchId: null, projectIds: [] },
-  { key: "demo-cashier", username: "demo_cashier", displayName: "演示-出纳", role: "CASHIER", branchId: null, projectIds: [] },
-  { key: "demo-reimbursement", username: "demo_reimbursement", displayName: "演示-部门制单人", role: "DEPARTMENT_REIMBURSEMENT_CLERK", branchId: null, projectIds: [] }
+  { key: "demo-hr", username: "demo_hr", displayName: "演示-内部人事", role: "INTERNAL_HR", branchId: uuid(data.branches[0]!.id), projectIds: [] },
+  { key: "demo-recruiter", username: "demo_recruiter", displayName: "演示-招聘专员", role: "RECRUITER", branchId: uuid(data.branches[1]!.id), projectIds: [] },
+  { key: "demo-finance", username: "demo_finance", displayName: "演示-财务审核", role: "FINANCE_REVIEWER", branchId: uuid(data.branches[0]!.id), projectIds: [] },
+  { key: "demo-cashier", username: "demo_cashier", displayName: "演示-出纳", role: "CASHIER", branchId: uuid(data.branches[1]!.id), projectIds: [] },
+  { key: "demo-reimbursement", username: "demo_reimbursement", displayName: "演示-部门制单人", role: "DEPARTMENT_REIMBURSEMENT_CLERK", branchId: uuid(data.branches[2]!.id), projectIds: [] }
 ] as const;
 
 try {
@@ -272,38 +272,11 @@ try {
     },
     update: { name: "祥能演示集团", isActive: true }
   });
-  const managementCenterId = uuid("organization:center:management");
-  const operationsCenterId = uuid("organization:center:operations");
-  for (const center of [
-    { id: managementCenterId, code: "XN-DEMO-MANAGEMENT", name: "管理中心", sortOrder: 1 },
-    { id: operationsCenterId, code: "XN-DEMO-OPERATIONS", name: "运营中心", sortOrder: 2 }
-  ]) {
-    await prisma.organizationUnit.upsert({
-      where: { code: center.code },
-      create: {
-        id: center.id,
-        code: center.code,
-        name: center.name,
-        type: "CENTER",
-        parentId: rootOrganizationId,
-        path: `/${rootOrganizationId}/${center.id}`,
-        sortOrder: center.sortOrder
-      },
-      update: {
-        name: center.name,
-        parentId: rootOrganizationId,
-        type: "CENTER",
-        path: `/${rootOrganizationId}/${center.id}`,
-        sortOrder: center.sortOrder,
-        isActive: true
-      }
-    });
-  }
-
-  const businessDepartmentIds = new Map<string, string>();
+  const departmentIds = new Map<string, string>();
   for (const [branchIndex, branch] of data.branches.entries()) {
+    const branchId = uuid(branch.id);
     const legalEntityId = uuid(`legal-entity:${branch.id}`);
-    const departmentId = uuid(`organization:business-department:${branch.id}`);
+    const branchUnitId = uuid(`organization:branch:${branch.id}`);
     await prisma.legalEntity.upsert({
       where: { code: `LE-${branch.sourceCode}` },
       create: {
@@ -317,61 +290,56 @@ try {
     await prisma.organizationUnit.upsert({
       where: { code: `OU-${branch.sourceCode}` },
       create: {
-        id: departmentId,
+        id: branchUnitId,
         code: `OU-${branch.sourceCode}`,
         name: branch.name,
-        type: "DEPARTMENT",
-        parentId: operationsCenterId,
-        path: `/${rootOrganizationId}/${operationsCenterId}/${departmentId}`,
+        type: "BRANCH",
+        parentId: rootOrganizationId,
+        legalEntityId,
+        branchId,
+        path: `/${rootOrganizationId}/${branchUnitId}`,
         sortOrder: branchIndex + 1
       },
       update: {
         name: branch.name,
-        type: "DEPARTMENT",
-        parentId: operationsCenterId,
-        path: `/${rootOrganizationId}/${operationsCenterId}/${departmentId}`,
-        sortOrder: branchIndex + 1,
+        legalEntityId,
+        branchId,
         isActive: true
       }
     });
-    businessDepartmentIds.set(branch.id, departmentId);
+    const departmentNames = [
+      ...new Set(
+        data.internalEmployees
+          .filter((employee) => employee.branchId === branch.id)
+          .map((employee) => employee.departmentName)
+      )
+    ];
+    for (const [departmentIndex, departmentName] of departmentNames.entries()) {
+      const departmentId = uuid(`organization:department:${branch.id}:${departmentName}`);
+      departmentIds.set(`${branch.id}:${departmentName}`, departmentId);
+      await prisma.organizationUnit.upsert({
+        where: { code: `OU-${branch.sourceCode}-D${departmentIndex + 1}` },
+        create: {
+          id: departmentId,
+          code: `OU-${branch.sourceCode}-D${departmentIndex + 1}`,
+          name: departmentName,
+          type: "DEPARTMENT",
+          parentId: branchUnitId,
+          legalEntityId,
+          branchId,
+          path: `/${rootOrganizationId}/${branchUnitId}/${departmentId}`,
+          sortOrder: departmentIndex + 1
+        },
+        update: {
+          name: departmentName,
+          parentId: branchUnitId,
+          legalEntityId,
+          branchId,
+          isActive: true
+        }
+      });
+    }
   }
-
-  const hrDepartmentId = uuid("organization:department:human-resources");
-  const financeDepartmentId = uuid("organization:department:finance");
-  for (const department of [
-    { id: hrDepartmentId, code: "XN-DEMO-HR", name: "人力资源部", sortOrder: 1 },
-    { id: financeDepartmentId, code: "XN-DEMO-FINANCE", name: "财务规划部", sortOrder: 2 }
-  ]) {
-    await prisma.organizationUnit.upsert({
-      where: { code: department.code },
-      create: {
-        id: department.id,
-        code: department.code,
-        name: department.name,
-        type: "DEPARTMENT",
-        parentId: managementCenterId,
-        path: `/${rootOrganizationId}/${managementCenterId}/${department.id}`,
-        sortOrder: department.sortOrder
-      },
-      update: {
-        name: department.name,
-        type: "DEPARTMENT",
-        parentId: managementCenterId,
-        path: `/${rootOrganizationId}/${managementCenterId}/${department.id}`,
-        sortOrder: department.sortOrder,
-        isActive: true
-      }
-    });
-  }
-
-  const resolveInternalOrganizationUnitId = (employee: (typeof data.internalEmployees)[number]): string => {
-    if (/人事|人力|HR|招聘/i.test(employee.position)) return hrDepartmentId;
-    if (/财务|会计|出纳|报销|制单/.test(employee.position)) return financeDepartmentId;
-    const departmentId = businessDepartmentIds.get(employee.branchId);
-    if (!departmentId) throw new Error(`未找到员工 ${employee.name} 对应的业务部门`);
-    return departmentId;
-  };
 
   const jobGrade = await prisma.jobGrade.upsert({
     where: { code: "G5" },
@@ -400,59 +368,6 @@ try {
     positionIds.set(positionName, position.id);
   }
 
-  const positionRoleRules = (positionName: string) => {
-    const rules: Array<{
-      role: SharedUserRole;
-      scopeType: "SELF" | "ORG_UNIT" | "CENTER" | "GROUP";
-    }> = [{ role: SharedUserRole.EMPLOYEE, scopeType: "SELF" }];
-    if (/负责人|经理|主管/.test(positionName)) {
-      rules.push({ role: SharedUserRole.DEPARTMENT_MANAGER, scopeType: "ORG_UNIT" });
-    }
-    if (/人事|人力|HR/i.test(positionName)) {
-      rules.push({ role: SharedUserRole.INTERNAL_HR, scopeType: "CENTER" });
-    }
-    if (/招聘/.test(positionName)) {
-      rules.push({ role: SharedUserRole.RECRUITER, scopeType: "CENTER" });
-    }
-    if (/资源/.test(positionName)) {
-      rules.push({ role: SharedUserRole.RESOURCE_SPECIALIST, scopeType: "ORG_UNIT" });
-    }
-    if (/运营/.test(positionName)) {
-      rules.push({ role: SharedUserRole.PROJECT_OPERATOR, scopeType: "ORG_UNIT" });
-    }
-    if (/财务|会计/.test(positionName)) {
-      rules.push({ role: SharedUserRole.FINANCE_REVIEWER, scopeType: "CENTER" });
-    }
-    if (/出纳/.test(positionName)) {
-      rules.push({ role: SharedUserRole.CASHIER, scopeType: "CENTER" });
-    }
-    if (/报销|制单/.test(positionName)) {
-      rules.push({ role: SharedUserRole.DEPARTMENT_REIMBURSEMENT_CLERK, scopeType: "ORG_UNIT" });
-    }
-    return rules;
-  };
-  for (const [positionName, positionId] of positionIds.entries()) {
-    for (const rule of positionRoleRules(positionName)) {
-      const roleId = roleIds.get(rule.role)!;
-      await prisma.positionRoleBinding.upsert({
-        where: {
-          positionId_roleId_scopeType: {
-            positionId,
-            roleId,
-            scopeType: rule.scopeType
-          }
-        },
-        create: {
-          id: uuid(`position-role:${positionName}:${rule.role}:${rule.scopeType}`),
-          positionId,
-          roleId,
-          scopeType: rule.scopeType
-        },
-        update: { isActive: true }
-      });
-    }
-  }
-
   const internalUsernames = [
     "demo_hr",
     "demo_recruiter",
@@ -469,7 +384,9 @@ try {
     });
     const employeeId = uuid(employee.id);
     const legalEntityId = uuid(`legal-entity:${branch.id}`);
-    const organizationUnitId = resolveInternalOrganizationUnitId(employee);
+    const organizationUnitId = departmentIds.get(
+      `${branch.id}:${employee.departmentName}`
+    )!;
     const positionId = positionIds.get(employee.position)!;
     await prisma.internalEmployee.upsert({
       where: { employeeNo: employee.employeeNo },
@@ -481,6 +398,7 @@ try {
         phone: employee.phone,
         idCard: employee.idCard,
         legalEntityId,
+        branchId: uuid(branch.id),
         organizationUnitId,
         positionId,
         jobGradeId: jobGrade.id,
@@ -493,6 +411,7 @@ try {
         phone: employee.phone,
         idCard: employee.idCard,
         legalEntityId,
+        branchId: uuid(branch.id),
         organizationUnitId,
         positionId,
         jobGradeId: jobGrade.id,
@@ -505,6 +424,7 @@ try {
         id: uuid(`employment:${employee.id}:initial`),
         employeeId,
         legalEntityId,
+        branchId: uuid(branch.id),
         organizationUnitId,
         positionId,
         jobGradeId: jobGrade.id,
@@ -514,6 +434,7 @@ try {
       },
       update: {
         legalEntityId,
+        branchId: uuid(branch.id),
         organizationUnitId,
         positionId,
         jobGradeId: jobGrade.id,
@@ -533,6 +454,7 @@ try {
           status: employee.status,
           organizationUnitId,
           positionId,
+          branchId: uuid(branch.id)
         }
       },
       update: {}
@@ -545,11 +467,11 @@ try {
     { username: "demo_branch", role: SharedUserRole.BRANCH_MANAGER, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[0]!.id) }] },
     { username: "demo_project", role: SharedUserRole.PROJECT_OPERATOR, scopes: demoProjectIds.map((projectId) => ({ type: "PROJECT" as const, projectId })) },
     { username: "demo_operator", role: SharedUserRole.PROJECT_OPERATOR, scopes: data.projects.map((project) => ({ type: "PROJECT" as const, projectId: uuid(project.id) })) },
-    { username: "demo_hr", role: SharedUserRole.INTERNAL_HR, scopes: [{ type: "CENTER" as const, organizationUnitId: managementCenterId }] },
-    { username: "demo_recruiter", role: SharedUserRole.RECRUITER, scopes: [{ type: "CENTER" as const, organizationUnitId: managementCenterId }] },
-    { username: "demo_finance", role: SharedUserRole.FINANCE_REVIEWER, scopes: [{ type: "CENTER" as const, organizationUnitId: managementCenterId }] },
-    { username: "demo_cashier", role: SharedUserRole.CASHIER, scopes: [{ type: "CENTER" as const, organizationUnitId: managementCenterId }] },
-    { username: "demo_reimbursement", role: SharedUserRole.DEPARTMENT_REIMBURSEMENT_CLERK, scopes: [{ type: "ORG_UNIT" as const, organizationUnitId: financeDepartmentId }] },
+    { username: "demo_hr", role: SharedUserRole.INTERNAL_HR, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[0]!.id) }] },
+    { username: "demo_recruiter", role: SharedUserRole.RECRUITER, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[1]!.id) }] },
+    { username: "demo_finance", role: SharedUserRole.FINANCE_REVIEWER, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_cashier", role: SharedUserRole.CASHIER, scopes: [{ type: "GROUP" as const }] },
+    { username: "demo_reimbursement", role: SharedUserRole.DEPARTMENT_REIMBURSEMENT_CLERK, scopes: [{ type: "BRANCH" as const, branchId: uuid(data.branches[2]!.id) }] },
     { username: "demo_supplier", role: SharedUserRole.SUPPLIER_ADMIN, scopes: [{ type: "SUPPLIER" as const, supplierId: uuid(demoSupplierSourceId) }] },
     { username: "demo_employee", role: SharedUserRole.EMPLOYEE, scopes: [{ type: "SELF" as const }] }
   ];
@@ -585,7 +507,6 @@ try {
         userId: account.id,
         roleAssignmentId: assignmentId,
         type: scope.type,
-        organizationUnitId: "organizationUnitId" in scope ? scope.organizationUnitId : null,
         branchId: "branchId" in scope ? scope.branchId : null,
         projectId: "projectId" in scope ? scope.projectId : null,
         supplierId: "supplierId" in scope ? scope.supplierId : null

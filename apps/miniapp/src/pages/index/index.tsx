@@ -3,7 +3,7 @@ import { Button, Text, View } from "@tarojs/components";
 import { useEffect, useRef } from "react";
 import { api, type OverviewStatistics } from "../../api/services";
 import { AsyncBoundary, ConfigGapBanner, MetricGrid, PageShell, SectionCard } from "../../components/ui";
-import { menuForUser, portalForUser, roleLabels } from "../../domain/roles";
+import { menuForUser, portalForRole, roleLabels } from "../../domain/roles";
 import { jobDetailPath, referralTokenFromParams } from "../../domain/links";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { useSession } from "../../hooks/useSession";
@@ -51,7 +51,7 @@ export default function HomePage() {
       </PageShell>
     );
   }
-  const portal = portalForUser(user);
+  const portal = portalForRole(user.role);
   const metrics =
     portal === "operator"
       ? [
@@ -72,7 +72,7 @@ export default function HomePage() {
   return (
     <PageShell title="工作台" subtitle="根据账号角色与数据权限展示可用功能">
       <View className="hero" onClick={() => void Taro.navigateTo({ url: "/pages/profile/index/index" })}>
-        <Text className="hero__eyebrow">{user.roles.map((role) => roleLabels[role]).join(" / ")}</Text>
+        <Text className="hero__eyebrow">{roleLabels[user.role]}</Text>
         <Text className="hero__title">{user.displayName}</Text>
         <Text className="hero__meta">查看账号、数据范围与配置状态 ›</Text>
       </View>

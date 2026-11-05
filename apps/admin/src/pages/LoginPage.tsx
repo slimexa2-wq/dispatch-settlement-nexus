@@ -75,13 +75,13 @@ export function LoginPage() {
               key: "code",
               label: "验证码登录",
               children: (
-                <Form<CodeLoginValues> layout="vertical" size="large" onFinish={submitCode} initialValues={{ code: "8888" }} requiredMark={false}>
-                  <Alert type="info" showIcon title="演示验证码：8888（已默认填入，支持一键直达）" className="demo-code-alert" />
+                <Form<CodeLoginValues> layout="vertical" size="large" onFinish={submitCode} requiredMark={false}>
+                  <Alert type="info" showIcon title="演示验证码：8888" className="demo-code-alert" />
                   <Form.Item name="code" label="验证码" rules={[{ required: true, message: "请输入验证码" }]}>
                     <Input prefix={<SafetyCertificateOutlined />} inputMode="numeric" maxLength={6} placeholder="请输入 8888" />
                   </Form.Item>
                   <Button type="primary" htmlType="submit" block loading={submitting}>
-                    ⚡ 一键进入系统
+                    进入系统
                   </Button>
                 </Form>
               )

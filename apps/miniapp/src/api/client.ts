@@ -111,27 +111,3 @@ export async function uploadFile<T>(path: string, filePath: string, name: string
   }
   return body.data;
 }
-
-export async function downloadFile(path: string): Promise<string> {
-  const token = getAccessToken();
-  if (!token) throw new ApiError("登录已失效，请重新登录", "AUTH_REQUIRED", 401);
-  try {
-    const response = await Taro.downloadFile({
-      url: `${runtimeConfig.apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`,
-      header: { Authorization: `Bearer ${token}` },
-      timeout: 30000
-    });
-    if (response.statusCode === 401) clearSession();
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw new ApiError(`文件下载失败（${response.statusCode}）`, "DOWNLOAD_FAILED", response.statusCode);
-    }
-    return response.tempFilePath;
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
-    throw new ApiError(
-      error instanceof Error ? error.message : "文件下载失败，请检查网络",
-      "DOWNLOAD_FAILED",
-      0
-    );
-  }
-}

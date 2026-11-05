@@ -1,4 +1,4 @@
-import { apiRequest, downloadFile, queryString, uploadFile } from "./client";
+import { apiRequest, queryString, uploadFile } from "./client";
 import type {
   Application,
   AppealRecord,
@@ -13,14 +13,6 @@ import type {
   Project,
   Referral,
   RegistrationInput,
-  Reimbursement,
-  DepartmentReimbursementSummary,
-  ReimbursementPaymentRosterRow,
-  ReimbursementArtifact,
-  ReimbursementAttachment,
-  ReimbursementIssue,
-  ReimbursementLineInput,
-  ReimbursementStatus,
   Reward,
   SalarySlip,
   SessionUser
@@ -39,13 +31,13 @@ export const api = {
     apiRequest<LoginResult>("/auth/login", {
       method: "POST",
       authenticated: false,
-      data: { username, password, portal: "MINIAPP" }
+      data: { username, password }
     }),
   wechatLogin: (code: string) =>
     apiRequest<LoginResult>("/wechat/auth/login", {
       method: "POST",
       authenticated: false,
-      data: { code, portal: "MINIAPP" }
+      data: { code }
     }),
   bindWechat: (code: string) =>
     apiRequest<{ bound: boolean }>("/wechat/bind", {
@@ -126,72 +118,6 @@ export const api = {
     apiRequest<ElectronicContract>(`/electronic-contracts/${encodeURIComponent(id)}/sign`, { method: "POST", data: {} }),
   policies: (params: Record<string, unknown> = {}) =>
     apiRequest<Paginated<Policy>>(`/policies${queryString({ page: 1, pageSize: 100, ...params })}`),
-  reimbursements: (params: Record<string, unknown> = {}) =>
-    apiRequest<Paginated<Reimbursement>>(`/reimbursements${queryString({ page: 1, pageSize: 100, ...params })}`),
-  reimbursement: (id: string) =>
-    apiRequest<Reimbursement>(`/reimbursements/${encodeURIComponent(id)}`),
-  reimbursementDepartmentSummaries: (params: Record<string, unknown> = {}) =>
-    apiRequest<DepartmentReimbursementSummary[]>(`/reimbursements/department-summaries${queryString(params)}`),
-  reimbursementPaymentRoster: (params: Record<string, unknown> = {}) =>
-    apiRequest<ReimbursementPaymentRosterRow[]>(`/reimbursements/payment-roster${queryString(params)}`),
-  transitionReimbursementDepartmentSummary: (input: {
-    batchIds: string[];
-    targetStatus: "OWNER_REVIEWING" | "FINANCE_REVIEWING" | "APPROVED" | "PENDING_PAYMENT";
-    comment?: string;
-  }) => apiRequest<{ updatedCount: number; items: Reimbursement[] }>(
-    "/reimbursements/department-summaries/transition",
-    { method: "POST", data: input }
-  ),
-  createReimbursement: (input: {
-    title: string;
-    branchId?: string | null;
-    organizationUnitId?: string | null;
-    projectId?: string | null;
-    supplierId?: string | null;
-    lines: ReimbursementLineInput[];
-  }) => apiRequest<Reimbursement>("/reimbursements", { method: "POST", data: input }),
-  updateReimbursement: (id: string, input: {
-    expectedVersion: number;
-    title?: string;
-    lines?: ReimbursementLineInput[];
-  }) => apiRequest<Reimbursement>(`/reimbursements/${encodeURIComponent(id)}`, { method: "PATCH", data: input }),
-  transitionReimbursement: (id: string, input: {
-    expectedVersion: number;
-    targetStatus: ReimbursementStatus;
-    comment?: string;
-    approvedAmountCents?: number;
-  }) => apiRequest<Reimbursement>(`/reimbursements/${encodeURIComponent(id)}/transition`, { method: "POST", data: input }),
-  uploadReimbursementAttachment: (
-    id: string,
-    lineId: string | null,
-    type: ReimbursementAttachment["type"],
-    filePath: string,
-    originalName: string
-  ) => uploadFile<ReimbursementAttachment>(
-    `/reimbursements/${encodeURIComponent(id)}/attachments${queryString({ type, lineId })}`,
-    filePath,
-    originalName
-  ),
-  downloadReimbursementAttachment: (id: string, attachmentId: string) =>
-    downloadFile(`/reimbursements/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}`),
-  createReimbursementIssue: (id: string, input: { lineId?: string | null; type: string; description: string }) =>
-    apiRequest<ReimbursementIssue>(`/reimbursements/${encodeURIComponent(id)}/issues`, { method: "POST", data: input }),
-  resolveReimbursementIssue: (id: string, issueId: string, resolution: string) =>
-    apiRequest<ReimbursementIssue>(
-      `/reimbursements/${encodeURIComponent(id)}/issues/${encodeURIComponent(issueId)}/resolve`,
-      { method: "POST", data: { resolution } }
-    ),
-  payReimbursement: (id: string, input: {
-    expectedVersion: number;
-    amountCents: number;
-    reference: string;
-    paidAt: string;
-    proofAttachmentId: string;
-  }) => apiRequest<{ id: string; amountCents: number; reference: string; paidAt: string }>(`/reimbursements/${encodeURIComponent(id)}/payments`, { method: "POST", data: input }),
-  generateReimbursementArtifact: (id: string, type: ReimbursementArtifact["type"]) =>
-    apiRequest<ReimbursementArtifact>(`/reimbursements/${encodeURIComponent(id)}/artifacts/generate`, { method: "POST", data: { type } }),
-  downloadReimbursementArtifact: (id: string, artifactId: string) =>
-    downloadFile(`/reimbursements/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifactId)}`),
   overview: () => apiRequest<OverviewStatistics>("/statistics/overview")
 };
 

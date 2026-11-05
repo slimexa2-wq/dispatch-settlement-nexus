@@ -3,7 +3,7 @@ import { Input, View } from "@tarojs/components";
 import { useMemo, useState } from "react";
 import { allJobs, allPublicJobs } from "../../../api/services";
 import { AccessDenied, AsyncBoundary, JobCard, PageShell } from "../../../components/ui";
-import { jobPortalForUser } from "../../../domain/roles";
+import { portalForRole } from "../../../domain/roles";
 import { jobDetailPath } from "../../../domain/links";
 import { useAsyncData } from "../../../hooks/useAsyncData";
 import { useSession } from "../../../hooks/useSession";
@@ -24,7 +24,7 @@ export default function JobListPage() {
   }, [jobs.data, keyword]);
 
   if (user && !user.permissions.includes("job:read")) return <AccessDenied />;
-  const portal = user ? jobPortalForUser(user) : "job-seeker";
+  const portal = user ? portalForRole(user.role) : "job-seeker";
   const actionLabel = !user ? "查看并报名" : portal === "supplier" ? "查看并报人" : portal === "employee" ? "查看并推荐" : "查看并报名";
 
   return (

@@ -1,5 +1,4 @@
 import { DEMO_TOKEN, demoDownload, handleDemoRequest } from "./demo";
-import { demoSessionAllowed } from "./data-mode";
 
 const TOKEN_KEY = "xiangneng.admin.token";
 
@@ -39,7 +38,6 @@ export class ApiError extends Error {
 
 const configuredBase = import.meta.env.VITE_API_BASE_URL?.trim();
 const API_BASE = (configuredBase || "/api").replace(/\/$/, "");
-const DEMO_SESSION_ALLOWED = demoSessionAllowed(import.meta.env.VITE_ENABLE_DEMO_SESSION);
 
 export type PaginatedResult<T> = {
   items: T[];
@@ -59,7 +57,7 @@ export function clearToken(): void {
 }
 
 export function isDemoSession(): boolean {
-  return DEMO_SESSION_ALLOWED && getToken() === DEMO_TOKEN;
+  return getToken() === DEMO_TOKEN;
 }
 
 function parseDemoBody(body: BodyInit | null | undefined): unknown {

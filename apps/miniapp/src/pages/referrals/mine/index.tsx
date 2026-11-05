@@ -3,13 +3,12 @@ import { AccessDenied, AsyncBoundary, FieldRow, PageShell, SectionCard, StatusTa
 import { formatDate, formatMoney, projectName } from "../../../domain/format";
 import { useAsyncData } from "../../../hooks/useAsyncData";
 import { useSession } from "../../../hooks/useSession";
-import { hasRole } from "../../../domain/roles";
 
 export default function MyReferralsPage() {
   const user = useSession();
   const referrals = useAsyncData(() => api.myReferrals(), []);
   if (!user) return <PageShell title="我的推荐" />;
-  if (!hasRole(user, "EMPLOYEE")) return <AccessDenied />;
+  if (user.role !== "EMPLOYEE") return <AccessDenied />;
   const items = referrals.data ? itemsOf(referrals.data) : [];
   return (
     <PageShell title="我的推荐" subtitle="被推荐人的身份证、附件、保险和供应商政策不会在此显示">

@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "../src/generated/prisma/client.js";
 import { AppError } from "../src/errors.js";
 import {
-  bindInternalEmployeeAccount,
   deleteInternalEmployee,
   offboardInternalEmployee,
   transferInternalEmployee
@@ -22,13 +21,12 @@ describe("内部员工生命周期", () => {
     const employmentCreate = vi.fn().mockResolvedValue({ id: "employment-new" });
     const scopeUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
     const scopeCreate = vi.fn().mockResolvedValue({ id: "scope-new" });
-    const roleUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
-    const roleCreate = vi.fn().mockResolvedValue({ id: "assignment-new" });
     const userUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
     const employeeUpdate = vi.fn().mockResolvedValue({
       id: "employee-1",
       organizationUnitId: "org-b",
       positionId: "position-b",
+      branchId: "branch-b",
       version: 4
     });
     const changeCreate = vi.fn().mockResolvedValue({ id: "change-1" });
@@ -40,7 +38,7 @@ describe("内部员工生命周期", () => {
           status: "ACTIVE",
           organizationUnitId: "org-a",
           positionId: "position-a",
-          jobGradeId: "grade-a",
+          branchId: "branch-a",
           version: 3
         }),
         update: employeeUpdate
@@ -49,12 +47,6 @@ describe("内部员工生命周期", () => {
         updateMany: employmentUpdateMany,
         create: employmentCreate
       },
-      positionRoleBinding: {
-        findMany: vi.fn().mockResolvedValue([
-          { id: "binding-1", roleId: "role-1", scopeType: "ORG_UNIT" }
-        ])
-      },
-      userRoleAssignment: { updateMany: roleUpdateMany, create: roleCreate },
       dataScopeBinding: { updateMany: scopeUpdateMany, create: scopeCreate },
       user: { updateMany: userUpdateMany },
       internalEmployeeChange: { create: changeCreate }
@@ -67,7 +59,7 @@ describe("内部员工生命周期", () => {
       effectiveDate: new Date("2026-08-01T00:00:00.000Z"),
       organizationUnitId: "org-b",
       positionId: "position-b",
-      jobGradeId: "grade-b",
+      branchId: "branch-b",
       reason: "组织调动"
     });
 
@@ -78,39 +70,30 @@ describe("内部员工生命周期", () => {
     );
     expect(scopeUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          userId: "user-1",
-          roleAssignment: { source: "POSITION" }
-        })
+        where: expect.objectContaining({ user: { internalEmployee: { id: "employee-1" } } })
       })
     );
-    expect(roleCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId: "user-1",
-        source: "POSITION",
-        positionRoleBindingId: "binding-1"
-      })
-    });
     expect(scopeCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: "user-1",
-        roleAssignmentId: "assignment-new",
-        type: "ORG_UNIT",
-        organizationUnitId: "org-b",
+        type: "BRANCH",
+        branchId: "branch-b",
         createdById: "actor-1"
       })
     });
     expect(userUpdateMany).toHaveBeenCalledWith({
       where: { id: "user-1", isActive: true },
-      data: { tokenVersion: { increment: 1 } }
+      data: {
+        branchId: "branch-b",
+        tokenVersion: { increment: 1 }
+      }
     });
     expect(employmentCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           employeeId: "employee-1",
           organizationUnitId: "org-b",
-          positionId: "position-b",
-          jobGradeId: "grade-b"
+          positionId: "position-b"
         })
       })
     );
@@ -163,114 +146,6 @@ describe("内部员工生命周期", () => {
     );
   });
 
-
-  it("换绑系统账号时撤销旧账号岗位授权并按当前岗位同步新账号", async () => {
-    const roleUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
-    const scopeUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
-    const assignmentCreate = vi.fn().mockResolvedValue({ id: "assignment-new" });
-    const scopeCreate = vi.fn().mockResolvedValue({ id: "scope-new" });
-    const userUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
-    const employeeUpdate = vi.fn().mockResolvedValue({
-      id: "employee-1",
-      userId: "user-new",
-      version: 4
-    });
-    const changeCreate = vi.fn().mockResolvedValue({ id: "change-account" });
-    const db = transactionClient({
-      internalEmployee: {
-        findUnique: vi.fn()
-          .mockResolvedValueOnce({
-            id: "employee-1",
-            userId: "user-old",
-            status: "ACTIVE",
-            organizationUnitId: "org-1",
-            positionId: "position-1",
-            version: 3
-          })
-          .mockResolvedValueOnce(null),
-        update: employeeUpdate
-      },
-      positionRoleBinding: {
-        findMany: vi.fn().mockResolvedValue([
-          { id: "binding-1", roleId: "role-1", scopeType: "ORG_UNIT" }
-        ])
-      },
-      userRoleAssignment: { updateMany: roleUpdateMany, create: assignmentCreate },
-      dataScopeBinding: { updateMany: scopeUpdateMany, create: scopeCreate },
-      user: {
-        findUnique: vi.fn().mockResolvedValue({ id: "user-new", isActive: true }),
-        updateMany: userUpdateMany
-      },
-      internalEmployeeChange: { create: changeCreate }
-    });
-
-    await bindInternalEmployeeAccount(db, {
-      employeeId: "employee-1",
-      actorId: "actor-1",
-      expectedVersion: 3,
-      userId: "user-new",
-      effectiveAt: new Date("2026-08-01T00:00:00.000Z")
-    });
-
-    expect(roleUpdateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: "user-old", status: "ACTIVE", source: "POSITION" }
-      })
-    );
-    expect(assignmentCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId: "user-new",
-        source: "POSITION",
-        positionRoleBindingId: "binding-1"
-      })
-    });
-    expect(employeeUpdate).toHaveBeenCalledWith({
-      where: { id_version: { id: "employee-1", version: 3 } },
-      data: { userId: "user-new", version: { increment: 1 } }
-    });
-    expect(changeCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        employeeId: "employee-1",
-        actorId: "actor-1",
-        type: "ACCOUNT_BIND",
-        before: { userId: "user-old", version: 3 },
-        after: { userId: "user-new", version: 4 }
-      })
-    });
-  });
-
-  it("不能把已绑定其他内部员工的账号重复绑定", async () => {
-    const db = transactionClient({
-      internalEmployee: {
-        findUnique: vi.fn()
-          .mockResolvedValueOnce({
-            id: "employee-1",
-            userId: null,
-            status: "ACTIVE",
-            organizationUnitId: "org-1",
-            positionId: "position-1",
-            version: 1
-          })
-          .mockResolvedValueOnce({ id: "employee-2", userId: "user-2" })
-      },
-      user: {
-        findUnique: vi.fn().mockResolvedValue({ id: "user-2", isActive: true }),
-        updateMany: vi.fn()
-      }
-    });
-
-    await expect(bindInternalEmployeeAccount(db, {
-      employeeId: "employee-1",
-      actorId: "actor-1",
-      expectedVersion: 1,
-      userId: "user-2",
-      effectiveAt: new Date("2026-08-01T00:00:00.000Z")
-    })).rejects.toMatchObject<AppError>({
-      statusCode: 409,
-      code: "USER_ALREADY_BOUND_TO_INTERNAL_EMPLOYEE"
-    });
-  });
-
   it("存在任职、变更或账号关联时禁止物理删除", async () => {
     const deleteCall = vi.fn();
     const db = transactionClient({
@@ -312,6 +187,7 @@ describe("内部员工生命周期", () => {
         effectiveDate: new Date("2026-08-01T00:00:00.000Z"),
         organizationUnitId: "org-b",
         positionId: "position-b",
+        branchId: "branch-b",
         reason: "组织调动"
       })
     ).rejects.toMatchObject<AppError>({

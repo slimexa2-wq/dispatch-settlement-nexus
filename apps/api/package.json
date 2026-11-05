@@ -16,10 +16,7 @@
     "db:validate": "prisma validate --schema ../../prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema ../../prisma/schema.prisma",
     "db:seed": "tsx ../../prisma/seed.ts",
-    "db:import-demo": "tsx ../../scripts/import-demo-data.mts",
-    "db:import-real": "tsx ../../scripts/import-real-business-data.mts",
-    "db:bootstrap-internal": "tsx ../../scripts/seed-internal-system.mts",
-    "db:bootstrap-employee-accounts": "tsx ../../scripts/bootstrap-real-employee-accounts.mts"
+    "db:import-demo": "tsx ../../scripts/import-demo-data.mts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",

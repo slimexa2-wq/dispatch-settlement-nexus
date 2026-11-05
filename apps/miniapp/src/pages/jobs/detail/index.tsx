@@ -8,7 +8,7 @@ import { AccessDenied, AsyncBoundary, FieldRow, PageShell, ProjectGallery, Secti
 import { runtimeConfig } from "../../../config/runtime";
 import { formatDate, projectName } from "../../../domain/format";
 import { jobDetailPath } from "../../../domain/links";
-import { jobPortalForUser } from "../../../domain/roles";
+import { portalForRole } from "../../../domain/roles";
 import { useAsyncData } from "../../../hooks/useAsyncData";
 import { useSession } from "../../../hooks/useSession";
 
@@ -33,7 +33,7 @@ export default function JobDetailPage() {
   }));
 
   useEffect(() => {
-    if (!user || !user.roles.includes("EMPLOYEE") || !id || !user.permissions.includes("referral:create")) return;
+    if (!user || user.role !== "EMPLOYEE" || !id || !user.permissions.includes("referral:create")) return;
     let cancelled = false;
     void api.createReferralShare(id).then((share) => {
       if (!cancelled) setSharePath(share.path);
@@ -46,7 +46,7 @@ export default function JobDetailPage() {
   if (user && !user.permissions.includes("job:read")) return <AccessDenied />;
   const data = job.data;
   const phone = data?.project?.managerPhone ?? null;
-  const portal = user ? jobPortalForUser(user) : "job-seeker";
+  const portal = user ? portalForRole(user.role) : "job-seeker";
   const applyLabel = portal === "supplier" ? "立即报人" : portal === "employee" ? "推荐报名" : portal === "operator" ? "代为报名" : "在线报名";
   const canApply = !user || user.permissions.includes("application:create") || user.permissions.includes("referral:create");
 
@@ -206,7 +206,7 @@ export default function JobDetailPage() {
             >
               {data.status !== "RECRUITING" ? "当前岗位不可报名" : canApply ? applyLabel : "当前账号仅可查看"}
             </Button>
-            {user?.roles.includes("EMPLOYEE") && user.permissions.includes("referral:create") ? (
+            {user?.role === "EMPLOYEE" && user.permissions.includes("referral:create") ? (
               <View className="action-row">
                 <Button className="button button--secondary" disabled={!sharePath} onClick={() => void copyReferralLink()}>复制推荐链接</Button>
                 <Button className="button button--secondary" openType="share" disabled={!sharePath}>微信转发</Button>
