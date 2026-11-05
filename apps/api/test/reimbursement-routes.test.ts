@@ -110,7 +110,7 @@ describe("报销接口", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({
-      error: { code: "INVOICE_MUST_EXCEED_PAYMENT" }
+      error: { code: "INVOICE_BELOW_PAYMENT" }
     });
     expect(createCalled).toBe(false);
   });

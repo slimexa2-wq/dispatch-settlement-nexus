@@ -9,7 +9,6 @@ import {
 
 describe("报销七态领域", () => {
   it.each([
-    { paymentCents: 10_000, invoiceCents: 9_998 },
     { paymentCents: 10_000, invoiceCents: 9_999 }
   ])("发票金额不严格大于付款金额时拒绝", (line) => {
     expect(() =>

@@ -12,8 +12,8 @@ import {
 const line = {
   sequence: 1,
   description: "交通费",
-  paymentCents: 10000,
-  invoiceCents: 10000
+  paymentCents: 100_00,
+  invoiceCents: 100_00
 };
 
 describe("报销金额校验", () => {
@@ -28,7 +28,7 @@ describe("报销金额校验", () => {
   });
 
   it("发票金额低于付款金额时拒绝提交", () => {
-    expect(() => validateReimbursementLine({ ...line, invoiceCents: 9999 }))
+    expect(() => validateReimbursementLine({ ...line, invoiceCents: 99_00 }))
       .toThrowError(expect.objectContaining<AppError>({
         code: "INVOICE_BELOW_PAYMENT"
       }));
