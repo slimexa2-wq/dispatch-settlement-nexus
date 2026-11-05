@@ -20,9 +20,6 @@ class TestUtilityFeeRoomSplitterCoreEngine(unittest.TestCase):
             {'name': 'Dave', 'days': None},
             {'name': 'Eve', 'days': -5}
         ]
-        # total_fee is string "300", residents have bad days
-        # "invalid" -> 1, None -> 1, -5 -> 1
-        # Total days = 3
         result = split_utility_fee("300", residents)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0]['days'], 1)
@@ -34,7 +31,6 @@ class TestUtilityFeeRoomSplitterCoreEngine(unittest.TestCase):
 
     def test_missing_parameters_fallback(self):
         """3. Missing parameters fallback (empty lists, missing fields)."""
-        # Missing total_fee, empty residents, missing name, missing days
         result_empty_total = split_utility_fee("abc", [{'name': 'A', 'days': 1}])
         self.assertEqual(result_empty_total[0]['fee'], 0.0)
 
@@ -48,8 +44,8 @@ class TestUtilityFeeRoomSplitterCoreEngine(unittest.TestCase):
         self.assertEqual(result_empty, [])
 
         residents = [
-            {'days': 5},  # missing name
-            {'name': 'Frank'}  # missing days
+            {'days': 5},
+            {'name': 'Frank'}
         ]
         result = split_utility_fee(100.0, residents)
         self.assertEqual(len(result), 2)
@@ -58,52 +54,42 @@ class TestUtilityFeeRoomSplitterCoreEngine(unittest.TestCase):
         self.assertEqual(result[1]['name'], 'Frank')
         self.assertEqual(result[1]['days'], 1)
 
-        # Total days = 6.
-        # Frank fee = 1/6 * 100 = 16.67
-        # Unknown fee = 5/6 * 100 = 83.33
         self.assertEqual(result[0]['fee'], 83.33)
         self.assertEqual(result[1]['fee'], 16.67)
 
     def test_extreme_boundaries(self):
         """4. Extreme boundaries (zero total fee, zero days, handling of rounding remainders)."""
-        # Zero fee
         residents = [{'name': 'G', 'days': 10}, {'name': 'H', 'days': 10}]
         result_zero_fee = split_utility_fee(0, residents)
         self.assertEqual(result_zero_fee[0]['fee'], 0.0)
         self.assertEqual(result_zero_fee[1]['fee'], 0.0)
 
-        # Zero total days
         residents_zero_days = [{'name': 'I', 'days': 0}, {'name': 'J', 'days': 0}, {'name': 'K', 'days': 0}]
         result_zero_days = split_utility_fee(100.0, residents_zero_days)
-        # Should split equally. 100 / 3 = 33.33, remainder 0.01 added to first person.
         self.assertEqual(result_zero_days[0]['fee'], 33.34)
         self.assertEqual(result_zero_days[1]['fee'], 33.33)
         self.assertEqual(result_zero_days[2]['fee'], 33.33)
         self.assertAlmostEqual(sum(r['fee'] for r in result_zero_days), 100.0)
 
-        # Rounding remainders test
         residents_remainders = [
             {'name': 'L', 'days': 1},
             {'name': 'M', 'days': 1},
             {'name': 'N', 'days': 1}
         ]
         result_remainders = split_utility_fee(100.0, residents_remainders)
-        self.assertEqual(result_remainders[0]['fee'], 33.34)  # First gets remainder since days are equal and max gets it
+        self.assertEqual(result_remainders[0]['fee'], 33.34)
         self.assertEqual(result_remainders[1]['fee'], 33.33)
         self.assertEqual(result_remainders[2]['fee'], 33.33)
         self.assertAlmostEqual(sum(r['fee'] for r in result_remainders), 100.0)
 
     def test_complete_self_healing(self):
         """5. Complete self-healing with totally unexpected structures (e.g. None for lists)."""
-        # None for residents
         result_none_residents = split_utility_fee(100.0, None)
         self.assertEqual(result_none_residents, [])
 
-        # Non-list for residents
         result_dict_residents = split_utility_fee(100.0, {"name": "O", "days": 5})
         self.assertEqual(result_dict_residents, [])
 
-        # Invalid objects in list
         residents = [
             "Just a string",
             123,
@@ -111,7 +97,6 @@ class TestUtilityFeeRoomSplitterCoreEngine(unittest.TestCase):
             None
         ]
         result = split_utility_fee(100.0, residents)
-        # Should only parse the dict
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['name'], 'P')
         self.assertEqual(result[0]['days'], 10)
