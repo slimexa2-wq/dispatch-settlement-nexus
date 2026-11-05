@@ -30,5 +30,7 @@ docs/source/*.xlsx
 output/
 # tailwind / 临时测试产物
 .tailtest/
+
+__pycache__/
 __pycache__/
 *.pyc
