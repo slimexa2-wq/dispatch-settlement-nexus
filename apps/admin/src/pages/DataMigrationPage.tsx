@@ -195,7 +195,7 @@ export function DataMigrationPage() {
       </Card> : null}
     </ContentCard>
 
-    <ContentCard style={{ marginTop: 16 }}>
+    <ContentCard className="margin-top-16">
       <Space style={{ width: "100%", justifyContent: "space-between" }}><Typography.Title level={4}>迁移批次记录</Typography.Title><Button icon={<ReloadOutlined />} onClick={() => void reload()}>刷新</Button></Space>
       <Table<MigrationBatch> rowKey="id" columns={batchColumns} dataSource={batches} scroll={{ x: 1200 }} pagination={{ pageSize: 10 }} />
     </ContentCard>

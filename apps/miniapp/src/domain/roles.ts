@@ -13,6 +13,7 @@ const operatorRoles: readonly UserRole[] = [
   "BRANCH_MANAGER",
   "PROJECT_OPERATOR",
   "RESOURCE_SPECIALIST",
+  "FINANCE_REVIEWER",
   "SYSTEM_ADMIN"
 ];
 
@@ -44,7 +45,8 @@ const menus: Record<Portal, MenuItem[]> = {
     { title: "面试名单", description: "到场与面试结果快速更新", path: "/pages/operator/interviews/index", permission: "people:write" },
     { title: "入职登记", description: "补充日期、工号与保险", path: "/pages/operator/onboarding/index", permission: "people:write" },
     { title: "离职登记", description: "记录日期、原因与保险", path: "/pages/operator/offboarding/index", permission: "people:write" },
-    { title: "人员查询", description: "按姓名、手机、项目和状态查询", path: "/pages/operator/people/index", permission: "people:read" }
+    { title: "人员查询", description: "按姓名、手机、项目和状态查询", path: "/pages/operator/people/index", permission: "people:read" },
+    { title: "报销待办", description: "财务报销审核", path: "/pages/operator/reimbursements/index", permission: "reimbursement:finance-review" }
   ],
   supplier: [
     { title: "招聘需求", description: "查看开放岗位并立即报人", path: "/pages/jobs/index/index", permission: "job:read" },
@@ -63,16 +65,33 @@ const menus: Record<Portal, MenuItem[]> = {
     { title: "我的推荐", description: "查看被推荐人完整进度", path: "/pages/referrals/mine/index", permission: "referral:create" },
     { title: "推荐奖励", description: "查看待达成、已达成与已发放", path: "/pages/referrals/rewards/index", permission: "referral:create" },
     { title: "我的工资条", description: "仅查看本人已发布工资条", path: "/pages/salary/index/index", permission: "salary:self-read" },
+    { title: "我的报销", description: "报销申请", path: "/pages/reimbursement/index/index", permission: "reimbursement:self" },
     { title: "我的信息", description: "本人信息与账号状态", path: "/pages/profile/index/index" }
   ]
 };
 
 export function menuForUser(user: SessionUser): MenuItem[] {
-  return menus[portalForRole(user.role)].filter(
+  return menus[portalForUser(user)].filter(
     (item) => !item.permission || user.permissions.includes(item.permission)
   );
 }
 
 export function canAccess(user: SessionUser | null, permission: string): boolean {
   return Boolean(user?.permissions.includes(permission));
+}
+
+export function hasRole(user: SessionUser, role: UserRole): boolean {
+  return user.roles.includes(role);
+}
+
+export function portalForUser(user: SessionUser): Portal {
+  if (user.roles.length > 1) {
+    const mainRole = user.roles.find(r => isOperatorRole(r)) || user.roles[0];
+    return portalForRole(mainRole);
+  }
+  return portalForRole(user.role);
+}
+
+export function jobPortalForUser(user: SessionUser): Portal {
+  return portalForUser(user);
 }

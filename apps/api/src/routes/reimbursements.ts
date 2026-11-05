@@ -71,6 +71,16 @@ const createSchema = z.object({
   projectId: idSchema.optional().nullable(),
   supplierId: idSchema.optional().nullable(),
   lines: z.array(lineSchema).min(1).max(200)
+}).superRefine((data, ctx) => {
+  for (const line of data.lines) {
+    if (line.invoiceCents <= line.paymentCents) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "INVOICE_MUST_EXCEED_PAYMENT"
+      });
+      break;
+    }
+  }
 });
 const patchSchema = z.object({
   expectedVersion: z.number().int().positive(),

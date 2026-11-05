@@ -73,6 +73,12 @@ export function listResult<T>(
 
 export function toDateValue(value: unknown): string | undefined {
   if (!value) return undefined;
+  if (typeof value === "string") {
+    // If it is an ISO string, extract just the YYYY-MM-DD part directly to avoid timezone shift
+    if (value.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.substring(0, 10);
+    }
+  }
   const date = dayjs(value as string | Date);
   return date.isValid() ? date.format("YYYY-MM-DD") : undefined;
 }

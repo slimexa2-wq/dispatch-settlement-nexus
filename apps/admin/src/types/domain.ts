@@ -613,6 +613,36 @@ export type SupplierSettlementSummary = {
   items: SupplierSettlementItem[];
 };
 
+export type DepartmentReimbursementSummary = {
+  period: string;
+  organizationUnitName: string;
+  applicantCount: number;
+  batchCount: number;
+  totalPaymentCents: number;
+  totalApprovedAmountCents: number;
+  totalInvoiceCents: number;
+  openIssueCount: number;
+  statusCounts: Record<string, number>;
+  categorySummaries: Array<{ category: string; lineCount: number; totalPaymentCents: number; totalInvoiceCents: number }>;
+  applicantSummaries: Array<{ applicantUserId: string; applicantName: string; batchCount: number; totalPaymentCents: number; totalApprovedAmountCents: number; totalInvoiceCents: number }>;
+  detailRows: Array<{ lineId: string; code: string; applicantName: string; expenseDate: string | null; category: string; description: string; paymentCents: number; invoiceCents: number }>;
+};
+
+export type ReimbursementPaymentRosterRow = {
+  code: string;
+  applicantName: string;
+  organizationUnitName: string;
+  payeeName: string;
+  payeeAccount: string;
+  payeeBank: string;
+  paymentCents: number;
+  approvedAmountCents: number;
+  paymentStatus: string;
+  paidAmountCents: number | null;
+  paidAt: string | null;
+  paymentReference: string | null;
+};
+
 export type ReimbursementStatus =
   | "PENDING_SUBMISSION"
   | "DEPARTMENT_PREPARING"
