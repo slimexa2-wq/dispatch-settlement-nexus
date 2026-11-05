@@ -1634,4 +1634,3 @@ model AccountLifecycleLog {
   @@map("account_lifecycle_logs")
 }
 
-// Add the relation back to UserRoleAssignment and DataScopeBinding
