@@ -6,8 +6,8 @@
 
 - ID：`reimbursement`
 - 职责：员工报销申请、部门制单、审批、财务审核、付款和打印材料。
-- 文件数：20
-- 源码行数：5941
+- 文件数：24
+- 源码行数：6688
 
 ## 直接依赖
 
@@ -43,10 +43,14 @@
 - 14. `apps/admin/src/lib/demo-reimbursement.test.ts`
 - 15. `apps/admin/src/pages/ReimbursementsPage.test.tsx`
 - 16. `apps/api/test/reimbursement-artifacts.test.ts`
-- 17. `apps/api/test/reimbursement-domain.test.ts`
-- 18. `apps/api/test/reimbursement-routes.test.ts`
-- 19. `apps/api/test/reimbursements.test.ts`
-- 20. `apps/miniapp/src/domain/reimbursements.test.ts`
+- 17. `apps/api/test/reimbursement-assistant-routes.test.ts`
+- 18. `apps/api/test/reimbursement-assistant.test.ts`
+- 19. `apps/api/test/reimbursement-automation.node.test.ts`
+- 20. `apps/api/test/reimbursement-domain.test.ts`
+- 21. `apps/api/test/reimbursement-routes.test.ts`
+- 22. `apps/api/test/reimbursement-state-contracts.test.ts`
+- 23. `apps/api/test/reimbursements.test.ts`
+- 24. `apps/miniapp/src/domain/reimbursements.test.ts`
 
 ## 模块验证命令
 
@@ -54,8 +58,9 @@
 
 ## 超大文件提醒
 
-- `apps/api/src/routes/reimbursements.ts`：1025 行，建议阈值 500 行
-- `apps/admin/src/pages/ReimbursementsPage.tsx`：914 行，建议阈值 500 行
+- `prisma/schema.prisma`：1632 行，建议阈值 1400 行
+- `apps/api/src/routes/reimbursements.ts`：1029 行，建议阈值 500 行
+- `apps/admin/src/pages/ReimbursementsPage.tsx`：871 行，建议阈值 500 行
 
 ## 未纳入文本上下文的二进制文件
 
@@ -235,6 +240,12 @@ pnpm project:verify
 ## 关键 Prisma 模型
 
 `ReimbursementBatch`、`ReimbursementLine`、`ReimbursementAttachment`、`ReimbursementIssue`、`ReimbursementApproval`、`ReimbursementPayment`、`ReimbursementArtifact`
+
+## 状态入口约束
+
+- 通用 `/reimbursements/:id/transition` 不能直接进入 `PAID`；必须通过付款登记入口将付款记录、状态和审计一并提交。通用入口返回 `PAYMENT_REGISTRATION_REQUIRED`，调用方应转到登记打款。
+- 附件入口复用 `reimbursementAttachmentUploadAuthorization` 的三种模式：草稿/制单材料、审核有开放问题时申请人的整单补充说明、待付款时出纳的整单最终付款凭证。原始付款凭证和发票仍须关联明细；已付款单不可继续上传。
+- 精准回归：`pnpm --filter @xiangneng/api exec vitest run test/reimbursements.test.ts test/reimbursement-domain.test.ts test/reimbursement-state-contracts.test.ts`。路由回归使用认证与数据库边界替身，不替代真实数据库、授权范围隔离和并发验证。
 
 ## 业务规则文档
 

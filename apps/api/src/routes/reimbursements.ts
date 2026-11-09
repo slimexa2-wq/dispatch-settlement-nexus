@@ -22,6 +22,7 @@ import { getSession } from "../plugins/auth.js";
 import {
   ReimbursementStatus,
   buildReimbursementArtifactPlan,
+  reimbursementAttachmentUploadAuthorization,
   summarizeReimbursement,
   transitionReimbursement,
   validateReimbursementLine,
@@ -536,6 +537,13 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
   }, async (request) => {
     const { id } = z.object({ id: idSchema }).parse(request.params);
     const input = transitionSchema.parse(request.body);
+    if (input.targetStatus === ReimbursementStatus.PAID) {
+      throw new AppError(
+        409,
+        "PAYMENT_REGISTRATION_REQUIRED",
+        "请通过登记打款完成报销，确保付款记录与状态一起保存"
+      );
+    }
     const user = getSession(request);
     const before = await scopedBatch(app, user, id);
     const permission = transitionPermission(input.targetStatus, user, before.applicantUserId);
@@ -572,7 +580,8 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
       app.authenticate,
       requireAnyPermission([
         Permission.REIMBURSEMENT_SELF,
-        Permission.REIMBURSEMENT_MANAGE
+        Permission.REIMBURSEMENT_MANAGE,
+        Permission.REIMBURSEMENT_PAY
       ])
     ]
   }, async (request, reply) => {
@@ -580,24 +589,25 @@ export async function reimbursementRoutes(app: FastifyInstance): Promise<void> {
     const query = attachmentQuerySchema.parse(request.query);
     const user = getSession(request);
     const batch = await scopedBatch(app, user, id);
-    if (
-      batch.status !== ReimbursementStatus.PENDING_SUBMISSION &&
-      batch.status !== ReimbursementStatus.DEPARTMENT_PREPARING
-    ) {
-      throw new AppError(409, "REIMBURSEMENT_ATTACHMENTS_LOCKED", "报销单已进入审核，不能再修改附件");
-    }
-    if (
-      batch.applicantUserId !== user.id &&
-      !user.permissions.includes(Permission.REIMBURSEMENT_MANAGE)
-    ) {
-      throw new AppError(403, "FORBIDDEN", "只能维护自己的报销附件");
+    const authorization = reimbursementAttachmentUploadAuthorization({
+      status: batch.status,
+      applicantUserId: batch.applicantUserId,
+      userId: user.id,
+      permissions: user.permissions,
+      type: query.type,
+      lineId: query.lineId,
+      openIssueCount: batch.issues.filter(issue => issue.status === "OPEN").length
+    });
+    if (!authorization) {
+      throw new AppError(409, "REIMBURSEMENT_ATTACHMENTS_LOCKED", "当前状态或权限不允许上传此类报销材料");
     }
     if (query.lineId && !batch.lines.some((line) => line.id === query.lineId)) {
       notFound("报销明细");
     }
     if (
       query.type !== "SUPPORTING" &&
-      !query.lineId
+      !query.lineId &&
+      authorization.mode !== "FINAL_PAYMENT_PROOF"
     ) {
       throw new AppError(
         400,

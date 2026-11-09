@@ -1,8 +1,8 @@
 # Prisma 模型索引
 
-> 自动生成，请勿手工编辑。源指纹：`fcc8dddb324cc313`。
+> 自动生成，请勿手工编辑。源指纹：`7eaaa95568ff032b`。
 
-## 枚举（35）
+## 枚举（33）
 
 - `AccessRequestStatus`
 - `AccessRiskLevel`
@@ -17,7 +17,6 @@
 - `InterviewStatus`
 - `JobStatus`
 - `MigrationBatchStatus`
-- `MigrationRowStatus`
 - `NotificationStatus`
 - `OrganizationUnitType`
 - `PermissionProvisionTaskStatus`
@@ -32,7 +31,6 @@
 - `ReimbursementStatus`
 - `ResponsibilityType`
 - `RewardStatus`
-- `RoleAssignmentSource`
 - `RoleAssignmentStatus`
 - `SalarySlipStatus`
 - `UserRole`
@@ -40,7 +38,7 @@
 - `WorkflowTaskStatus`
 - `WorkflowTemplateStatus`
 
-## 模型（64）
+## 模型（61）
 
 - `AccessRequest`
 - `AccountLifecycleLog`
@@ -57,7 +55,6 @@
 - `InternalEmployment`
 - `JobDemand`
 - `JobGrade`
-- `JobGradeApprovalPolicy`
 - `LegalEntity`
 - `MigrationBatch`
 - `MigrationRowResult`
@@ -78,10 +75,8 @@
 - `PortalSettlement`
 - `PortalSettlementItem`
 - `Position`
-- `PositionRoleBinding`
 - `Project`
 - `ProjectImage`
-- `ProjectWeeklySnapshot`
 - `ReferralRecord`
 - `ReferralReward`
 - `ReferralShare`

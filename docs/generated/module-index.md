@@ -1,28 +1,28 @@
 # 业务模块索引
 
-> 自动生成，请勿手工编辑。源指纹：`fcc8dddb324cc313`。
+> 自动生成，请勿手工编辑。源指纹：`7eaaa95568ff032b`。
 
 | ID | 模块 | 文件 | 源码行 | 依赖 | 职责 |
 | --- | --- | --- | --- | --- | --- |
-| `platform` | 平台与工程基础 | 57 | 4964 | 无 | 工作区配置、部署、构建、演示环境和跨应用公共工程能力。 |
-| `auth` | 账号、会话与权限 | 17 | 3907 | `organization` | 登录会话、多角色授权、权限定义、数据范围和账号管理。 |
-| `organization` | 组织与内部员工 | 24 | 4910 | 无 | 集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。 |
-| `workforce` | 求职者与派遣外包人员 | 15 | 4088 | `project`、`supplier` | 求职者、派遣外包员工、人员档案、生命周期状态和附件。 |
-| `recruitment` | 招聘需求与进度 | 17 | 3533 | `project`、`supplier`、`workforce`、`auth` | 岗位需求、报名、面试、入职进度、员工推荐和奖励。 |
-| `project` | 项目与经营区域 | 9 | 2335 | `auth` | 项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。 |
-| `supplier` | 供应商与政策 | 9 | 2630 | `project`、`auth` | 供应商、项目合作关系、供应商政策和员工推荐政策。 |
-| `reimbursement` | 员工报销 | 21 | 7486 | `auth`、`organization`、`notification` | 员工报销申请、部门制单、审批、财务审核、付款和打印材料。 |
-| `payroll` | 工资与工资条 | 5 | 2508 | `workforce`、`project`、`auth`、`import-export` | 工资批次、工资条、导入核验和员工工资查询。 |
+| `platform` | 平台与工程基础 | 59 | 4974 | 无 | 工作区配置、部署、构建、演示环境和跨应用公共工程能力。 |
+| `auth` | 账号、会话与权限 | 17 | 3726 | `organization` | 登录会话、多角色授权、权限定义、数据范围和账号管理。 |
+| `organization` | 组织与内部员工 | 24 | 3883 | 无 | 集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。 |
+| `workforce` | 求职者与派遣外包人员 | 15 | 3995 | `project`、`supplier` | 求职者、派遣外包员工、人员档案、生命周期状态和附件。 |
+| `recruitment` | 招聘需求与进度 | 17 | 3434 | `project`、`supplier`、`workforce`、`auth` | 岗位需求、报名、面试、入职进度、员工推荐和奖励。 |
+| `project` | 项目与经营区域 | 9 | 2239 | `auth` | 项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。 |
+| `supplier` | 供应商与政策 | 9 | 2534 | `project`、`auth` | 供应商、项目合作关系、供应商政策和员工推荐政策。 |
+| `reimbursement` | 员工报销 | 24 | 6688 | `auth`、`organization`、`notification` | 员工报销申请、部门制单、审批、财务审核、付款和打印材料。 |
+| `payroll` | 工资与工资条 | 5 | 2417 | `workforce`、`project`、`auth`、`import-export` | 工资批次、工资条、导入核验和员工工资查询。 |
 | `reporting` | 统计与经营看板 | 7 | 1289 | `workforce`、`recruitment`、`project`、`supplier`、`payroll`、`reimbursement` | 管理看板、招聘统计、领导驾驶舱和跨模块只读汇总。 |
-| `notification` | 通知与待办 | 2 | 1917 | `auth` | 站内通知、读取状态和业务待办提醒。 |
-| `import-export` | 导入导出与数据安全 | 15 | 4448 | `auth` | Excel 导入、导出、模板解析、数据预览和表格安全校验。 |
-| `ai` | AI 业务助手 | 23 | 5541 | `auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting` | 意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。 |
-| `portal` | 员工、供应商与公开端体验 | 61 | 5091 | `auth`、`workforce`、`recruitment`、`supplier`、`payroll`、`reimbursement`、`notification` | Portal 手机网页演示、个人服务、供应商服务和公开产品展示。 |
+| `notification` | 通知与待办 | 2 | 1817 | `auth` | 站内通知、读取状态和业务待办提醒。 |
+| `import-export` | 导入导出与数据安全 | 17 | 4415 | `auth` | Excel 导入、导出、模板解析、数据预览和表格安全校验。 |
+| `ai` | AI 业务助手 | 23 | 5445 | `auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting` | 意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。 |
+| `portal` | 员工、供应商与公开端体验 | 62 | 5120 | `auth`、`workforce`、`recruitment`、`supplier`、`payroll`、`reimbursement`、`notification` | Portal 手机网页演示、个人服务、供应商服务和公开产品展示。 |
 
 ## 平台与工程基础（`platform`）
 
-- 文件数：57
-- 源码行数：4964
+- 文件数：59
+- 源码行数：4974
 - 依赖：无
 - 数据模型：无专属模型
 - 测试命令：`pnpm typecheck`；`pnpm lint`；`pnpm test`；`pnpm build`
@@ -40,6 +40,7 @@
 - `package.json`
 - `packages/data-import/package.json`
 - `packages/shared/package.json`
+- `packages/supplier-commission-audit/package.json`
 - `pnpm-workspace.yaml`
 - `render.yaml`
 - `scripts/bootstrap-real-employee-accounts.mts`
@@ -79,6 +80,7 @@
 - `scripts/stop-internal-system.ps1`
 - `scripts/stop-local-demo.ps1`
 - `scripts/verify-ai-integration.mts`
+- `scripts/verify-domain-rules.mjs`
 - `scripts/verify-internal-org-model.mjs`
 - `scripts/verify-ollama.mts`
 - `scripts/verify-package-manifest.mjs`
@@ -92,7 +94,7 @@
 ## 账号、会话与权限（`auth`）
 
 - 文件数：17
-- 源码行数：3907
+- 源码行数：3726
 - 依赖：`organization`
 - 数据模型：`Role`、`PermissionDefinition`、`RolePermission`、`UserRoleAssignment`、`DataScopeBinding`、`User`、`UserProject`
 - 测试命令：`pnpm test:module:authorization`
@@ -122,7 +124,7 @@
 ## 组织与内部员工（`organization`）
 
 - 文件数：24
-- 源码行数：4910
+- 源码行数：3883
 - 依赖：无
 - 数据模型：`LegalEntity`、`OrganizationUnit`、`Position`、`JobGrade`、`JobGradeApprovalPolicy`、`InternalEmployee`、`InternalEmployment`、`InternalEmployeeChange`
 - 测试命令：`pnpm test:module:organization`
@@ -159,7 +161,7 @@
 ## 求职者与派遣外包人员（`workforce`）
 
 - 文件数：15
-- 源码行数：4088
+- 源码行数：3995
 - 依赖：`project`、`supplier`
 - 数据模型：`Person`、`PersonFile`、`PersonStatusLog`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/portal-mappers.test.ts`
@@ -187,7 +189,7 @@
 ## 招聘需求与进度（`recruitment`）
 
 - 文件数：17
-- 源码行数：3533
+- 源码行数：3434
 - 依赖：`project`、`supplier`、`workforce`、`auth`
 - 数据模型：`JobDemand`、`Application`、`ReferralRecord`、`ReferralReward`、`ReferralShare`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/job-notification.test.ts`
@@ -217,7 +219,7 @@
 ## 项目与经营区域（`project`）
 
 - 文件数：9
-- 源码行数：2335
+- 源码行数：2239
 - 依赖：`auth`
 - 数据模型：`Branch`、`Project`、`ProjectImage`、`UserProject`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/auth-and-scope.test.ts test/public-resources.test.ts`
@@ -239,7 +241,7 @@
 ## 供应商与政策（`supplier`）
 
 - 文件数：9
-- 源码行数：2630
+- 源码行数：2534
 - 依赖：`project`、`auth`
 - 数据模型：`Supplier`、`SupplierProject`、`Policy`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts`
@@ -260,8 +262,8 @@
 
 ## 员工报销（`reimbursement`）
 
-- 文件数：21
-- 源码行数：7486
+- 文件数：24
+- 源码行数：6688
 - 依赖：`auth`、`organization`、`notification`
 - 数据模型：`ReimbursementBatch`、`ReimbursementLine`、`ReimbursementAttachment`、`ReimbursementIssue`、`ReimbursementApproval`、`ReimbursementPayment`、`ReimbursementArtifact`
 - 测试命令：`pnpm test:module:reimbursement`
@@ -275,9 +277,12 @@
 - `apps/api/src/services/reimbursement-artifacts.ts`
 - `apps/api/src/services/reimbursements.ts`
 - `apps/api/test/reimbursement-artifacts.test.ts`
+- `apps/api/test/reimbursement-assistant-routes.test.ts`
+- `apps/api/test/reimbursement-assistant.test.ts`
 - `apps/api/test/reimbursement-automation.node.test.ts`
 - `apps/api/test/reimbursement-domain.test.ts`
 - `apps/api/test/reimbursement-routes.test.ts`
+- `apps/api/test/reimbursement-state-contracts.test.ts`
 - `apps/api/test/reimbursements.test.ts`
 - `apps/miniapp/src/api/services.ts`
 - `apps/miniapp/src/domain/reimbursements.test.ts`
@@ -295,7 +300,7 @@
 ## 工资与工资条（`payroll`）
 
 - 文件数：5
-- 源码行数：2508
+- 源码行数：2417
 - 依赖：`workforce`、`project`、`auth`、`import-export`
 - 数据模型：`SalaryImportBatch`、`SalarySlip`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/workflow-and-salary.test.ts`
@@ -333,7 +338,7 @@
 ## 通知与待办（`notification`）
 
 - 文件数：2
-- 源码行数：1917
+- 源码行数：1817
 - 依赖：`auth`
 - 数据模型：`Notification`、`PortalNotificationRead`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/job-notification.test.ts`
@@ -347,8 +352,8 @@
 
 ## 导入导出与数据安全（`import-export`）
 
-- 文件数：15
-- 源码行数：4448
+- 文件数：17
+- 源码行数：4415
 - 依赖：`auth`
 - 数据模型：`ImportJob`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/spreadsheet-safety.test.ts test/workbook-row-numbers.test.ts`；`pnpm --filter @xiangneng/data-import test`
@@ -365,6 +370,8 @@
 - `packages/data-import/src/index.ts`
 - `packages/data-import/src/project-master.test.ts`
 - `packages/data-import/src/project-master.ts`
+- `packages/data-import/src/smart-importer.test.ts`
+- `packages/data-import/src/smart-importer.ts`
 - `packages/data-import/src/synthetic-demo.test.ts`
 - `packages/data-import/src/synthetic-demo.ts`
 - `packages/data-import/tsconfig.json`
@@ -376,7 +383,7 @@
 ## AI 业务助手（`ai`）
 
 - 文件数：23
-- 源码行数：5541
+- 源码行数：5445
 - 依赖：`auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting`
 - 数据模型：`AiAction`、`AiAuditLog`、`AiDemoSnapshot`
 - 测试命令：`pnpm verify:ai`；`pnpm verify:ollama`
@@ -411,8 +418,8 @@
 
 ## 员工、供应商与公开端体验（`portal`）
 
-- 文件数：61
-- 源码行数：5091
+- 文件数：62
+- 源码行数：5120
 - 依赖：`auth`、`workforce`、`recruitment`、`supplier`、`payroll`、`reimbursement`、`notification`
 - 数据模型：`PortalFavorite`、`PortalAdvance`、`PortalAppeal`、`PortalSettlement`、`PortalSettlementItem`、`PortalQrCode`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts test/public-resources.test.ts`；`pnpm --filter @xiangneng/portal test`
@@ -480,5 +487,6 @@
 - `apps/website/src/styles.css`
 - `apps/website/tsconfig.json`
 - `apps/website/vite.config.ts`
+- `apps/website/交付质检报告.md`
 
 </details>

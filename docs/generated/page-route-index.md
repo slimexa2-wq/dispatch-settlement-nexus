@@ -1,17 +1,14 @@
 # 页面路由索引
 
-> 自动生成，请勿手工编辑。源指纹：`fcc8dddb324cc313`。
+> 自动生成，请勿手工编辑。源指纹：`7eaaa95568ff032b`。
 
 ## PC 管理后台
 
 | 路径 | 页面组件 |
 | --- | --- |
 | `*` | `HomeRedirect` |
-| `/access-center` | `AccessCenterPage` |
-| `/account-center` | `AccountCenterPage` |
 | `/ai-assistant` | `AiAssistantPage` |
 | `/dashboard` | `DashboardPage` |
-| `/data-migration` | `DataMigrationPage` |
 | `/electronic-contracts` | `ElectronicContractsPage` |
 | `/imports` | `ImportsPage` |
 | `/internal-employees` | `InternalEmployeesPage` |
@@ -31,7 +28,6 @@
 | `/settings` | `SettingsPage` |
 | `/statistics` | `Navigate` |
 | `/suppliers` | `SuppliersPage` |
-| `/workflow-designer` | `WorkflowDesignerPage` |
 
 ## 微信小程序
 
@@ -57,7 +53,4 @@
 | `pages/referrals/mine/index` |
 | `pages/referrals/rewards/index` |
 | `pages/salary/index/index` |
-| `pages/reimbursements/index/index` |
-| `pages/reimbursements/form/index` |
-| `pages/reimbursements/detail/index` |
 | `pages/profile/index/index` |
