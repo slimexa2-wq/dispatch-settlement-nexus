@@ -1,0 +1,26 @@
+[
+  {
+    "phase": "before",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "description": {
+      "text": "管理真实项目数据，贯通报名、面试、入职、在职与离职，所有统计均可回到业务明细。",
+      "color": "rgb(33, 54, 58)",
+      "fontSize": "14px"
+    }
+  },
+  {
+    "phase": "after",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "description": {
+      "text": "管理真实项目数据，贯通报名、面试、入职、在职与离职，所有统计均可回到业务明细。",
+      "color": "rgb(216, 239, 240)",
+      "fontSize": "17px"
+    }
+  }
+]

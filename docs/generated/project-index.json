@@ -1,10 +1,10 @@
 {
   "generatedAt": "deterministic",
-  "sourceFingerprint": "7eaaa95568ff032b",
+  "sourceFingerprint": "454ad430c5ec9848",
   "summary": {
-    "fileCount": 913,
-    "sourceFileCount": 351,
-    "totalSourceLines": 52085,
+    "fileCount": 994,
+    "sourceFileCount": 421,
+    "totalSourceLines": 202287,
     "moduleCount": 14,
     "apiRouteCount": 171,
     "adminRouteCount": 22,
@@ -144,7 +144,7 @@
         "UserProject"
       ],
       "fileCount": 17,
-      "sourceLines": 3726,
+      "sourceLines": 3774,
       "files": [
         "apps/admin/src/auth/AuthContext.test.tsx",
         "apps/admin/src/auth/AuthContext.tsx",
@@ -199,7 +199,7 @@
         "InternalEmployeeChange"
       ],
       "fileCount": 24,
-      "sourceLines": 3883,
+      "sourceLines": 3888,
       "files": [
         "apps/admin/src/pages/InternalEmployeesPage.test.tsx",
         "apps/admin/src/pages/InternalEmployeesPage.tsx",
@@ -257,7 +257,7 @@
         "PersonStatusLog"
       ],
       "fileCount": 15,
-      "sourceLines": 3995,
+      "sourceLines": 4000,
       "files": [
         "apps/admin/src/lib/people.ts",
         "apps/admin/src/pages/PeoplePage.tsx",
@@ -312,7 +312,7 @@
         "ReferralShare"
       ],
       "fileCount": 17,
-      "sourceLines": 3434,
+      "sourceLines": 3439,
       "files": [
         "apps/admin/src/pages/JobDemandsPage.tsx",
         "apps/admin/src/pages/RecruitmentProgressPage.tsx",
@@ -358,7 +358,7 @@
         "UserProject"
       ],
       "fileCount": 9,
-      "sourceLines": 2239,
+      "sourceLines": 2244,
       "files": [
         "apps/admin/public/project-assets/electronics-workshop.png",
         "apps/admin/public/project-assets/logistics-warehouse.png",
@@ -398,7 +398,7 @@
         "Policy"
       ],
       "fileCount": 9,
-      "sourceLines": 2534,
+      "sourceLines": 2539,
       "files": [
         "apps/admin/src/pages/PoliciesPage.tsx",
         "apps/admin/src/pages/SuppliersPage.tsx",
@@ -451,7 +451,7 @@
         "ReimbursementArtifact"
       ],
       "fileCount": 24,
-      "sourceLines": 6688,
+      "sourceLines": 7010,
       "files": [
         "apps/admin/src/lib/demo-reimbursement.test.ts",
         "apps/admin/src/pages/ReimbursementsPage.test.tsx",
@@ -505,7 +505,7 @@
         "SalarySlip"
       ],
       "fileCount": 5,
-      "sourceLines": 2417,
+      "sourceLines": 2422,
       "files": [
         "apps/admin/src/pages/SalarySlipsPage.tsx",
         "apps/api/src/routes/salary.ts",
@@ -573,7 +573,7 @@
         "PortalNotificationRead"
       ],
       "fileCount": 2,
-      "sourceLines": 1817,
+      "sourceLines": 1822,
       "files": [
         "apps/api/src/routes/notifications.ts",
         "prisma/schema.prisma"
@@ -604,7 +604,7 @@
         "ImportJob"
       ],
       "fileCount": 17,
-      "sourceLines": 4415,
+      "sourceLines": 4420,
       "files": [
         "apps/admin/src/pages/ImportsPage.tsx",
         "apps/api/src/routes/imports.ts",
@@ -664,7 +664,7 @@
         "AiDemoSnapshot"
       ],
       "fileCount": 23,
-      "sourceLines": 5445,
+      "sourceLines": 5450,
       "files": [
         "apps/admin/src/components/AdminAiDrawer.tsx",
         "apps/admin/src/components/AiAssistantPanel.tsx",
@@ -1865,16 +1865,400 @@
   },
   "largeFiles": [
     {
+      "path": "apps/api/src/generated/prisma/models/User.ts",
+      "lines": 15903,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/internal/prismaNamespace.ts",
+      "lines": 6885,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Person.ts",
+      "lines": 5334,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementBatch.ts",
+      "lines": 4020,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Project.ts",
+      "lines": 3450,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/InternalEmployee.ts",
+      "lines": 3373,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/JobDemand.ts",
+      "lines": 3333,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AccessRequest.ts",
+      "lines": 3200,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
       "path": "apps/admin/src/lib/demo.ts",
-      "lines": 3152,
+      "lines": 3164,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/OrganizationUnit.ts",
+      "lines": 3067,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/DataScopeBinding.ts",
+      "lines": 3031,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Policy.ts",
+      "lines": 3022,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Supplier.ts",
+      "lines": 2486,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/InternalEmployment.ts",
+      "lines": 2453,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Application.ts",
+      "lines": 2426,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/WorkflowInstance.ts",
+      "lines": 2267,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Branch.ts",
+      "lines": 2212,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/WorkflowTask.ts",
+      "lines": 2144,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/MigrationBatch.ts",
+      "lines": 2137,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/UserRoleAssignment.ts",
+      "lines": 2115,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementIssue.ts",
+      "lines": 2114,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReferralRecord.ts",
+      "lines": 2105,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/SalarySlip.ts",
+      "lines": 2090,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementAttachment.ts",
+      "lines": 2084,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementLine.ts",
+      "lines": 2006,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/commonInputTypes.ts",
+      "lines": 1993,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/UserPortalAccess.ts",
+      "lines": 1905,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/SalaryImportBatch.ts",
+      "lines": 1902,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalAppeal.ts",
+      "lines": 1854,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Notification.ts",
+      "lines": 1818,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/WorkflowVersion.ts",
+      "lines": 1800,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AiAuditLog.ts",
+      "lines": 1785,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AiAction.ts",
+      "lines": 1770,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ImportJob.ts",
+      "lines": 1760,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Position.ts",
+      "lines": 1751,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalSettlement.ts",
+      "lines": 1741,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementArtifact.ts",
+      "lines": 1740,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementPayment.ts",
+      "lines": 1710,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalQrCode.ts",
+      "lines": 1694,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReferralReward.ts",
+      "lines": 1694,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalAdvance.ts",
+      "lines": 1669,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PersonStatusLog.ts",
+      "lines": 1652,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/LegalEntity.ts",
+      "lines": 1649,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/MigrationRowResult.ts",
+      "lines": 1647,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PersonFile.ts",
+      "lines": 1647,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalSettlementItem.ts",
+      "lines": 1646,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AccountLifecycleLog.ts",
+      "lines": 1640,
       "threshold": 500,
       "category": "TypeScript"
     },
     {
       "path": "prisma/schema.prisma",
-      "lines": 1632,
+      "lines": 1637,
       "threshold": 1400,
       "category": "Prisma"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/JobGrade.ts",
+      "lines": 1593,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReimbursementApproval.ts",
+      "lines": 1588,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/WorkflowTemplate.ts",
+      "lines": 1549,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/Role.ts",
+      "lines": 1545,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ProjectImage.ts",
+      "lines": 1531,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AuditLog.ts",
+      "lines": 1523,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PermissionProvisionTask.ts",
+      "lines": 1514,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/ReferralShare.ts",
+      "lines": 1502,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/MigrationTemplate.ts",
+      "lines": 1488,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/InternalEmployeeChange.ts",
+      "lines": 1473,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalFavorite.ts",
+      "lines": 1385,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PortalNotificationRead.ts",
+      "lines": 1385,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/RolePermission.ts",
+      "lines": 1385,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/SupplierProject.ts",
+      "lines": 1385,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/UserProject.ts",
+      "lines": 1385,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/PermissionDefinition.ts",
+      "lines": 1355,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/models/AiDemoSnapshot.ts",
+      "lines": 1311,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
+      "path": "apps/api/src/generated/prisma/internal/prismaNamespaceBrowser.ts",
+      "lines": 1220,
+      "threshold": 500,
+      "category": "TypeScript"
     },
     {
       "path": "apps/portal/src/app/demo.ts",
@@ -1884,19 +2268,19 @@
     },
     {
       "path": "apps/api/src/routes/reimbursements.ts",
-      "lines": 1029,
+      "lines": 1028,
       "threshold": 500,
       "category": "TypeScript"
     },
     {
-      "path": "apps/admin/src/pages/ProductIntroPage.tsx",
-      "lines": 947,
+      "path": "apps/admin/src/pages/ReimbursementsPage.tsx",
+      "lines": 1007,
       "threshold": 500,
       "category": "React/TSX"
     },
     {
-      "path": "apps/admin/src/pages/ReimbursementsPage.tsx",
-      "lines": 871,
+      "path": "apps/admin/src/pages/ProductIntroPage.tsx",
+      "lines": 947,
       "threshold": 500,
       "category": "React/TSX"
     },
@@ -1907,6 +2291,12 @@
       "category": "React/TSX"
     },
     {
+      "path": "apps/api/src/generated/prisma/internal/class.ts",
+      "lines": 821,
+      "threshold": 500,
+      "category": "TypeScript"
+    },
+    {
       "path": "apps/api/src/routes/portal.ts",
       "lines": 813,
       "threshold": 500,
@@ -1914,7 +2304,7 @@
     },
     {
       "path": "apps/admin/src/types/domain.ts",
-      "lines": 784,
+      "lines": 785,
       "threshold": 500,
       "category": "TypeScript"
     },

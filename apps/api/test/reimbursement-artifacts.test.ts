@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as XLSX from "xlsx";
 import {
   createReimbursementWorkbook,
   createStoredZip
@@ -29,6 +30,9 @@ describe("报销最终生成物", () => {
 
     expect(workbook.subarray(0, 2).toString("ascii")).toBe("PK");
     expect(workbook.length).toBeGreaterThan(1_000);
+    const parsed = XLSX.read(workbook, { type: "buffer" });
+    const rows = XLSX.utils.sheet_to_json<string[]>(parsed.Sheets["报销单"]!, { header: 1 });
+    expect(rows.at(-1)?.[1]).toContain("不得低于付款金额");
   });
 
   it("按顺序生成标准ZIP材料包并保留缺件占位说明", () => {

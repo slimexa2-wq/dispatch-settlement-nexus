@@ -61,7 +61,13 @@ export function isDemoSession(): boolean {
 }
 
 function parseDemoBody(body: BodyInit | null | undefined): unknown {
-  if (!body || body instanceof FormData) return undefined;
+  if (!body) return undefined;
+  if (body instanceof FormData) {
+    const file = body.get("file");
+    return file instanceof File ? {
+      originalName: file.name, mimeType: file.type, sizeBytes: file.size
+    } : undefined;
+  }
   try {
     return JSON.parse(String(body));
   } catch {

@@ -1,0 +1,51 @@
+{
+  "checks": [
+    "R04 Escape restores every field across two lines",
+    "R04 mask dismissal restores every field",
+    "R04 route unmount restores all fields including date and two lines",
+    "R04 explicit discard clears title and all lines",
+    "R01 100/100 creates draft with no artificial invoice increase",
+    "R01 100/100.01 accepted; second row100/99.99 located inline; one correction saves",
+    "R02 no premature100%; amount/payee visible; missing proof blocks confirmation",
+    "R02 payment state, amount, reference and final proof match on trajectory",
+    "R03 390px form date/action readable; pointer correction+touch save completes",
+    "R03 768px form date/action readable; pointer correction+touch save completes"
+  ],
+  "pageErrors": [],
+  "mobileMeasurements": [
+    {
+      "width": 390,
+      "innerWidth": 390,
+      "docWidth": 390,
+      "dates": [
+        {
+          "value": "2026-11-11",
+          "width": 274
+        }
+      ],
+      "action": {
+        "x": 258,
+        "y": 779.5,
+        "width": 108,
+        "height": 36
+      }
+    },
+    {
+      "width": 768,
+      "innerWidth": 768,
+      "docWidth": 768,
+      "dates": [
+        {
+          "value": "2026-11-11",
+          "width": 283
+        }
+      ],
+      "action": {
+        "x": 626,
+        "y": 807.5,
+        "width": 102,
+        "height": 36
+      }
+    }
+  ]
+}

@@ -740,6 +740,7 @@ export type Reimbursement = {
     id: string;
     amountCents: number;
     reference: string;
+    proofAttachmentId?: Nullable<string>;
     paidAt: string;
   }>;
   artifacts: ReimbursementArtifact[];

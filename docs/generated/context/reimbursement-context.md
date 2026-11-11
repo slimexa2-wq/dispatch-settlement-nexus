@@ -7,7 +7,7 @@
 - ID：`reimbursement`
 - 职责：员工报销申请、部门制单、审批、财务审核、付款和打印材料。
 - 文件数：24
-- 源码行数：6688
+- 源码行数：7010
 
 ## 直接依赖
 
@@ -58,9 +58,9 @@
 
 ## 超大文件提醒
 
-- `prisma/schema.prisma`：1632 行，建议阈值 1400 行
-- `apps/api/src/routes/reimbursements.ts`：1029 行，建议阈值 500 行
-- `apps/admin/src/pages/ReimbursementsPage.tsx`：871 行，建议阈值 500 行
+- `prisma/schema.prisma`：1637 行，建议阈值 1400 行
+- `apps/api/src/routes/reimbursements.ts`：1028 行，建议阈值 500 行
+- `apps/admin/src/pages/ReimbursementsPage.tsx`：1007 行，建议阈值 500 行
 
 ## 未纳入文本上下文的二进制文件
 
@@ -241,12 +241,6 @@ pnpm project:verify
 
 `ReimbursementBatch`、`ReimbursementLine`、`ReimbursementAttachment`、`ReimbursementIssue`、`ReimbursementApproval`、`ReimbursementPayment`、`ReimbursementArtifact`
 
-## 状态入口约束
-
-- 通用 `/reimbursements/:id/transition` 不能直接进入 `PAID`；必须通过付款登记入口将付款记录、状态和审计一并提交。通用入口返回 `PAYMENT_REGISTRATION_REQUIRED`，调用方应转到登记打款。
-- 附件入口复用 `reimbursementAttachmentUploadAuthorization` 的三种模式：草稿/制单材料、审核有开放问题时申请人的整单补充说明、待付款时出纳的整单最终付款凭证。原始付款凭证和发票仍须关联明细；已付款单不可继续上传。
-- 精准回归：`pnpm --filter @xiangneng/api exec vitest run test/reimbursements.test.ts test/reimbursement-domain.test.ts test/reimbursement-state-contracts.test.ts`。路由回归使用认证与数据库边界替身，不替代真实数据库、授权范围隔离和并发验证。
-
 ## 业务规则文档
 
 - `docs/business-rules/reimbursement.md`
@@ -254,20 +248,26 @@ pnpm project:verify
 ## 固定边界
 
 - 员工报销归属业务部门
-- 付款截图、发票和最终付款凭证语义分离
+- 明细发票金额不得低于付款金额，允许等额，UI、演示和API一致
+- 付款截图、发票和整单最终付款凭证语义分离：最终凭证必须属于当前单据且不绑定明细
+- 打款在同一事务重新校验状态、金额、版本与凭证并写入付款、终态和审计；通用推进不能直接进入PAID
+- 新建草稿按当前用户在标签页暂存，关闭与离页保留全部明细，明确放弃才清空
 - 推进状态必须校验版本、问题和授权包
 
 ## 验证命令
 
-- `pnpm test:module:reimbursement`
+- 管理端：在 `apps/admin` 执行 `pnpm exec vitest run src`，原生测试单独使用 `node --experimental-strip-types --test test/*.node.test.ts`
+- API定向：在 `apps/api` 执行 `pnpm exec vitest run test/reimbursement-state-contracts.test.ts test/reimbursement-routes.test.ts test/reimbursements.test.ts test/reimbursement-artifacts.test.ts`
+- 浏览器回归：`apps/admin/test/reimbursement-ux.browser.cjs`，仅隔离本地演示
+- `node scripts/generate-project-index.mjs --check` 与 `node scripts/check-architecture.mjs`
 
 ## 安全修改方式
 
-1. 先生成本模块局部上下文：`pnpm project:context -- reimbursement`。
+1. 先生成本模块局部上下文：`node scripts/build-ai-context.mjs reimbursement`。
 2. 默认只修改本模块文件和直接依赖中确有必要的接口。
 3. 业务事实由依赖模块提供，不在本模块复制主数据逻辑。
 4. 新增入口、模型、依赖或测试命令后同步更新 `config/project-modules.json`。
-5. 完成后运行模块验证、`pnpm project:index` 和 `pnpm project:check`。
+5. 完成后运行模块验证、`node scripts/generate-project-index.mjs` 和 `node scripts/check-architecture.mjs`。
 
 ## 文档：`docs/business-rules/reimbursement.md`
 

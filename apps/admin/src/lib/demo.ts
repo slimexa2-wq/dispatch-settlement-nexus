@@ -2290,7 +2290,7 @@ function demoLeadershipDashboard(): LeadershipDashboard {
       "当前在职：截至更新时间，人员状态为在职的外包人员与内部员工合计。",
       "本月入离职：按人员主档入职日期、离职日期落在本自然月统计。",
       "招聘完成率：招聘中岗位的报名人数 ÷ 需求人数，最高显示100%。",
-      "报销金额：按明细付款与发票金额汇总，发票金额严格大于付款金额。"
+      "报销金额：按明细付款与发票金额汇总，发票金额不得低于付款金额。"
     ]
   };
 }
@@ -2323,8 +2323,8 @@ function createDemoReimbursement(input: Omit<Partial<Reimbursement>, "lines"> & 
 }): Reimbursement {
   const lines = input.lines ?? [];
   if (!lines.length) throw new Error("报销单至少需要一条明细");
-  if (lines.some((line) => line.invoiceCents <= line.paymentCents)) {
-    throw new Error("发票金额必须严格大于付款金额");
+  if (lines.some((line) => line.invoiceCents < line.paymentCents)) {
+    throw new Error("发票金额不能低于付款金额");
   }
   const batchId = `demo-reimbursement-${Date.now()}`;
   const branch = demoOrganizationOptions.branches.find((item) => item.id === input.branchId);
@@ -2696,6 +2696,7 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
       targetStatus: ReimbursementStatus;
       comment?: string;
     };
+    if (input.targetStatus === "PAID") throw new Error("请通过登记打款完成报销，确保付款记录与状态一起保存");
     if (previous.version !== input.expectedVersion) throw new Error("报销单已更新，请刷新后重试");
     if (previous.issues.some((issue) => issue.status === "OPEN")) throw new Error("仍有未解决问题，不能继续流转");
     const next: Reimbursement = {
@@ -2724,14 +2725,15 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
     const previous = byId(reimbursements, batchId);
     const lineId = String(query.lineId ?? "");
     const type = String(query.type ?? "SUPPORTING") as "PAYMENT_VOUCHER" | "INVOICE" | "SUPPORTING";
+    const file = body as { originalName?: string; mimeType?: string; sizeBytes?: number } | undefined;
     const attachment = {
       id: `demo-attachment-${Date.now()}`,
       batchId,
       lineId: lineId || undefined,
       type,
-      originalName: type === "INVOICE" ? "新上传增值税发票.pdf" : "新上传付款凭证.pdf",
-      mimeType: "application/pdf",
-      sizeBytes: 186_000,
+      originalName: file?.originalName ?? (type === "INVOICE" ? "新上传增值税发票.pdf" : "新上传付款凭证.pdf"),
+      mimeType: file?.mimeType || "application/pdf",
+      sizeBytes: file?.sizeBytes ?? 186_000,
       sha256: "d".repeat(64),
       createdAt: new Date().toISOString()
     };
@@ -2805,8 +2807,17 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
   if (method === "POST" && /^\/reimbursements\/[^/]+\/payments$/.test(path)) {
     const batchId = path.split("/")[2] ?? "";
     const previous = byId(reimbursements, batchId);
-    const input = body as { amountCents: number; reference: string; paidAt: string };
+    const input = body as { expectedVersion: number; amountCents: number; reference: string; paidAt: string; proofAttachmentId?: string };
+    if (previous.status !== "PENDING_PAYMENT") throw new Error("报销单尚未进入待打款状态");
+    if (previous.version !== input.expectedVersion) throw new Error("报销单已更新，请刷新后重试");
+    if (previous.issues.some(issue => issue.status === "OPEN")) throw new Error("仍有未解决问题，不能登记付款");
     if (input.amountCents !== previous.totalPaymentCents) throw new Error("打款金额必须与报销付款合计一致");
+    if (!input.proofAttachmentId) throw new Error("登记付款前必须上传最终付款凭证");
+    const proof = previous.attachments.find(attachment => attachment.id === input.proofAttachmentId);
+    if (!proof || proof.type !== "PAYMENT_VOUCHER" || proof.lineId) {
+      throw new Error("付款凭证必须是当前报销单的整单最终付款凭证");
+    }
+    if (!input.reference?.trim() || !Number.isFinite(Date.parse(input.paidAt))) throw new Error("请填写有效的银行流水号和打款时间");
     const next: Reimbursement = {
       ...previous,
       status: "PAID",
@@ -2817,6 +2828,7 @@ export async function handleDemoRequest<T>(method: string, path: string, query: 
         id: `demo-payment-${Date.now()}`,
         amountCents: input.amountCents,
         reference: input.reference,
+        proofAttachmentId: proof.id,
         paidAt: input.paidAt
       },
       approvals: [...previous.approvals, {

@@ -55,7 +55,7 @@ export function createReimbursementWorkbook(
       input.totalInvoiceCents / 100,
       input.invoiceExcessCents / 100
     ],
-    ["口径说明", "发票金额必须严格大于付款金额；金额统一以人民币元展示、数据库以分存储。"]
+    ["口径说明", "发票金额不得低于付款金额；金额统一以人民币元展示、数据库以分存储。"]
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
   worksheet["!cols"] = [

@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Permission } from "@xiangneng/shared";
 import { api, clearToken, getToken, setToken } from "../lib/api";
 import { DEMO_CODE, DEMO_TOKEN, demoUserForRole } from "../lib/demo";
@@ -62,8 +62,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [demoRole, setDemoRole] = useState<DemoRoleKey>(() => safeStoredDemoRole());
   const [isDemo, setIsDemo] = useState(() => localStorage.getItem(DEMO_MODE_KEY) === "true" || getToken() === DEMO_TOKEN);
   const [initializing, setInitializing] = useState(true);
+  const sessionRequest = useRef(0);
 
   const logout = useCallback(() => {
+    sessionRequest.current += 1;
     clearToken();
     localStorage.removeItem(DEMO_MODE_KEY);
     setIsDemo(false);
@@ -71,6 +73,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const loginDemoRole = useCallback(async (role: DemoRoleKey) => {
+    const requestId = ++sessionRequest.current;
     clearToken();
     let session: SessionUser;
     let token = DEMO_TOKEN;
@@ -84,6 +87,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // 比赛断网或本地数据库未启动时，切到同一套合成数据离线演示层。
       session = demoUserForRole(role);
     }
+    if (requestId !== sessionRequest.current) throw new Error("登录已取消，请重试");
     setToken(token);
     localStorage.setItem(DEMO_MODE_KEY, "true");
     setIsDemo(true);
@@ -92,29 +96,38 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const refreshUser = useCallback(async () => {
-    if (!getToken()) {
+    const requestId = ++sessionRequest.current;
+    const token = getToken();
+    if (!token) {
       setUser(null);
       return;
     }
-    if (getToken() === DEMO_TOKEN) {
-      await loginDemoRole(safeStoredDemoRole());
+    if (token === DEMO_TOKEN) {
+      // 已保存的离线演示会话无需重新登录，避免清空令牌与 StrictMode 恢复竞争。
+      setUser(demoUserForRole(safeStoredDemoRole()));
+      setIsDemo(true);
       return;
     }
     try {
-      setUser(await api.get<SessionUser>("/auth/me"));
+      const session = await api.get<SessionUser>("/auth/me");
+      if (requestId === sessionRequest.current) setUser(session);
     } catch {
-      logout();
+      if (requestId === sessionRequest.current) logout();
     }
-  }, [loginDemoRole, logout]);
+  }, [logout]);
 
   useEffect(() => {
-    void refreshUser().finally(() => setInitializing(false));
+    let active = true;
+    void refreshUser().finally(() => { if (active) setInitializing(false); });
+    return () => { active = false; };
   }, [refreshUser]);
 
   const login = useCallback(async (username: string, password: string) => {
+    const requestId = ++sessionRequest.current;
     const result = await api.post<LoginResult>("/auth/login", { username, password });
     const token = result.accessToken ?? result.token;
     if (!token) throw new Error("登录响应缺少访问令牌");
+    if (requestId !== sessionRequest.current) throw new Error("登录已取消，请重试");
     setToken(token);
     localStorage.removeItem(DEMO_MODE_KEY);
     setIsDemo(false);

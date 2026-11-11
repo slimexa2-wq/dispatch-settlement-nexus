@@ -1,22 +1,22 @@
 # 业务模块索引
 
-> 自动生成，请勿手工编辑。源指纹：`7eaaa95568ff032b`。
+> 自动生成，请勿手工编辑。源指纹：`454ad430c5ec9848`。
 
 | ID | 模块 | 文件 | 源码行 | 依赖 | 职责 |
 | --- | --- | --- | --- | --- | --- |
 | `platform` | 平台与工程基础 | 59 | 4974 | 无 | 工作区配置、部署、构建、演示环境和跨应用公共工程能力。 |
-| `auth` | 账号、会话与权限 | 17 | 3726 | `organization` | 登录会话、多角色授权、权限定义、数据范围和账号管理。 |
-| `organization` | 组织与内部员工 | 24 | 3883 | 无 | 集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。 |
-| `workforce` | 求职者与派遣外包人员 | 15 | 3995 | `project`、`supplier` | 求职者、派遣外包员工、人员档案、生命周期状态和附件。 |
-| `recruitment` | 招聘需求与进度 | 17 | 3434 | `project`、`supplier`、`workforce`、`auth` | 岗位需求、报名、面试、入职进度、员工推荐和奖励。 |
-| `project` | 项目与经营区域 | 9 | 2239 | `auth` | 项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。 |
-| `supplier` | 供应商与政策 | 9 | 2534 | `project`、`auth` | 供应商、项目合作关系、供应商政策和员工推荐政策。 |
-| `reimbursement` | 员工报销 | 24 | 6688 | `auth`、`organization`、`notification` | 员工报销申请、部门制单、审批、财务审核、付款和打印材料。 |
-| `payroll` | 工资与工资条 | 5 | 2417 | `workforce`、`project`、`auth`、`import-export` | 工资批次、工资条、导入核验和员工工资查询。 |
+| `auth` | 账号、会话与权限 | 17 | 3774 | `organization` | 登录会话、多角色授权、权限定义、数据范围和账号管理。 |
+| `organization` | 组织与内部员工 | 24 | 3888 | 无 | 集团、中心、业务部门、岗位、职级、合同主体和内部员工任职关系。 |
+| `workforce` | 求职者与派遣外包人员 | 15 | 4000 | `project`、`supplier` | 求职者、派遣外包员工、人员档案、生命周期状态和附件。 |
+| `recruitment` | 招聘需求与进度 | 17 | 3439 | `project`、`supplier`、`workforce`、`auth` | 岗位需求、报名、面试、入职进度、员工推荐和奖励。 |
+| `project` | 项目与经营区域 | 9 | 2244 | `auth` | 项目、经营区域 Branch、项目图片、现场运营负责人和项目授权。 |
+| `supplier` | 供应商与政策 | 9 | 2539 | `project`、`auth` | 供应商、项目合作关系、供应商政策和员工推荐政策。 |
+| `reimbursement` | 员工报销 | 24 | 7010 | `auth`、`organization`、`notification` | 员工报销申请、部门制单、审批、财务审核、付款和打印材料。 |
+| `payroll` | 工资与工资条 | 5 | 2422 | `workforce`、`project`、`auth`、`import-export` | 工资批次、工资条、导入核验和员工工资查询。 |
 | `reporting` | 统计与经营看板 | 7 | 1289 | `workforce`、`recruitment`、`project`、`supplier`、`payroll`、`reimbursement` | 管理看板、招聘统计、领导驾驶舱和跨模块只读汇总。 |
-| `notification` | 通知与待办 | 2 | 1817 | `auth` | 站内通知、读取状态和业务待办提醒。 |
-| `import-export` | 导入导出与数据安全 | 17 | 4415 | `auth` | Excel 导入、导出、模板解析、数据预览和表格安全校验。 |
-| `ai` | AI 业务助手 | 23 | 5445 | `auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting` | 意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。 |
+| `notification` | 通知与待办 | 2 | 1822 | `auth` | 站内通知、读取状态和业务待办提醒。 |
+| `import-export` | 导入导出与数据安全 | 17 | 4420 | `auth` | Excel 导入、导出、模板解析、数据预览和表格安全校验。 |
+| `ai` | AI 业务助手 | 23 | 5450 | `auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting` | 意图识别、受控工具调用、确认令牌、模型适配和 AI 审计。 |
 | `portal` | 员工、供应商与公开端体验 | 62 | 5120 | `auth`、`workforce`、`recruitment`、`supplier`、`payroll`、`reimbursement`、`notification` | Portal 手机网页演示、个人服务、供应商服务和公开产品展示。 |
 
 ## 平台与工程基础（`platform`）
@@ -94,7 +94,7 @@
 ## 账号、会话与权限（`auth`）
 
 - 文件数：17
-- 源码行数：3726
+- 源码行数：3774
 - 依赖：`organization`
 - 数据模型：`Role`、`PermissionDefinition`、`RolePermission`、`UserRoleAssignment`、`DataScopeBinding`、`User`、`UserProject`
 - 测试命令：`pnpm test:module:authorization`
@@ -124,7 +124,7 @@
 ## 组织与内部员工（`organization`）
 
 - 文件数：24
-- 源码行数：3883
+- 源码行数：3888
 - 依赖：无
 - 数据模型：`LegalEntity`、`OrganizationUnit`、`Position`、`JobGrade`、`JobGradeApprovalPolicy`、`InternalEmployee`、`InternalEmployment`、`InternalEmployeeChange`
 - 测试命令：`pnpm test:module:organization`
@@ -161,7 +161,7 @@
 ## 求职者与派遣外包人员（`workforce`）
 
 - 文件数：15
-- 源码行数：3995
+- 源码行数：4000
 - 依赖：`project`、`supplier`
 - 数据模型：`Person`、`PersonFile`、`PersonStatusLog`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/portal-mappers.test.ts`
@@ -189,7 +189,7 @@
 ## 招聘需求与进度（`recruitment`）
 
 - 文件数：17
-- 源码行数：3434
+- 源码行数：3439
 - 依赖：`project`、`supplier`、`workforce`、`auth`
 - 数据模型：`JobDemand`、`Application`、`ReferralRecord`、`ReferralReward`、`ReferralShare`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/registration.test.ts test/job-notification.test.ts`
@@ -219,7 +219,7 @@
 ## 项目与经营区域（`project`）
 
 - 文件数：9
-- 源码行数：2239
+- 源码行数：2244
 - 依赖：`auth`
 - 数据模型：`Branch`、`Project`、`ProjectImage`、`UserProject`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/auth-and-scope.test.ts test/public-resources.test.ts`
@@ -241,7 +241,7 @@
 ## 供应商与政策（`supplier`）
 
 - 文件数：9
-- 源码行数：2534
+- 源码行数：2539
 - 依赖：`project`、`auth`
 - 数据模型：`Supplier`、`SupplierProject`、`Policy`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/portal-mappers.test.ts test/portal-security.test.ts`
@@ -263,7 +263,7 @@
 ## 员工报销（`reimbursement`）
 
 - 文件数：24
-- 源码行数：6688
+- 源码行数：7010
 - 依赖：`auth`、`organization`、`notification`
 - 数据模型：`ReimbursementBatch`、`ReimbursementLine`、`ReimbursementAttachment`、`ReimbursementIssue`、`ReimbursementApproval`、`ReimbursementPayment`、`ReimbursementArtifact`
 - 测试命令：`pnpm test:module:reimbursement`
@@ -300,7 +300,7 @@
 ## 工资与工资条（`payroll`）
 
 - 文件数：5
-- 源码行数：2417
+- 源码行数：2422
 - 依赖：`workforce`、`project`、`auth`、`import-export`
 - 数据模型：`SalaryImportBatch`、`SalarySlip`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/workflow-and-salary.test.ts`
@@ -338,7 +338,7 @@
 ## 通知与待办（`notification`）
 
 - 文件数：2
-- 源码行数：1817
+- 源码行数：1822
 - 依赖：`auth`
 - 数据模型：`Notification`、`PortalNotificationRead`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/job-notification.test.ts`
@@ -353,7 +353,7 @@
 ## 导入导出与数据安全（`import-export`）
 
 - 文件数：17
-- 源码行数：4415
+- 源码行数：4420
 - 依赖：`auth`
 - 数据模型：`ImportJob`
 - 测试命令：`pnpm --filter @xiangneng/api exec vitest run test/statistics-and-import.test.ts test/spreadsheet-safety.test.ts test/workbook-row-numbers.test.ts`；`pnpm --filter @xiangneng/data-import test`
@@ -383,7 +383,7 @@
 ## AI 业务助手（`ai`）
 
 - 文件数：23
-- 源码行数：5445
+- 源码行数：5450
 - 依赖：`auth`、`organization`、`workforce`、`recruitment`、`project`、`supplier`、`reimbursement`、`payroll`、`reporting`
 - 数据模型：`AiAction`、`AiAuditLog`、`AiDemoSnapshot`
 - 测试命令：`pnpm verify:ai`；`pnpm verify:ollama`

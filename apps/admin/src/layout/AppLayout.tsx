@@ -20,7 +20,8 @@ import {
   SafetyCertificateOutlined,
   TeamOutlined,
   UploadOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import { App, Button, Drawer, Dropdown, Grid, Layout, Menu, Select, Space, Tag, Typography } from "antd";
 import type { ItemType } from "antd/es/menu/interface";
@@ -279,11 +280,12 @@ export function AppLayout() {
             icon={desktop ? (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />) : <MenuUnfoldOutlined />}
             onClick={() => (desktop ? setCollapsed((value) => !value) : setDrawerOpen(true))}
           />
-          <div className="header-search">搜索人员、项目、岗位、供应商等</div>
+          <div className="header-context">祥能业务工作台</div>
           <div className="header-spacer" />
-          {isDemo ? (
+          {isDemo && screens.xl ? (
             <Space className="demo-role-switch" size={8}>
               <Select
+                aria-label="演示身份"
                 size="middle"
                 value={demoRole}
                 options={demoRoleOptions}
@@ -292,6 +294,17 @@ export function AppLayout() {
               />
               <Button size="middle" loading={resettingDemo} onClick={() => void resetDemoData()}>恢复初始演示数据</Button>
             </Space>
+          ) : isDemo ? (
+            <Dropdown trigger={["click"]} menu={{ items: [
+              { key: "demo-role", label: "切换演示身份", children: demoRoleOptions.map((option) => ({
+                key: option.value,
+                label: `${option.value === demoRole ? "✓ " : ""}${option.label}`,
+                onClick: () => void onSwitchDemoRole(option.value)
+              })) },
+              { key: "demo-reset", label: "恢复初始演示数据", disabled: resettingDemo, onClick: () => void resetDemoData() }
+            ] }}>
+              <Button aria-label="演示工具" loading={resettingDemo}>演示</Button>
+            </Dropdown>
           ) : null}
           {currentModule ? (
             <Space className="module-io-actions">
@@ -319,7 +332,7 @@ export function AppLayout() {
             }}
             placement="bottomRight"
           >
-            <Button type="text" className="user-menu">
+            <Button type="text" className="user-menu" aria-label="用户菜单" icon={<UserOutlined />}>
               <Space>
                 <span className="user-name">{user?.displayName ?? "用户"}</span>
                 {user ? <Tag color="blue">{roleLabels[user.role] ?? user.role}</Tag> : null}
