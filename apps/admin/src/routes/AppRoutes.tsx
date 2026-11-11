@@ -28,7 +28,7 @@ function ProtectedLayout() {
   const { user, initializing } = useAuth();
   const location = useLocation();
   if (initializing) return <div className="full-screen-loader"><Spin size="large" description="正在验证登录状态" /></div>;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search + location.hash }} />;
   return <AppLayout />;
 }
 

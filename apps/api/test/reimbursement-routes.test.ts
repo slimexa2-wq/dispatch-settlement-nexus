@@ -68,7 +68,7 @@ describe("报销接口", () => {
     expect(JSON.stringify(listWhere)).toContain(branchId);
   });
 
-  it("创建报销单时在服务端拒绝发票金额不高于付款金额", async () => {
+  it("创建报销单时在服务端拒绝发票金额低于付款金额", async () => {
     const user = userFixture({
       username: "clerk",
       role: UserRole.DEPARTMENT_REIMBURSEMENT_CLERK,
@@ -103,7 +103,7 @@ describe("报销接口", () => {
           category: "差旅费",
           description: "宜宾至成都项目巡检",
           paymentCents: 100_00,
-          invoiceCents: 100_00
+          invoiceCents: 99_99
         }]
       }
     });

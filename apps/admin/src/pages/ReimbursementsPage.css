@@ -1,0 +1,42 @@
+.reimbursement-page,
+.reimbursement-page > * {
+  min-width: 0;
+}
+
+.reimbursement-create-modal .ant-picker,
+.reimbursement-create-modal .ant-input-number,
+.reimbursement-create-modal .ant-select {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .reimbursement-create-modal {
+    max-width: calc(100vw - 24px);
+    margin-inline: auto;
+    top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .reimbursement-create-modal .ant-modal-container {
+    padding: 16px;
+  }
+
+  .reimbursement-create-modal .ant-card-body {
+    padding: 12px;
+  }
+
+  .reimbursement-create-modal .ant-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .reimbursement-create-modal .ant-modal-footer > .ant-btn {
+    flex: 1 1 auto;
+    margin-inline-start: 0;
+  }
+
+  .reimbursement-create-modal .ant-picker-input > input {
+    min-width: 110px;
+  }
+}

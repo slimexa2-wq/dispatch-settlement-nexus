@@ -7,11 +7,25 @@ import type {
   ReimbursementArtifact,
   ReimbursementStatus
 } from "../types/domain";
-import { handleDemoRequest } from "./demo";
+import { DEMO_TOKEN, handleDemoRequest } from "./demo";
+import { api, clearToken, setToken } from "./api";
 
 describe("断网演示业务层", () => {
   beforeEach(async () => {
+    clearToken();
     await handleDemoRequest("POST", "/demo/reset", {}, {});
+  });
+
+  it("最终凭证上传保留所选文件名和文件信息", async () => {
+    const list = await handleDemoRequest<ListResult<Reimbursement>>("GET", "/reimbursements");
+    const batch = list.items.find(item => item.status === "PENDING_PAYMENT")!;
+    const form = new FormData();
+    form.append("file", new File(["%PDF-synthetic"], "整单最终付款-合成凭证.pdf", { type: "application/pdf" }));
+    setToken(DEMO_TOKEN);
+    try {
+      const proof = await api.upload(`/reimbursements/${batch.id}/attachments?type=PAYMENT_VOUCHER`, form);
+      expect(proof).toMatchObject({ originalName: "整单最终付款-合成凭证.pdf", mimeType: "application/pdf", sizeBytes: 14 });
+    } finally { clearToken(); }
   });
 
   it("内部员工和领导看板均使用完整合成数据", async () => {
@@ -134,6 +148,9 @@ describe("断网演示业务层", () => {
       {},
       { type: "REIMBURSEMENT_FORM" }
     );
+    const proof = await handleDemoRequest<{ id: string }>(
+      "POST", `/reimbursements/${batch.id}/attachments`, { type: "PAYMENT_VOUCHER" }
+    );
     await handleDemoRequest(
       "POST",
       `/reimbursements/${batch.id}/payments`,
@@ -142,7 +159,8 @@ describe("断网演示业务层", () => {
         expectedVersion: batch.version,
         amountCents: batch.totalPaymentCents,
         reference: "DEMO-OFFLINE-001",
-        paidAt: "2026-07-26T16:00:00.000Z"
+        paidAt: "2026-07-26T16:00:00.000Z",
+        proofAttachmentId: proof.id
       }
     );
     const completed = await handleDemoRequest<Reimbursement>(
@@ -153,5 +171,48 @@ describe("断网演示业务层", () => {
     expect(artifact.status).toBe("GENERATED");
     expect(completed.status).toBe("PAID");
     expect(completed.payment?.reference).toBe("DEMO-OFFLINE-001");
+    expect(completed.payment).toMatchObject({ proofAttachmentId: proof.id });
+  });
+
+  it.each([10000, 10001])("允许真实票额 %i 分不低于付款10000分", async (invoiceCents) => {
+    const batch = await handleDemoRequest<Reimbursement>("POST", "/reimbursements", {}, {
+      title: "等额费用", lines: [{ sequence: 1, expenseDate: "2026-07-26", category: "交通费",
+        description: "实际费用", paymentCents: 10000, invoiceCents }]
+    });
+    expect(batch.totalInvoiceCents).toBe(invoiceCents);
+    expect(batch.invoiceExcessCents).toBe(invoiceCents - 10000);
+  });
+
+  it("拒绝票额不足且不创建单据", async () => {
+    await expect(handleDemoRequest("POST", "/reimbursements", {}, {
+      title: "不足费用", lines: [{ sequence: 1, expenseDate: "2026-07-26", category: "交通费",
+        description: "实际费用", paymentCents: 10000, invoiceCents: 9999 }]
+    })).rejects.toThrow("发票金额不能低于付款金额");
+    const list = await handleDemoRequest<ListResult<Reimbursement>>("GET", "/reimbursements");
+    expect(list.pagination.total).toBe(7);
+  });
+
+  it("最终付款凭证必填，原始明细凭证不能替代，失败不改变状态", async () => {
+    const list = await handleDemoRequest<ListResult<Reimbursement>>("GET", "/reimbursements");
+    const batch = list.items.find(item => item.status === "PENDING_PAYMENT")!;
+    const payload = { expectedVersion: batch.version, amountCents: batch.totalPaymentCents,
+      reference: "TEST-ONLY", paidAt: "2026-07-26T16:00:00.000Z" };
+    await expect(handleDemoRequest("POST", `/reimbursements/${batch.id}/payments`, {}, payload))
+      .rejects.toThrow("最终付款凭证");
+    const lineProof = batch.lines.flatMap(line => line.attachments).find(item => item.type === "PAYMENT_VOUCHER")!;
+    await expect(handleDemoRequest("POST", `/reimbursements/${batch.id}/payments`, {}, {
+      ...payload, proofAttachmentId: lineProof.id
+    })).rejects.toThrow("整单最终付款凭证");
+    const unchanged = await handleDemoRequest<Reimbursement>("GET", `/reimbursements/${batch.id}`);
+    expect(unchanged.status).toBe("PENDING_PAYMENT");
+    expect(unchanged.payment).toBeFalsy();
+  });
+
+  it("通用流转不能绕过付款登记", async () => {
+    const list = await handleDemoRequest<ListResult<Reimbursement>>("GET", "/reimbursements");
+    const batch = list.items.find(item => item.status === "PENDING_PAYMENT")!;
+    await expect(handleDemoRequest("POST", `/reimbursements/${batch.id}/transition`, {}, {
+      expectedVersion: batch.version, targetStatus: "PAID"
+    })).rejects.toThrow("登记打款");
   });
 });

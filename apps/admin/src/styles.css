@@ -2886,21 +2886,29 @@ a,
   box-shadow: 0 3px 14px rgb(20 80 170 / 7%);
 }
 
-.header-search {
-  display: flex;
-  align-items: center;
-  width: min(520px, 42vw);
-  height: 38px;
-  margin-left: 18px;
-  padding: 0 18px;
-  color: #8a9bb4;
-  background: #f7faff;
-  border: 1px solid #dbe6f6;
-  border-radius: 999px;
+.header-context {
+  min-width: 0;
+  margin-left: 12px;
+  color: #234448;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-spacer {
   flex: 1;
+  min-width: 0;
+}
+
+.app-header > .ant-btn,
+.demo-role-switch,
+.module-io-actions {
+  flex-shrink: 0;
+}
+
+.app-shell > .ant-layout {
+  min-width: 0;
 }
 
 .user-menu {
@@ -3371,9 +3379,9 @@ a,
   letter-spacing: -0.04em;
 }
 
-.login-intro p.ant-typography {
+.login-intro .login-description {
   max-width: 600px;
-  color: #c7dcde;
+  color: #d8eff0;
   font-size: 17px;
   line-height: 1.8;
 }
@@ -4771,7 +4779,7 @@ a,
     font-size: 34px;
   }
 
-  .login-intro p.ant-typography,
+  .login-intro .login-description,
   .login-feature-grid {
     display: none;
   }
@@ -4781,6 +4789,12 @@ a,
   .app-header {
     height: 56px;
     padding: 0 10px;
+    gap: 8px;
+  }
+
+  .header-context,
+  .user-menu .ant-tag {
+    display: none;
   }
 
   .app-content {

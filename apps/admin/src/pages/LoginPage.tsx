@@ -16,9 +16,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (user) return <Navigate to={homePathForPermissions(user.permissions)} replace />;
-
-  const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
+  const requested = (location.state as { from?: unknown } | null)?.from;
+  const from = typeof requested === "string" && requested.startsWith("/") && !requested.startsWith("//") && !/^\/login(?:[/?#]|$)/.test(requested) ? requested : undefined;
+  if (user) return <Navigate to={from ?? homePathForPermissions(user.permissions)} replace />;
 
   const submit = async (values: LoginValues) => {
     setSubmitting(true);
@@ -26,7 +26,7 @@ export function LoginPage() {
     try {
       const session = await login(values.username, values.password);
       const home = homePathForPermissions(session.permissions);
-      navigate(from === "/dashboard" && home !== "/dashboard" ? home : from, { replace: true });
+      navigate(from ?? home, { replace: true });
     } catch (nextError) {
       setError(getErrorMessage(nextError));
     } finally {
@@ -40,7 +40,7 @@ export function LoginPage() {
     try {
       const session = await loginWithCode(values.code);
       const home = homePathForPermissions(session.permissions);
-      navigate(from === "/dashboard" && home !== "/dashboard" ? home : from, { replace: true });
+      navigate(from ?? home, { replace: true });
     } catch (nextError) {
       setError(getErrorMessage(nextError));
     } finally {
@@ -53,7 +53,7 @@ export function LoginPage() {
       <section className="login-intro">
         <div className="login-badge">祥能人力 · 统一业务平台</div>
         <Typography.Title>让项目、招聘与人员信息保持同一条主线</Typography.Title>
-        <Typography.Paragraph>
+        <Typography.Paragraph className="login-description">
           管理真实项目数据，贯通报名、面试、入职、在职与离职，所有统计均可回到业务明细。
         </Typography.Paragraph>
         <div className="login-feature-grid">

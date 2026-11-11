@@ -1,6 +1,6 @@
 # API 路由索引
 
-> 自动生成，请勿手工编辑。源指纹：`fcc8dddb324cc313`。
+> 自动生成，请勿手工编辑。源指纹：`454ad430c5ec9848`。
 
 | 方法 | 路径 | 文件 |
 | --- | --- | --- |
@@ -38,7 +38,6 @@
 | `DELETE` | `/internal-employees/:id` | `apps/api/src/routes/internal-employees.ts` |
 | `GET` | `/internal-employees/:id` | `apps/api/src/routes/internal-employees.ts` |
 | `PATCH` | `/internal-employees/:id` | `apps/api/src/routes/internal-employees.ts` |
-| `PUT` | `/internal-employees/:id/account` | `apps/api/src/routes/internal-employees.ts` |
 | `POST` | `/internal-employees/:id/offboard` | `apps/api/src/routes/internal-employees.ts` |
 | `POST` | `/internal-employees/:id/transfer` | `apps/api/src/routes/internal-employees.ts` |
 | `GET` | `/job-demands` | `apps/api/src/routes/jobs.ts` |
@@ -60,9 +59,7 @@
 | `GET` | `/notifications` | `apps/api/src/routes/notifications.ts` |
 | `POST` | `/notifications/:id/retry` | `apps/api/src/routes/notifications.ts` |
 | `GET` | `/notifications/config-status` | `apps/api/src/routes/notifications.ts` |
-| `PUT` | `/organization/job-grades/:id/reimbursement-policy` | `apps/api/src/routes/internal-employees.ts` |
 | `GET` | `/organization/options` | `apps/api/src/routes/internal-employees.ts` |
-| `PUT` | `/organization/positions/:id/role-bindings` | `apps/api/src/routes/internal-employees.ts` |
 | `GET` | `/organization/tree` | `apps/api/src/routes/internal-employees.ts` |
 | `GET` | `/people` | `apps/api/src/routes/people.ts` |
 | `POST` | `/people` | `apps/api/src/routes/people.ts` |
@@ -144,9 +141,6 @@
 | `POST` | `/reimbursements/:id/issues/:issueId/resolve` | `apps/api/src/routes/reimbursements.ts` |
 | `POST` | `/reimbursements/:id/payments` | `apps/api/src/routes/reimbursements.ts` |
 | `POST` | `/reimbursements/:id/transition` | `apps/api/src/routes/reimbursements.ts` |
-| `GET` | `/reimbursements/department-summaries` | `apps/api/src/routes/reimbursements.ts` |
-| `POST` | `/reimbursements/department-summaries/transition` | `apps/api/src/routes/reimbursements.ts` |
-| `GET` | `/reimbursements/payment-roster` | `apps/api/src/routes/reimbursements.ts` |
 | `GET` | `/salary-slips` | `apps/api/src/routes/salary.ts` |
 | `POST` | `/salary-slips/:batchId/publish` | `apps/api/src/routes/salary.ts` |
 | `POST` | `/salary-slips/:batchId/withdraw` | `apps/api/src/routes/salary.ts` |
@@ -180,3 +174,4 @@
 | `POST` | `/workflow-templates/:id/versions` | `apps/api/src/routes/workflows.ts` |
 | `GET` | `/workflow-templates/options` | `apps/api/src/routes/workflows.ts` |
 | `POST` | `/workflow-templates/simulate` | `apps/api/src/routes/workflows.ts` |
+| `POST` | `/zero-friction` | `apps/api/src/routes/reimbursements-assistant.ts` |

@@ -1,19 +1,19 @@
 # 工程维护基线
 
-> 自动生成，请勿手工编辑。源指纹：`fcc8dddb324cc313`。
+> 自动生成，请勿手工编辑。源指纹：`454ad430c5ec9848`。
 
 ## 当前规模
 
 | 指标 | 数量 |
 | --- | --- |
-| 项目文件 | 550 |
-| 源代码文件 | 333 |
-| 源代码总行数 | 53153 |
+| 项目文件 | 994 |
+| 源代码文件 | 421 |
+| 源代码总行数 | 202287 |
 | 业务模块 | 14 |
-| API 路由 | 176 |
-| 后台页面路由 | 26 |
-| 小程序页面 | 24 |
-| Prisma 模型 | 64 |
+| API 路由 | 171 |
+| 后台页面路由 | 22 |
+| 小程序页面 | 21 |
+| Prisma 模型 | 61 |
 
 ## 治理原则
 
@@ -26,22 +26,23 @@
 
 | 文件 | 行数 | 建议阈值 | 超出 |
 | --- | --- | --- | --- |
-| `apps/admin/src/lib/demo.ts` | 3268 | 500 | 2768 |
-| `prisma/schema.prisma` | 1728 | 1400 | 328 |
-| `apps/admin/src/pages/ReimbursementsPage.tsx` | 1295 | 500 | 795 |
-| `apps/api/src/routes/reimbursements.ts` | 1288 | 500 | 788 |
-| `apps/portal/src/app/demo.ts` | 1091 | 500 | 591 |
-| `apps/admin/src/pages/ProductIntroPage.tsx` | 947 | 500 | 447 |
-| `apps/admin/src/pages/InternalEmployeesPage.tsx` | 875 | 500 | 375 |
-| `apps/admin/src/types/domain.ts` | 832 | 500 | 332 |
-| `apps/admin/src/pages/PeoplePage.tsx` | 828 | 500 | 328 |
-| `apps/api/src/routes/portal.ts` | 812 | 500 | 312 |
-| `apps/api/src/routes/internal-employees.ts` | 725 | 500 | 225 |
-| `scripts/import-demo-data.mts` | 697 | 500 | 197 |
-| `apps/api/src/services/migration-targets.ts` | 677 | 500 | 177 |
-| `apps/admin/src/pages/ImportsPage.tsx` | 548 | 500 | 48 |
-| `apps/miniapp/src/pages/demo/index.tsx` | 544 | 500 | 44 |
-| `apps/api/src/routes/migration-center.ts` | 537 | 500 | 37 |
-| `apps/miniapp/src/api/types.ts` | 513 | 500 | 13 |
-| `apps/api/src/routes/imports.ts` | 510 | 500 | 10 |
-| `scripts/import-real-business-data.mts` | 506 | 500 | 6 |
+| `apps/api/src/generated/prisma/models/User.ts` | 15903 | 500 | 15403 |
+| `apps/api/src/generated/prisma/internal/prismaNamespace.ts` | 6885 | 500 | 6385 |
+| `apps/api/src/generated/prisma/models/Person.ts` | 5334 | 500 | 4834 |
+| `apps/api/src/generated/prisma/models/ReimbursementBatch.ts` | 4020 | 500 | 3520 |
+| `apps/api/src/generated/prisma/models/Project.ts` | 3450 | 500 | 2950 |
+| `apps/api/src/generated/prisma/models/InternalEmployee.ts` | 3373 | 500 | 2873 |
+| `apps/api/src/generated/prisma/models/JobDemand.ts` | 3333 | 500 | 2833 |
+| `apps/api/src/generated/prisma/models/AccessRequest.ts` | 3200 | 500 | 2700 |
+| `apps/admin/src/lib/demo.ts` | 3164 | 500 | 2664 |
+| `apps/api/src/generated/prisma/models/OrganizationUnit.ts` | 3067 | 500 | 2567 |
+| `apps/api/src/generated/prisma/models/DataScopeBinding.ts` | 3031 | 500 | 2531 |
+| `apps/api/src/generated/prisma/models/Policy.ts` | 3022 | 500 | 2522 |
+| `apps/api/src/generated/prisma/models/Supplier.ts` | 2486 | 500 | 1986 |
+| `apps/api/src/generated/prisma/models/InternalEmployment.ts` | 2453 | 500 | 1953 |
+| `apps/api/src/generated/prisma/models/Application.ts` | 2426 | 500 | 1926 |
+| `apps/api/src/generated/prisma/models/WorkflowInstance.ts` | 2267 | 500 | 1767 |
+| `apps/api/src/generated/prisma/models/Branch.ts` | 2212 | 500 | 1712 |
+| `apps/api/src/generated/prisma/models/WorkflowTask.ts` | 2144 | 500 | 1644 |
+| `apps/api/src/generated/prisma/models/MigrationBatch.ts` | 2137 | 500 | 1637 |
+| `apps/api/src/generated/prisma/models/UserRoleAssignment.ts` | 2115 | 500 | 1615 |
